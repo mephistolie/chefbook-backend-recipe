@@ -1,1 +1,2 @@
-# chefbook-backend-recipe
+# ChefBook Backend Shopping List Service
+ChefBook Backend Shopping List Microservice

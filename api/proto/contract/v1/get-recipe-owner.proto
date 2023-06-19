@@ -1,0 +1,12 @@
+syntax = "proto3";
+package v1;
+
+option go_package = "github.com/mephistolie/chefbook-backend-recipe/api/proto/v1";
+
+message GetRecipeOwnerRequest {
+  string recipeId = 1;
+}
+
+message GetRecipeOwnerResponse {
+  string ownerId = 2;
+}

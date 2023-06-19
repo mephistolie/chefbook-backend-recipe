@@ -1,0 +1,51 @@
+package entity
+
+import (
+	"github.com/google/uuid"
+	"time"
+)
+
+type BaseRecipeInfo struct {
+	Id   uuid.UUID
+	Name string
+
+	OwnerId uuid.UUID
+
+	IsOwned     bool
+	IsSaved     bool
+	Visibility  string
+	IsEncrypted bool
+
+	Language string
+	Preview  *string
+
+	CreationTimestamp time.Time
+	UpdateTimestamp   time.Time
+	Version           int32
+
+	Rating float32
+	Score  *int
+	Votes  int32
+
+	Tags        []string
+	Categories  []uuid.UUID
+	IsFavourite bool
+
+	Servings *int
+	Time     *int
+
+	Calories *int
+}
+
+type RecipeInfo struct {
+	BaseRecipeInfo
+
+	OwnerName   *string
+	OwnerAvatar *string
+}
+
+type DetailedRecipesInfo struct {
+	Recipes    []RecipeInfo
+	Tags       map[string]Tag
+	Categories map[string]Category
+}

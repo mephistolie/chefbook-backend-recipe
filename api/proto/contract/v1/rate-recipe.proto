@@ -1,0 +1,14 @@
+syntax = "proto3";
+package v1;
+
+option go_package = "github.com/mephistolie/chefbook-backend-recipe/api/proto/v1";
+
+message RateRecipeRequest {
+  string recipeId = 1;
+  string userId = 2;
+  int32  score = 3;
+}
+
+message RateRecipeResponse {
+  string message = 1;
+}

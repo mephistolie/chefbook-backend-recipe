@@ -1,0 +1,36 @@
+syntax = "proto3";
+package v1;
+
+option go_package = "github.com/mephistolie/chefbook-backend-recipe/api/proto/v1";
+
+import "v1/get-recipes.proto";
+import "v1/get-random-recipe.proto";
+import "v1/get-recipe-book.proto";
+import "v1/create-recipe.proto";
+import "v1/get-recipe.proto";
+import "v1/update-recipe.proto";
+import "v1/rate-recipe.proto";
+import "v1/save-recipe.proto";
+import "v1/delete-recipe.proto";
+import "v1/set-recipe-favourite-status.proto";
+import "v1/set-recipe-categories.proto";
+import "v1/get-recipe-owner.proto";
+
+service RecipeService {
+  rpc GetRecipes(GetRecipesRequest) returns (GetRecipesResponse);
+  rpc GetRandomRecipe(GetRandomRecipeRequest) returns (GetRecipeResponse);
+  rpc GetRecipeBook(GetRecipeBookRequest) returns (GetRecipeBookResponse);
+
+  rpc CreateRecipe(CreateRecipeRequest) returns (CreateRecipeResponse);
+  rpc GetRecipe(GetRecipeRequest) returns (GetRecipeResponse);
+  rpc UpdateRecipe(UpdateRecipeRequest) returns (UpdateRecipeResponse);
+  rpc DeleteRecipe(DeleteRecipeRequest) returns (DeleteRecipeResponse);
+
+  rpc RateRecipe(RateRecipeRequest) returns (RateRecipeResponse);
+  rpc SaveToRecipeBook(SaveToRecipeBookRequest) returns (SaveToRecipeBookResponse);
+  rpc RemoveFromRecipeBook(RemoveFromRecipeBookRequest) returns (RemoveFromRecipeBookResponse);
+  rpc SetRecipeFavouriteStatus(SetRecipeFavouriteStatusRequest) returns (SetRecipeFavouriteStatusResponse);
+  rpc SetRecipeCategories(SetRecipeCategoriesRequest) returns (SetRecipeCategoriesResponse);
+
+  rpc GetRecipeOwner(GetRecipeOwnerRequest) returns (GetRecipeOwnerResponse);
+}

@@ -1,0 +1,10 @@
+syntax = "proto3";
+package v1;
+
+option go_package = "github.com/mephistolie/chefbook-backend-recipe/api/proto/v1";
+
+message GetRandomRecipeRequest {
+  string userId = 1;
+  repeated string recipeLanguages = 2;
+  string userLanguage = 24;
+}

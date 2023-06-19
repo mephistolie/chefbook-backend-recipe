@@ -1,0 +1,83 @@
+syntax = "proto3";
+package v1;
+
+option go_package = "github.com/mephistolie/chefbook-backend-recipe/api/proto/v1";
+
+import "google/protobuf/timestamp.proto";
+import "v1/recipe-category.proto";
+import "v1/recipe-tag.proto";
+
+message RecipeInfo {
+  string recipeId = 1;
+  string name = 2;
+
+  string ownerId = 3;
+  string ownerName = 4;
+  string ownerAvatar = 5;
+
+  bool isOwned = 6;
+  bool isSaved = 7;
+  string visibility = 8;
+  bool isEncrypted = 9;
+  string language = 10;
+  string preview = 11;
+
+  google.protobuf.Timestamp creationTimestamp = 12;
+  google.protobuf.Timestamp updateTimestamp = 13;
+  int32 version = 14;
+
+  float rating = 15;
+  int32 score = 16;
+  int32 votes = 17;
+
+  repeated string tags = 18;
+  repeated string categories = 19;
+  bool isFavourite = 20;
+
+  int32 servings = 21;
+  int32 time = 22;
+
+  int32 calories = 23;
+}
+
+message GetRecipesRequest {
+  string userId = 1;
+
+  int32 pageSize = 2;
+
+  string authorId = 3;
+
+  bool owned = 4;
+  bool saved = 5;
+
+  string search = 6;
+
+  string sorting = 7;
+  string lastRecipeId = 8;
+  google.protobuf.Timestamp lastCreationTimestamp = 9;
+  google.protobuf.Timestamp lastUpdateTimestamp = 10;
+  float lastRating = 11;
+  int32 lastVotes = 12;
+  int32 lastTime = 13;
+  int32 lastCalories = 14;
+
+  int32 minRating = 15;
+  int32 maxRating = 16;
+
+  int32 minTime = 17;
+  int32 maxTime = 18;
+  int32 minServings = 19;
+  int32 maxServings = 20;
+  int32 minCalories = 21;
+  int32 maxCalories = 22;
+
+  repeated string recipeLanguages = 23;
+
+  string userLanguage = 24;
+}
+
+message GetRecipesResponse {
+  repeated RecipeInfo recipes = 1;
+  map<string, RecipeTag> tags = 2;
+  map<string, RecipeCategory> categories = 3;
+}

@@ -1,0 +1,33 @@
+syntax = "proto3";
+package v1;
+
+option go_package = "github.com/mephistolie/chefbook-backend-recipe/api/proto/v1";
+
+import "v1/recipe.proto";
+
+message UpdateRecipeRequest {
+  string recipeId = 1;
+  string userId = 2;
+  string name = 3;
+  string visibility = 4;
+  bool isEncrypted = 5;
+  string language = 6;
+  string description = 7;
+
+  repeated string tags = 8;
+
+  int32 servings = 9;
+  int32 time = 10;
+
+  int32 calories = 11;
+  Macronutrients macronutrients = 12;
+
+  repeated IngredientItem ingredients = 13;
+  repeated CookingItem cooking = 14;
+
+  int32 version = 15;
+}
+
+message UpdateRecipeResponse {
+  int32 version = 1;
+}

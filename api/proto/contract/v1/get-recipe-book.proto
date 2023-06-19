@@ -1,0 +1,33 @@
+syntax = "proto3";
+package v1;
+
+option go_package = "github.com/mephistolie/chefbook-backend-recipe/api/proto/v1";
+
+import "v1/recipe-category.proto";
+import "v1/recipe-tag.proto";
+
+message RecipeState {
+  string recipeId = 1;
+  int32 version = 2;
+
+  string ownerName = 3;
+  string ownerAvatar = 4;
+
+  float rating = 5;
+  int32 score = 6;
+  int32 votes = 7;
+
+  repeated string categories = 8;
+  bool isFavourite = 9;
+}
+
+message GetRecipeBookRequest {
+  string userId = 1;
+  string userLanguage = 2;
+}
+
+message GetRecipeBookResponse {
+  repeated RecipeState recipes = 1;
+  repeated RecipeCategory categories = 2;
+  map<string, RecipeTag> tags = 3;
+}

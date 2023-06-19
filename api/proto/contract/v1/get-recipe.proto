@@ -1,0 +1,22 @@
+syntax = "proto3";
+package v1;
+
+option go_package = "github.com/mephistolie/chefbook-backend-recipe/api/proto/v1";
+
+import "v1/recipe.proto";
+import "v1/recipe-category.proto";
+import "v1/recipe-tag.proto";
+
+message GetRecipeRequest {
+  string recipeId = 1;
+  string userId = 2;
+  string userLanguage = 3;
+  bool translate = 4;
+  string subscriptionPlan = 5;
+}
+
+message GetRecipeResponse {
+  Recipe recipe = 1;
+  map<string, RecipeTag> tags = 2;
+  map<string, RecipeCategory> categories = 3;
+}
