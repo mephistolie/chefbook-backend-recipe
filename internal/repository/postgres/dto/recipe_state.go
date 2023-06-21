@@ -12,16 +12,16 @@ type RecipeState struct {
 	OwnerId uuid.UUID `db:"owner_id"`
 
 	Rating float32 `db:"rating"`
-	Score  int     `db:"score"`
+	Score  int32   `db:"score"`
 	Votes  int32   `db:"votes"`
 
-	Tags        []string   `db:"tags"`
+	Tags        Tags       `db:"tags"`
 	Categories  Categories `db:"categories"`
 	IsFavourite bool       `db:"favourite"`
 }
 
 func (r *RecipeState) Entity() entity.BaseRecipeState {
-	var score *int
+	var score *int32
 	if r.Score > 0 {
 		score = &r.Score
 	}

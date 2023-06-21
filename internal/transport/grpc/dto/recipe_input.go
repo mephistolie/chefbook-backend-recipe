@@ -5,154 +5,109 @@ import (
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 	api "github.com/mephistolie/chefbook-backend-recipe/api/proto/implementation/v1"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
+	recipeFail "github.com/mephistolie/chefbook-backend-recipe/internal/entity/fail"
 	"k8s.io/utils/strings/slices"
-	"regexp"
 )
 
-const languageRegex = "^[a-z]+$"
+const (
+	maxNameLength        = 150
+	maxDescriptionLength = 1500
 
-func NewRecipeCreationInput(req *api.CreateRecipeRequest) (entity.RecipeInput, error) {
-	return newRecipeInput(
-		req.UserId,
-		req.RecipeId,
-		req.Name,
-		req.Visibility,
-		req.IsEncrypted,
-		req.Language,
-		req.Description,
-		req.Tags,
-		req.Servings,
-		req.Time,
-		req.Calories,
-		req.Macronutrients,
-		req.Ingredients,
-		req.Cooking,
-		nil,
-	)
-}
+	maxServings    = 1000
+	maxCookingTime = 10080 // 1 week
+	maxCalories    = 10000
+)
 
-func NewRecipeUpdateInput(req *api.UpdateRecipeRequest) (entity.RecipeInput, error) {
-	var version *int32
-	if req.Version > 0 {
-		version = &req.Version
-	}
-
-	return newRecipeInput(
-		req.UserId,
-		req.RecipeId,
-		req.Name,
-		req.Visibility,
-		req.IsEncrypted,
-		req.Language,
-		req.Description,
-		req.Tags,
-		req.Servings,
-		req.Time,
-		req.Calories,
-		req.Macronutrients,
-		req.Ingredients,
-		req.Cooking,
-		version,
-	)
-}
-
-func newRecipeInput(
-	rawUserId string,
-	rawRecipeId string,
-	rawName string,
-	rawVisibility string,
-	isEncrypted bool,
-	rawLanguage string,
-	rawDescription string,
-	tags []string,
-	rawServings int32,
-	rawTime int32,
-	rawCalories int32,
-	rawMacronutrients *api.Macronutrients,
-	rawIngredients []*api.IngredientItem,
-	rawCooking []*api.CookingItem,
-	version *int32,
+func NewRecipeInput(
+	req *api.RecipeInput,
+	isUpdateInput bool,
+	isEncryptedRecipeAllowed bool,
 ) (entity.RecipeInput, error) {
-	if len(rawName) == 0 {
+	if len(req.Name) == 0 {
 		return entity.RecipeInput{}, fail.GrpcInvalidBody
 	}
-	userId, err := uuid.Parse(rawUserId)
+	if req.IsEncrypted && req.Visibility == entity.VisibilityPublic {
+		return entity.RecipeInput{}, recipeFail.GrpcEncryptedPublicRecipe
+	}
+	if req.IsEncrypted && !isEncryptedRecipeAllowed {
+		return entity.RecipeInput{}, fail.GrpcPremiumRequired
+	}
+
+	userId, err := uuid.Parse(req.UserId)
 	if err != nil {
 		return entity.RecipeInput{}, fail.GrpcInvalidBody
 	}
 	var recipeIdPtr *uuid.UUID
-	if recipeId, err := uuid.Parse(rawRecipeId); err == nil {
-		recipeIdPtr = &recipeId
-	}
-	name := rawName
-	if len(name) > 150 {
-		name = name[0:150]
-	}
-	visibility := rawVisibility
-	if !slices.Contains(entity.AvailableVisibilities, visibility) {
-		visibility = entity.VisibilityPrivate
-	}
-	language := rawLanguage
-	matched, err := regexp.MatchString(languageRegex, language)
-	if len(language) != 2 || !matched || err != nil {
-		language = "en"
-	}
-	var descriptionPtr *string
-	if len(rawDescription) > 0 {
-		description := rawDescription
-		if len(description) > 1500 {
-			description = description[0:1500]
+	if req.RecipeId != nil {
+		if recipeId, err := uuid.Parse(*req.RecipeId); err == nil {
+			recipeIdPtr = &recipeId
 		}
-		descriptionPtr = &description
 	}
-	var servings *int32
-	if rawServings > 0 {
-		servings = &rawServings
+	if recipeIdPtr == nil && isUpdateInput {
+		return entity.RecipeInput{}, fail.GrpcInvalidBody
 	}
-	var time *int32
-	if rawTime > 0 {
-		time = &rawTime
+	if len(req.Name) > maxNameLength {
+		req.Name = req.Name[0:maxNameLength]
 	}
-	var calories *int32
-	if rawCalories > 0 {
-		calories = &rawCalories
+	if !slices.Contains(entity.AvailableVisibilities, req.Visibility) {
+		req.Visibility = entity.VisibilityPrivate
+	}
+	if req.Description != nil && len(*req.Description) > maxDescriptionLength {
+		description := (*req.Description)[0:maxDescriptionLength]
+		req.Description = &description
+	}
+	if req.Servings != nil && *req.Servings > maxServings {
+		*req.Servings = maxServings
+	}
+	if req.CookingTime != nil && *req.CookingTime > maxCookingTime {
+		*req.CookingTime = maxCookingTime
+	}
+	if req.Calories != nil && *req.Calories > maxCalories {
+		*req.Calories = maxCalories
 	}
 	var macronutrientsPtr *entity.Macronutrients
-	if rawMacronutrients != nil && (rawMacronutrients.Protein > 0 || rawMacronutrients.Fats > 0 || rawMacronutrients.Carbohydrates > 0) {
+	if req.Macronutrients != nil {
 		macronutrients := entity.Macronutrients{}
-		if rawMacronutrients.Protein > 0 {
-			macronutrients.Protein = &rawMacronutrients.Protein
+		if req.Macronutrients.Protein != nil && *req.Macronutrients.Protein > 0 {
+			macronutrients.Protein = req.Macronutrients.Protein
 		}
-		if rawMacronutrients.Fats > 0 {
-			macronutrients.Fats = &rawMacronutrients.Fats
+		if req.Macronutrients.Fats != nil && *req.Macronutrients.Fats > 0 {
+			macronutrients.Fats = req.Macronutrients.Fats
 		}
-		if rawMacronutrients.Carbohydrates > 0 {
-			macronutrients.Carbohydrates = &rawMacronutrients.Carbohydrates
+		if req.Macronutrients.Carbohydrates != nil && *req.Macronutrients.Carbohydrates > 0 {
+			macronutrients.Carbohydrates = req.Macronutrients.Carbohydrates
 		}
-		macronutrientsPtr = &macronutrients
+		if macronutrients.Protein != nil || macronutrients.Fats != nil || macronutrients.Carbohydrates != nil {
+			macronutrientsPtr = &macronutrients
+		}
 	}
 
-	ingredients, err := newIngredients(rawIngredients, isEncrypted)
+	ingredients, err := newIngredients(req.Ingredients, req.IsEncrypted)
 	if err != nil {
 		return entity.RecipeInput{}, err
 	}
-	cooking, err := newCooking(rawCooking, isEncrypted)
+	cooking, err := newCooking(req.Cooking, req.IsEncrypted)
 	if err != nil {
 		return entity.RecipeInput{}, err
+	}
+
+	var version *int32
+	if isUpdateInput {
+		version = req.Version
 	}
 
 	return entity.RecipeInput{
-		Id:             recipeIdPtr,
-		Name:           name,
+		RecipeId:       recipeIdPtr,
+		Name:           req.Name,
 		UserId:         userId,
-		Visibility:     visibility,
-		IsEncrypted:    isEncrypted,
-		Language:       language,
-		Description:    descriptionPtr,
-		Tags:           tags,
-		Servings:       servings,
-		Time:           time,
-		Calories:       calories,
+		Visibility:     req.Visibility,
+		IsEncrypted:    req.IsEncrypted,
+		Language:       entity.ValidatedLanguage(&req.Language),
+		Description:    req.Description,
+		Tags:           req.Tags,
+		Servings:       req.Servings,
+		Time:           req.CookingTime,
+		Calories:       req.Calories,
 		Macronutrients: macronutrientsPtr,
 		Ingredients:    ingredients,
 		Cooking:        cooking,

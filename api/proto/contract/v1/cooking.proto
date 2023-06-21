@@ -1,0 +1,14 @@
+syntax = "proto3";
+package v1;
+
+option go_package = "github.com/mephistolie/chefbook-backend-recipe/api/proto/v1";
+
+message CookingItem {
+  string id = 1;
+  optional string text = 2;
+  string type = 3;
+  optional int32 time = 4;
+  optional string recipeId = 5;
+  repeated string pictures = 6;
+}
+

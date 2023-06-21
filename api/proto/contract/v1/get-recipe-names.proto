@@ -1,0 +1,13 @@
+syntax = "proto3";
+package v1;
+
+option go_package = "github.com/mephistolie/chefbook-backend-recipe/api/proto/v1";
+
+message GetRecipeNamesRequest {
+  repeated string recipeIds = 1;
+  string userId = 2;
+}
+
+message GetRecipeNamesResponse {
+  map<string, string> recipeNames = 2;
+}

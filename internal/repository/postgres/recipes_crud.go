@@ -6,13 +6,14 @@ import (
 	"github.com/mephistolie/chefbook-backend-common/log"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
+	recipeFail "github.com/mephistolie/chefbook-backend-recipe/internal/entity/fail"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/repository/postgres/dto"
 )
 
 func (r *Repository) CreateRecipe(input entity.RecipeInput) (uuid.UUID, int32, error) {
 	var id uuid.UUID
-	if input.Id != nil {
-		id = *input.Id
+	if input.RecipeId != nil {
+		id = *input.RecipeId
 	} else {
 		id = uuid.New()
 	}
@@ -125,7 +126,18 @@ func (r *Repository) GetRecipe(recipeId, userId uuid.UUID) (entity.BaseRecipe, e
 	`, recipesTable, usersTable, scoresTable)
 
 	row := r.db.QueryRow(query, recipeId)
-	if err := row.Scan(&recipe); err != nil {
+	if err := row.Scan(
+		&recipe.Id, &recipe.Name,
+		&recipe.OwnerId,
+		&recipe.Visibility, &recipe.IsEncrypted,
+		&recipe.Language, &recipe.Description,
+		&recipe.Rating, &recipe.Votes, &recipe.Score,
+		&recipe.Tags, &recipe.Categories, &recipe.IsFavourite, &recipe.IsSaved,
+		&recipe.Ingredients, &recipe.Cooking, &recipe.Pictures,
+		&recipe.Servings, &recipe.Time,
+		&recipe.Calories, &recipe.Protein, &recipe.Fats, &recipe.Carbohydrates,
+		&recipe.CreationTimestamp, &recipe.UpdateTimestamp, &recipe.Version,
+	); err != nil {
 		log.Warnf("unable to get recipe %s for user %s; %s", recipeId, userId, err)
 		return entity.BaseRecipe{}, fail.GrpcNotFound
 	}
@@ -133,11 +145,16 @@ func (r *Repository) GetRecipe(recipeId, userId uuid.UUID) (entity.BaseRecipe, e
 	return recipe.Entity(userId), nil
 }
 
-func (r *Repository) UpdateRecipe(input entity.RecipeInput) (int32, error) {
+func (r *Repository) UpdateRecipe(input entity.RecipeInput, incrementVersion bool) (int32, error) {
 	var version int32
 
+	increment := 0
+	if incrementVersion {
+		increment = 1
+	}
+
 	query := fmt.Sprintf(`
-		UPDATE %s
+		UPDATE %[1]v
 		SET 
 			name=$1
 			visibility=$2, encrypted=$3,
@@ -146,9 +163,9 @@ func (r *Repository) UpdateRecipe(input entity.RecipeInput) (int32, error) {
 			ingredients=$7, cooking=$8,
 			servings=$9, cooking_time=$10,
 			calories=$11, protein=$12, fats=$13, carbohydrates=$14,
-			version=version+1
-		WHERE recipe_id=$15 AND owner_id=$16
-	`, recipesTable)
+			version=version+%[2]v
+		WHERE recipe_id=$15
+	`, recipesTable, increment)
 
 	macronutrients := entity.Macronutrients{}
 	if input.Macronutrients != nil {
@@ -164,7 +181,7 @@ func (r *Repository) UpdateRecipe(input entity.RecipeInput) (int32, error) {
 		dto.NewIngredients(input.Ingredients), dto.NewCooking(input.Cooking),
 		input.Servings, input.Time,
 		input.Calories, macronutrients.Protein, macronutrients.Fats, macronutrients.Carbohydrates,
-		*input.Id, input.UserId,
+		*input.RecipeId,
 	}
 
 	if input.Version != nil {
@@ -175,20 +192,25 @@ func (r *Repository) UpdateRecipe(input entity.RecipeInput) (int32, error) {
 	query += " RETURNING version"
 
 	if err := r.db.Get(&version, query, args...); err != nil {
-		log.Errorf("unable to update recipe %s: %s", *input.Id, err)
-		return 0, fail.GrpcUnknown
+		if input.Version != nil {
+			log.Warnf("try to update recipe %s with outdated version %s: %s", *input.RecipeId, *input.Version, err)
+			return 0, recipeFail.GrpcOutdatedVersion
+		} else {
+			log.Errorf("unable to update recipe %s: %s", *input.RecipeId, err)
+			return 0, fail.GrpcUnknown
+		}
 	}
 
 	return version, nil
 }
 
-func (r *Repository) DeleteRecipe(recipeId, userId uuid.UUID) error {
+func (r *Repository) DeleteRecipe(recipeId uuid.UUID) error {
 	query := fmt.Sprintf(`
 		DELETE FROM %s
-		WHERE recipe_id=$1 AND owner_id=$2
+		WHERE recipe_id=$1
 	`, recipesTable)
 
-	if _, err := r.db.Exec(query, recipeId, userId); err != nil {
+	if _, err := r.db.Exec(query, recipeId); err != nil {
 		log.Errorf("unable to delete recipe %s: %s", recipeId, err)
 		return fail.GrpcUnknown
 	}

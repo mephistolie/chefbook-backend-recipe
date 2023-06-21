@@ -11,7 +11,7 @@ type BaseRecipeState struct {
 	OwnerId uuid.UUID
 
 	Rating float32
-	Score  *int
+	Score  *int32
 	Votes  int32
 
 	Tags        []string

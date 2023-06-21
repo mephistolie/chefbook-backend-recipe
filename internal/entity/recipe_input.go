@@ -6,8 +6,8 @@ import (
 )
 
 type RecipeInput struct {
-	Id   *uuid.UUID
-	Name string
+	RecipeId *uuid.UUID
+	Name     string
 
 	UserId uuid.UUID
 

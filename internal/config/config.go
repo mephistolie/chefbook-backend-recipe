@@ -14,6 +14,8 @@ type Config struct {
 	Port        *int
 	LogsPath    *string
 
+	Recipe Recipe
+
 	ProfileService  ProfileService
 	TagService      TagService
 	CategoryService CategoryService
@@ -21,6 +23,10 @@ type Config struct {
 	Firebase Firebase
 	Database Database
 	Amqp     Amqp
+}
+
+type Recipe struct {
+	CheckSubscription *bool
 }
 
 type ProfileService struct {
@@ -67,6 +73,7 @@ func (c Config) Print() {
 		"Environment: %v\n"+
 		"Port: %v\n"+
 		"Logs path: %v\n\n"+
+		"Check subscription: %v\n\n"+
 		"Profile Service Address: %v\n"+
 		"Tag Service Address: %v\n"+
 		"Category Service Address: %v\n\n"+
@@ -77,6 +84,7 @@ func (c Config) Print() {
 		"MQ port: %v\n"+
 		"MQ vhost: %v\n\n",
 		*c.Environment, *c.Port, *c.LogsPath,
+		*c.Recipe.CheckSubscription,
 		*c.ProfileService.Addr, *c.TagService.Addr, *c.CategoryService.Addr,
 		*c.Database.Host, *c.Database.Port, *c.Database.DBName,
 		*c.Amqp.Host, *c.Amqp.Port, *c.Amqp.VHost,

@@ -4,14 +4,17 @@ package v1;
 option go_package = "github.com/mephistolie/chefbook-backend-recipe/api/proto/v1";
 
 import "google/protobuf/timestamp.proto";
+import "v1/macronutrients.proto";
+import "v1/ingredient.proto";
+import "v1/cooking.proto";
 
 message Recipe {
   string recipeId = 1;
   string name = 2;
 
   string ownerId = 3;
-  string ownerName = 4;
-  string ownerAvatar = 5;
+  optional string ownerName = 4;
+  optional string ownerAvatar = 5;
 
   bool isOwned = 6;
   bool isSaved = 7;
@@ -19,51 +22,27 @@ message Recipe {
   bool isEncrypted = 9;
 
   string language = 10;
-  string description = 11;
-  string preview = 12;
+  optional string description = 11;
+  optional string preview = 12;
 
   google.protobuf.Timestamp creationTimestamp = 13;
   google.protobuf.Timestamp updateTimestamp = 14;
   int32 version = 15;
 
   float rating = 16;
-  int32 score = 17;
+  optional int32 score = 17;
   int32 votes = 18;
 
   repeated string tags = 19;
   repeated string categories = 20;
   bool isFavourite = 21;
 
-  int32 servings = 22;
-  int32 time = 23;
+  optional int32 servings = 22;
+  optional int32 time = 23;
 
-  int32 calories = 24;
-  Macronutrients macronutrients = 25;
+  optional int32 calories = 24;
+  optional Macronutrients macronutrients = 25;
 
   repeated IngredientItem ingredients = 26;
   repeated CookingItem cooking = 27;
-}
-
-message Macronutrients {
-  int32 Protein = 1;
-  int32 Fats = 2;
-  int32 Carbohydrates = 3;
-}
-
-message IngredientItem {
-  string id = 1;
-  string text = 2;
-  string type = 3;
-  int32 amount = 4;
-  string unit = 5;
-  string recipeId = 6;
-}
-
-message CookingItem {
-  string id = 1;
-  string text = 2;
-  string type = 3;
-  int32 time = 4;
-  string recipeId = 5;
-  repeated string pictures = 6;
 }

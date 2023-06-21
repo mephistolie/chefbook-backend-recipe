@@ -3,7 +3,8 @@ package v1;
 
 option go_package = "github.com/mephistolie/chefbook-backend-recipe/api/proto/v1";
 
-message CreateRecipeResponse {
-  string recipeId = 1;
-  int32 version = 2;
+message Macronutrients {
+  optional int32 Protein = 1;
+  optional int32 Fats = 2;
+  optional int32 Carbohydrates = 3;
 }

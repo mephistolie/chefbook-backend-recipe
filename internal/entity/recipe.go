@@ -25,17 +25,17 @@ type BaseRecipe struct {
 	Version           int32
 
 	Rating float32
-	Score  *int
+	Score  *int32
 	Votes  int32
 
 	Tags        []string
 	Categories  []uuid.UUID
 	IsFavourite bool
 
-	Servings *int
-	Time     *int
+	Servings *int32
+	Time     *int32
 
-	Calories       *int
+	Calories       *int32
 	Macronutrients *Macronutrients
 
 	Ingredients []IngredientItem

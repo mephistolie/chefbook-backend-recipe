@@ -6,7 +6,7 @@ import (
 )
 
 type RecipesQuery struct {
-	PageSize *int
+	PageSize *int32
 
 	AuthorId *uuid.UUID
 

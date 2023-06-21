@@ -2,19 +2,31 @@ package dto
 
 import (
 	"github.com/google/uuid"
-	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 	api "github.com/mephistolie/chefbook-backend-recipe/api/proto/implementation/v1"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
+	recipeFail "github.com/mephistolie/chefbook-backend-recipe/internal/entity/fail"
+	"k8s.io/utils/strings/slices"
+)
+
+const (
+	maxIngredientsCount      = 50
+	maxIngredientTextLength  = 150
+	maxIngredientAmount      = 10000
+	maxIngredientUnitLength  = 10
+	encryptedIngredientsSize = 1
 )
 
 func newIngredients(ingredients []*api.IngredientItem, isEncrypted bool) ([]entity.IngredientItem, error) {
-	if isEncrypted && len(ingredients) != 1 {
-		return nil, fail.GrpcInvalidBody
+	if len(ingredients) == 0 {
+		return nil, recipeFail.GrpcEmptyIngredients
+	}
+	if isEncrypted && len(ingredients) != encryptedIngredientsSize {
+		return nil, recipeFail.GrpcInvalidEncryptedFormat
 	}
 
 	ingredientsCount := len(ingredients)
-	if ingredientsCount > 50 {
-		ingredientsCount = 50
+	if ingredientsCount > maxIngredientsCount {
+		ingredientsCount = maxIngredientsCount
 	}
 
 	response := make([]entity.IngredientItem, ingredientsCount)
@@ -27,58 +39,52 @@ func newIngredients(ingredients []*api.IngredientItem, isEncrypted bool) ([]enti
 		if err != nil {
 			return nil, err
 		}
-		if ingredient == nil {
-			continue
-		}
-		response[i] = *ingredient
+		response[i] = ingredient
 	}
 	return response, nil
 }
 
-func newIngredient(ingredient *api.IngredientItem, isEncrypted bool) (*entity.IngredientItem, error) {
-	if isEncrypted && ingredient.Type != entity.TypeIngredientEncryptedData {
-		return nil, fail.GrpcInvalidBody
+func newIngredient(ingredient *api.IngredientItem, isEncrypted bool) (entity.IngredientItem, error) {
+	if ingredient.Text == nil {
+		return entity.IngredientItem{}, recipeFail.GrpcEmptyIngredientText
 	}
+	if !slices.Contains(entity.AvailableIngredientTypes, ingredient.Type) {
+		return entity.IngredientItem{}, recipeFail.GrpcInvalidIngredientType
+	}
+	if isEncrypted && ingredient.Type != entity.TypeCookingEncryptedData ||
+		!isEncrypted && ingredient.Type == entity.TypeCookingEncryptedData {
+		return entity.IngredientItem{}, recipeFail.GrpcInvalidEncryptedFormat
+	}
+
 	ingredientId, err := uuid.Parse(ingredient.Id)
 	if err != nil {
-		return nil, nil
+		return entity.IngredientItem{}, recipeFail.GrpcInvalidIngredientId
 	}
 
-	var textPtr *string
-	if len(ingredient.Text) > 0 {
-		text := ingredient.Text
-		if len(text) > 100 {
-			text = text[0:100]
-		}
-		textPtr = &text
+	if ingredient.Text != nil && len(*ingredient.Text) > maxIngredientTextLength {
+		text := (*ingredient.Text)[0:maxIngredientTextLength]
+		ingredient.Text = &text
 	}
-	var amount *int32
-	if ingredient.Amount > 0 {
-		amount = &ingredient.Amount
+	if ingredient.Amount != nil && *ingredient.Amount > maxIngredientAmount {
+		*ingredient.Amount = maxIngredientAmount
 	}
-	var unitPtr *string
-	if len(ingredient.Unit) > 0 {
-		unit := ingredient.Unit
-		if len(unit) > 10 {
-			unit = unit[0:10]
-		}
-		unitPtr = &unit
+	if ingredient.Unit != nil && len(*ingredient.Unit) > maxIngredientUnitLength {
+		unit := (*ingredient.Unit)[0:maxIngredientUnitLength]
+		ingredient.Unit = &unit
 	}
 	var recipeId *uuid.UUID
-	if id, err := uuid.Parse(ingredient.RecipeId); err == nil {
-		recipeId = &id
+	if ingredient.RecipeId != nil {
+		if id, err := uuid.Parse(*ingredient.RecipeId); err == nil {
+			recipeId = &id
+		}
 	}
 
-	if textPtr == nil {
-		return nil, nil
-	}
-
-	return &entity.IngredientItem{
+	return entity.IngredientItem{
 		Id:       ingredientId,
-		Text:     textPtr,
+		Text:     ingredient.Text,
 		Type:     ingredient.Type,
-		Amount:   amount,
-		Unit:     unitPtr,
+		Amount:   ingredient.Amount,
+		Unit:     ingredient.Unit,
 		RecipeId: recipeId,
 	}, nil
 }
@@ -92,29 +98,18 @@ func newIngredientsResponse(ingredients []entity.IngredientItem) []*api.Ingredie
 }
 
 func newIngredientResponse(ingredient entity.IngredientItem) *api.IngredientItem {
-	text := ""
-	if ingredient.Text != nil {
-		text = *ingredient.Text
-	}
-	var amount int32 = 0
-	if ingredient.Amount != nil {
-		amount = *ingredient.Amount
-	}
-	unit := ""
-	if ingredient.Unit != nil {
-		unit = *ingredient.Unit
-	}
-	recipeId := ""
+	var recipeIdPtr *string
 	if ingredient.RecipeId != nil {
-		recipeId = ingredient.RecipeId.String()
+		recipeId := ingredient.RecipeId.String()
+		recipeIdPtr = &recipeId
 	}
 
 	return &api.IngredientItem{
 		Id:       ingredient.Id.String(),
-		Text:     text,
+		Text:     ingredient.Text,
 		Type:     ingredient.Type,
-		Amount:   amount,
-		Unit:     unit,
-		RecipeId: recipeId,
+		Amount:   ingredient.Amount,
+		Unit:     ingredient.Unit,
+		RecipeId: recipeIdPtr,
 	}
 }

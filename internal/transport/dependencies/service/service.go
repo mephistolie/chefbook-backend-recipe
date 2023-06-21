@@ -21,7 +21,7 @@ type Recipe interface {
 	GetRecipes(params entity.RecipesQuery, userId uuid.UUID, language string) entity.DetailedRecipesInfo
 	GetRandomRecipe(userId uuid.UUID, recipeLanguages *[]string, userLanguage string) (entity.DetailedRecipe, error)
 	GetRecipesBook(userId uuid.UUID, language string) (entity.DetailedRecipesState, error)
-
+	GetRecipeNames(recipeIds []uuid.UUID, userId uuid.UUID) (map[uuid.UUID]string, error)
 	CreateRecipe(input entity.RecipeInput) (uuid.UUID, int32, error)
 	GetRecipe(recipeId, userId uuid.UUID, language string) (entity.DetailedRecipe, error)
 	UpdateRecipe(input entity.RecipeInput) (int32, error)

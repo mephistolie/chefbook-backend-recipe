@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/google/uuid"
-	"github.com/mephistolie/chefbook-backend-common/log"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
 )
 
@@ -37,7 +36,6 @@ func (c *Cooking) Entity(pictures RecipePictures) []entity.CookingItem {
 func NewCooking(cooking []entity.CookingItem) Cooking {
 	dtos := make(Cooking, len(cooking))
 	for i, ingredient := range cooking {
-		log.Debug("parsing ingredient ", ingredient.Text)
 		dto := CookingItem{
 			Id:       ingredient.Id,
 			Text:     ingredient.Text,

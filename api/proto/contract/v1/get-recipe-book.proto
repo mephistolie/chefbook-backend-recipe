@@ -10,11 +10,11 @@ message RecipeState {
   string recipeId = 1;
   int32 version = 2;
 
-  string ownerName = 3;
-  string ownerAvatar = 4;
+  optional string ownerName = 3;
+  optional string ownerAvatar = 4;
 
   float rating = 5;
-  int32 score = 6;
+  optional int32 score = 6;
   int32 votes = 7;
 
   repeated string categories = 8;
@@ -23,7 +23,7 @@ message RecipeState {
 
 message GetRecipeBookRequest {
   string userId = 1;
-  string userLanguage = 2;
+  optional string userLanguage = 2;
 }
 
 message GetRecipeBookResponse {

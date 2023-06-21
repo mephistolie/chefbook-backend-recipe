@@ -22,18 +22,6 @@ func newRecipeStates(recipes []entity.RecipeState) []*api.RecipeState {
 }
 
 func newRecipeState(recipe entity.RecipeState) *api.RecipeState {
-	ownerName := ""
-	if recipe.OwnerName != nil {
-		ownerName = *recipe.OwnerName
-	}
-	ownerAvatar := ""
-	if recipe.OwnerAvatar != nil {
-		ownerName = *recipe.OwnerAvatar
-	}
-	var score int32 = 0
-	if recipe.Score != nil {
-		score = int32(*recipe.Score)
-	}
 	var categories []string
 	for _, category := range recipe.Categories {
 		categories = append(categories, category.String())
@@ -41,12 +29,12 @@ func newRecipeState(recipe entity.RecipeState) *api.RecipeState {
 
 	return &api.RecipeState{
 		RecipeId:    recipe.Id.String(),
-		OwnerName:   ownerName,
-		OwnerAvatar: ownerAvatar,
+		OwnerName:   recipe.OwnerName,
+		OwnerAvatar: recipe.OwnerAvatar,
 		Version:     recipe.Version,
 		Rating:      recipe.Rating,
 		Votes:       recipe.Votes,
-		Score:       score,
+		Score:       recipe.Score,
 		Categories:  categories,
 		IsFavourite: recipe.IsFavourite,
 	}

@@ -10,7 +10,7 @@ import "v1/recipe-tag.proto";
 message GetRecipeRequest {
   string recipeId = 1;
   string userId = 2;
-  string userLanguage = 3;
+  optional string userLanguage = 3;
   bool translate = 4;
   string subscriptionPlan = 5;
 }

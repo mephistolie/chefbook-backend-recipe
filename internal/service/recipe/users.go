@@ -4,13 +4,21 @@ import (
 	"context"
 	"github.com/google/uuid"
 	api "github.com/mephistolie/chefbook-backend-category/api/proto/implementation/v1"
+	"github.com/mephistolie/chefbook-backend-common/responses/fail"
+	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
 )
 
 func (s *Service) RateRecipe(recipeId, userId uuid.UUID, score int) error {
+	if err := s.checkRecipeAccessible(recipeId, userId); err != nil {
+		return err
+	}
 	return s.repo.RateRecipe(recipeId, userId, score)
 }
 
 func (s *Service) SaveToRecipeBook(recipeId, userId uuid.UUID) error {
+	if err := s.checkRecipeAccessible(recipeId, userId); err != nil {
+		return err
+	}
 	return s.repo.SaveToRecipeBook(recipeId, userId)
 }
 
@@ -19,14 +27,22 @@ func (s *Service) RemoveFromRecipeBook(recipeId, userId uuid.UUID) error {
 }
 
 func (s *Service) SetRecipeFavouriteStatus(recipeId, userId uuid.UUID, favourite bool) error {
+	if err := s.checkRecipeAccessible(recipeId, userId); err != nil {
+		return err
+	}
 	return s.repo.SetRecipeFavouriteStatus(recipeId, userId, favourite)
 }
 
 func (s *Service) SetRecipeCategories(recipeId, userId uuid.UUID, categories []uuid.UUID) error {
+	if err := s.checkRecipeAccessible(recipeId, userId); err != nil {
+		return err
+	}
+
 	err := s.repo.SetRecipeCategories(recipeId, userId, categories)
 	if err == nil {
 		go s.ValidateCategories(recipeId, userId, categories)
 	}
+
 	return err
 }
 
@@ -54,4 +70,17 @@ func (s *Service) ValidateCategories(recipeId, userId uuid.UUID, categories []uu
 			_ = s.repo.SetRecipeCategories(recipeId, userId, ownedCategories)
 		}
 	}
+}
+
+func (s *Service) checkRecipeAccessible(recipeId, userId uuid.UUID) error {
+	policy, err := s.repo.GetRecipePolicy(recipeId)
+	if err != nil {
+		return err
+	}
+
+	if userId != policy.OwnerId && policy.Visibility == entity.VisibilityPrivate {
+		return fail.GrpcAccessDenied
+	}
+
+	return nil
 }

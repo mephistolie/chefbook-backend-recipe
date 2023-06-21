@@ -22,13 +22,8 @@ func newCategoriesMap(categories map[string]entity.Category) map[string]*api.Rec
 }
 
 func newCategory(category entity.Category) *api.RecipeCategory {
-	emoji := ""
-	if category.Emoji != nil {
-		emoji = *category.Emoji
-	}
-
 	return &api.RecipeCategory{
 		Name:  category.Name,
-		Emoji: emoji,
+		Emoji: category.Emoji,
 	}
 }

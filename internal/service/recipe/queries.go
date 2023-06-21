@@ -125,3 +125,7 @@ func (s *Service) getRecipeStates(
 		Categories: categories,
 	}
 }
+
+func (s *Service) GetRecipeNames(recipeIds []uuid.UUID, userId uuid.UUID) (map[uuid.UUID]string, error) {
+	return s.repo.GetRecipeNames(recipeIds, userId)
+}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/google/uuid"
 	categoryApi "github.com/mephistolie/chefbook-backend-category/api/proto/implementation/v1"
+	"github.com/mephistolie/chefbook-backend-common/log"
 	profileApi "github.com/mephistolie/chefbook-backend-profile/api/proto/implementation/v1"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
 	tagApi "github.com/mephistolie/chefbook-backend-tag/api/proto/implementation/v1"
@@ -28,6 +29,8 @@ func (s *Service) getRecipeAuthorsInfo(authorIds []string) map[string]*profileAp
 				infos[authorId] = info
 			}
 		}
+	} else {
+		log.Warn("unable to get recipe authors data: %s", err)
 	}
 
 	return infos
@@ -74,6 +77,7 @@ func (s *Service) getTags(
 	})
 	cancelCtx()
 
+	log.Debugf("found %d tags", len(res.Tags))
 	if err == nil {
 		for tagId, dto := range res.Tags {
 			var emoji *string

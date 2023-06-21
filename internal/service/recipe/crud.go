@@ -3,14 +3,16 @@ package recipe
 import (
 	"context"
 	"github.com/google/uuid"
+	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
+	recipeFail "github.com/mephistolie/chefbook-backend-recipe/internal/entity/fail"
 	api "github.com/mephistolie/chefbook-backend-tag/api/proto/implementation/v1"
 )
 
 func (s *Service) CreateRecipe(input entity.RecipeInput) (uuid.UUID, int32, error) {
 	id, version, err := s.repo.CreateRecipe(input)
 	if err == nil {
-		go s.ValidateTags(input)
+		go s.validateTags(input)
 	}
 	return id, version, err
 }
@@ -19,6 +21,9 @@ func (s *Service) GetRecipe(recipeId, userId uuid.UUID, language string) (entity
 	baseRecipe, err := s.repo.GetRecipe(recipeId, userId)
 	if err != nil {
 		return entity.DetailedRecipe{}, err
+	}
+	if baseRecipe.OwnerId != userId && baseRecipe.Visibility == entity.VisibilityPrivate {
+		return entity.DetailedRecipe{}, fail.GrpcAccessDenied
 	}
 	return s.fillBaseRecipe(baseRecipe, userId, language), nil
 }
@@ -60,18 +65,36 @@ func (s *Service) fillBaseRecipe(baseRecipe entity.BaseRecipe, userId uuid.UUID,
 }
 
 func (s *Service) UpdateRecipe(input entity.RecipeInput) (int32, error) {
-	version, err := s.repo.UpdateRecipe(input)
+	policy, err := s.repo.GetRecipePolicy(*input.RecipeId)
+	if err != nil {
+		return 0, err
+	}
+	if policy.OwnerId != input.UserId {
+		return 0, fail.GrpcAccessDenied
+	}
+	if policy.IsEncrypted != input.IsEncrypted {
+		return 0, recipeFail.GrpcChangedEncryptionStatus
+	}
+
+	version, err := s.repo.UpdateRecipe(input, true)
 	if err == nil {
-		go s.ValidateTags(input)
+		go s.validateTags(input)
 	}
 	return version, err
 }
 
 func (s *Service) DeleteRecipe(recipeId, userId uuid.UUID) error {
-	return s.repo.DeleteRecipe(recipeId, userId)
+	policy, err := s.repo.GetRecipePolicy(recipeId)
+	if err != nil {
+		return err
+	}
+	if policy.OwnerId != userId {
+		return fail.GrpcAccessDenied
+	}
+	return s.repo.DeleteRecipe(recipeId)
 }
 
-func (s *Service) ValidateTags(input entity.RecipeInput) {
+func (s *Service) validateTags(input entity.RecipeInput) {
 	if len(input.Tags) == 0 {
 		return
 	}
@@ -90,7 +113,7 @@ func (s *Service) ValidateTags(input entity.RecipeInput) {
 		}
 		if len(usedTags) < len(input.Tags) {
 			input.Tags = usedTags
-			_, _ = s.repo.UpdateRecipe(input)
+			_, _ = s.repo.UpdateRecipe(input, false)
 		}
 	}
 }

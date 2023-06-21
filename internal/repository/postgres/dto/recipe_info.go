@@ -19,20 +19,20 @@ type RecipeInfo struct {
 	Language string `db:"language"`
 
 	Rating float32 `db:"rating"`
-	Score  int     `db:"score"`
+	Score  int32   `db:"score"`
 	Votes  int32   `db:"votes"`
 
-	Tags []string `db:"tags"`
+	Tags Tags `db:"tags"`
 
 	IsFavourite bool       `db:"favourite"`
 	Categories  Categories `db:"categories"`
 
 	Pictures RecipePictures `db:"pictures"`
 
-	Servings *int `db:"servings"`
-	Time     *int `db:"cooking_time"`
+	Servings *int32 `db:"servings"`
+	Time     *int32 `db:"cooking_time"`
 
-	Calories *int `db:"calories"`
+	Calories *int32 `db:"calories"`
 
 	CreationTimestamp time.Time `db:"creation_timestamp"`
 	UpdateTimestamp   time.Time `db:"update_timestamp"`
@@ -40,7 +40,7 @@ type RecipeInfo struct {
 }
 
 func (r *RecipeInfo) Entity(userId uuid.UUID) entity.BaseRecipeInfo {
-	var score *int
+	var score *int32
 	if r.Score > 0 {
 		score = &r.Score
 	}

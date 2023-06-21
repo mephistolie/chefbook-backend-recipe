@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 	api "github.com/mephistolie/chefbook-backend-recipe/api/proto/implementation/v1"
+	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/transport/grpc/dto"
 )
 
@@ -14,7 +15,7 @@ func (s *RecipeServer) GetRecipes(_ context.Context, req *api.GetRecipesRequest)
 		return nil, fail.GrpcInvalidBody
 	}
 
-	recipes := s.service.GetRecipes(dto.NewRecipesQuery(req), userId, req.UserLanguage)
+	recipes := s.service.GetRecipes(dto.NewRecipesQuery(req), userId, entity.ValidatedLanguage(req.UserLanguage))
 	return dto.NewGetRecipesResponse(recipes), nil
 }
 
@@ -28,7 +29,7 @@ func (s *RecipeServer) GetRandomRecipe(_ context.Context, req *api.GetRandomReci
 		languages = &req.RecipeLanguages
 	}
 
-	recipe, err := s.service.GetRandomRecipe(userId, languages, req.UserLanguage)
+	recipe, err := s.service.GetRandomRecipe(userId, languages, entity.ValidatedLanguage(req.UserLanguage))
 	if err != nil {
 		return nil, err
 	}
@@ -42,10 +43,36 @@ func (s *RecipeServer) GetRecipeBook(_ context.Context, req *api.GetRecipeBookRe
 		return nil, fail.GrpcInvalidBody
 	}
 
-	recipe, err := s.service.GetRecipesBook(userId, req.UserLanguage)
+	recipe, err := s.service.GetRecipesBook(userId, entity.ValidatedLanguage(req.UserLanguage))
 	if err != nil {
 		return nil, err
 	}
 
 	return dto.NewGetRecipeBookResponse(recipe), nil
+}
+
+func (s *RecipeServer) GetRecipeNames(_ context.Context, req *api.GetRecipeNamesRequest) (*api.GetRecipeNamesResponse, error) {
+	userId, err := uuid.Parse(req.UserId)
+	if err != nil {
+		return nil, fail.GrpcInvalidBody
+	}
+
+	var recipeIds []uuid.UUID
+	for _, rawId := range req.RecipeIds {
+		if id, err := uuid.Parse(rawId); err == nil {
+			recipeIds = append(recipeIds, id)
+		}
+	}
+
+	recipeNames, err := s.service.GetRecipeNames(recipeIds, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	response := make(map[string]string)
+	for id, name := range recipeNames {
+		response[id.String()] = name
+	}
+
+	return &api.GetRecipeNamesResponse{RecipeNames: response}, nil
 }

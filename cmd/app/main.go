@@ -15,6 +15,10 @@ func main() {
 		Port:        fs.Int("port", 8080, "service port"),
 		LogsPath:    fs.String("logs-path", "", "logs file path"),
 
+		Recipe: config.Recipe{
+			CheckSubscription: fs.Bool("check-subscription", true, "enable free subscription limits"),
+		},
+
 		ProfileService: config.ProfileService{
 			Addr: fs.String("profile-addr", "", "profile service address"),
 		},

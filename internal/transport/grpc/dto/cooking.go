@@ -5,19 +5,30 @@ import (
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 	api "github.com/mephistolie/chefbook-backend-recipe/api/proto/implementation/v1"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
+	recipeFail "github.com/mephistolie/chefbook-backend-recipe/internal/entity/fail"
+	"k8s.io/utils/strings/slices"
+)
+
+const (
+	maxCookingStepsCount     = 40
+	maxCookingItemTextLength = 2500
+	encryptedCookingSize     = 1
 )
 
 func newCooking(cooking []*api.CookingItem, isEncrypted bool) ([]entity.CookingItem, error) {
-	if isEncrypted && len(cooking) != 1 {
+	if len(cooking) == 0 {
+		return nil, recipeFail.GrpcEmptyCooking
+	}
+	if isEncrypted && len(cooking) != encryptedCookingSize {
 		return nil, fail.GrpcInvalidBody
 	}
 
-	ingredientsCount := len(cooking)
-	if ingredientsCount > 30 {
-		ingredientsCount = 30
+	stepsCount := len(cooking)
+	if stepsCount > maxCookingStepsCount {
+		stepsCount = maxCookingStepsCount
 	}
 
-	response := make([]entity.CookingItem, ingredientsCount)
+	response := make([]entity.CookingItem, maxCookingStepsCount)
 	for i, rawItem := range cooking {
 		if i >= len(response) {
 			break
@@ -27,49 +38,43 @@ func newCooking(cooking []*api.CookingItem, isEncrypted bool) ([]entity.CookingI
 		if err != nil {
 			return nil, err
 		}
-		if item == nil {
-			continue
-		}
-		response[i] = *item
+		response[i] = item
 	}
 	return response, nil
 }
 
-func newCookingItem(item *api.CookingItem, isEncrypted bool) (*entity.CookingItem, error) {
-	if isEncrypted && item.Type != entity.TypeCookingEncryptedData {
-		return nil, fail.GrpcInvalidBody
+func newCookingItem(item *api.CookingItem, isEncrypted bool) (entity.CookingItem, error) {
+	if item.Text == nil {
+		return entity.CookingItem{}, recipeFail.GrpcEmptyCookingItemText
 	}
+	if !slices.Contains(entity.AvailableCookingTypes, item.Type) {
+		return entity.CookingItem{}, recipeFail.GrpcInvalidCookingItemType
+	}
+	if isEncrypted && item.Type != entity.TypeCookingEncryptedData ||
+		!isEncrypted && item.Type == entity.TypeCookingEncryptedData {
+		return entity.CookingItem{}, recipeFail.GrpcInvalidEncryptedFormat
+	}
+
 	itemId, err := uuid.Parse(item.Id)
 	if err != nil {
-		return nil, nil
+		return entity.CookingItem{}, recipeFail.GrpcInvalidCookingItemId
 	}
-
-	var textPtr *string
-	if len(item.Text) > 0 {
-		text := item.Text
-		if len(text) > 2500 {
-			text = text[0:2500]
-		}
-		textPtr = &text
-	}
-	var time *int32
-	if item.Time > 0 {
-		time = &item.Time
+	if item.Text != nil && len(*item.Text) > maxCookingItemTextLength {
+		text := (*item.Text)[0:maxCookingItemTextLength]
+		item.Text = &text
 	}
 	var recipeId *uuid.UUID
-	if id, err := uuid.Parse(item.RecipeId); err == nil {
-		recipeId = &id
+	if item.RecipeId != nil {
+		if id, err := uuid.Parse(*item.RecipeId); err == nil {
+			recipeId = &id
+		}
 	}
 
-	if textPtr == nil {
-		return nil, nil
-	}
-
-	return &entity.CookingItem{
+	return entity.CookingItem{
 		Id:       itemId,
-		Text:     textPtr,
+		Text:     item.Text,
 		Type:     item.Type,
-		Time:     time,
+		Time:     item.Time,
 		RecipeId: recipeId,
 	}, nil
 }
@@ -83,24 +88,17 @@ func newCookingResponse(cooking []entity.CookingItem) []*api.CookingItem {
 }
 
 func newCookingItemResponse(cookingItem entity.CookingItem) *api.CookingItem {
-	text := ""
-	if cookingItem.Text != nil {
-		text = *cookingItem.Text
-	}
-	var time int32 = 0
-	if cookingItem.Time != nil {
-		time = *cookingItem.Time
-	}
-	recipeId := ""
+	var recipeId *string
 	if cookingItem.RecipeId != nil {
-		recipeId = cookingItem.RecipeId.String()
+		id := cookingItem.RecipeId.String()
+		recipeId = &id
 	}
 
 	return &api.CookingItem{
 		Id:       cookingItem.Id.String(),
-		Text:     text,
+		Text:     cookingItem.Text,
 		Type:     cookingItem.Type,
-		Time:     time,
+		Time:     cookingItem.Time,
 		RecipeId: recipeId,
 		Pictures: cookingItem.Pictures,
 	}

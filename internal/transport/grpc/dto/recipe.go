@@ -15,53 +15,16 @@ func NewGetRecipeResponse(data entity.DetailedRecipe) *api.GetRecipeResponse {
 }
 
 func newRecipe(recipe entity.Recipe) *api.Recipe {
-	ownerName := ""
-	if recipe.OwnerName != nil {
-		ownerName = *recipe.OwnerName
-	}
-	ownerAvatar := ""
-	if recipe.OwnerAvatar != nil {
-		ownerName = *recipe.OwnerAvatar
-	}
-	description := ""
-	if recipe.Description != nil {
-		description = *recipe.Description
-	}
-	preview := ""
-	if recipe.Preview != nil {
-		preview = *recipe.Preview
-	}
-	var score int32 = 0
-	if recipe.Score != nil {
-		score = int32(*recipe.Score)
-	}
 	var categories []string
 	for _, category := range recipe.Categories {
 		categories = append(categories, category.String())
 	}
-	var servings int32 = 0
-	if recipe.Servings != nil {
-		servings = int32(*recipe.Servings)
-	}
-	var time int32 = 0
-	if recipe.Time != nil {
-		time = int32(*recipe.Time)
-	}
-	var calories int32 = 0
-	if recipe.Calories != nil {
-		calories = int32(*recipe.Calories)
-	}
-	var macronutrientsPtr *api.Macronutrients
+	var macronutrients *api.Macronutrients
 	if recipe.Macronutrients != nil {
-		macronutrients := api.Macronutrients{}
-		if recipe.Macronutrients.Protein != nil {
-			macronutrients.Protein = int32(*recipe.Macronutrients.Protein)
-		}
-		if recipe.Macronutrients.Fats != nil {
-			macronutrients.Fats = int32(*recipe.Macronutrients.Fats)
-		}
-		if recipe.Macronutrients.Carbohydrates != nil {
-			macronutrients.Carbohydrates = int32(*recipe.Macronutrients.Carbohydrates)
+		macronutrients = &api.Macronutrients{
+			Protein:       recipe.Macronutrients.Protein,
+			Fats:          recipe.Macronutrients.Fats,
+			Carbohydrates: recipe.Macronutrients.Carbohydrates,
 		}
 	}
 
@@ -70,8 +33,8 @@ func newRecipe(recipe entity.Recipe) *api.Recipe {
 		Name:     recipe.Name,
 
 		OwnerId:     recipe.OwnerId.String(),
-		OwnerName:   ownerName,
-		OwnerAvatar: ownerAvatar,
+		OwnerName:   recipe.OwnerName,
+		OwnerAvatar: recipe.OwnerAvatar,
 
 		IsOwned:     recipe.IsOwned,
 		IsSaved:     recipe.IsSaved,
@@ -79,8 +42,8 @@ func newRecipe(recipe entity.Recipe) *api.Recipe {
 		IsEncrypted: recipe.IsEncrypted,
 
 		Language:    recipe.Language,
-		Description: description,
-		Preview:     preview,
+		Description: recipe.Description,
+		Preview:     recipe.Preview,
 
 		CreationTimestamp: timestamppb.New(recipe.CreationTimestamp),
 		UpdateTimestamp:   timestamppb.New(recipe.UpdateTimestamp),
@@ -88,17 +51,17 @@ func newRecipe(recipe entity.Recipe) *api.Recipe {
 
 		Rating: recipe.Rating,
 		Votes:  recipe.Votes,
-		Score:  score,
+		Score:  recipe.Score,
 
 		Tags:        recipe.Tags,
 		Categories:  categories,
 		IsFavourite: recipe.IsFavourite,
 
-		Servings: servings,
-		Time:     time,
+		Servings: recipe.Servings,
+		Time:     recipe.Time,
 
-		Calories:       calories,
-		Macronutrients: macronutrientsPtr,
+		Calories:       recipe.Calories,
+		Macronutrients: macronutrients,
 
 		Ingredients: newIngredientsResponse(recipe.Ingredients),
 		Cooking:     newCookingResponse(recipe.Cooking),

@@ -4,12 +4,15 @@ import (
 	"context"
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
+	"github.com/mephistolie/chefbook-backend-common/subscription"
 	api "github.com/mephistolie/chefbook-backend-recipe/api/proto/implementation/v1"
+	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/transport/grpc/dto"
 )
 
-func (s *RecipeServer) CreateRecipe(_ context.Context, req *api.CreateRecipeRequest) (*api.CreateRecipeResponse, error) {
-	input, err := dto.NewRecipeCreationInput(req)
+func (s *RecipeServer) CreateRecipe(_ context.Context, req *api.RecipeInput) (*api.CreateRecipeResponse, error) {
+	isEncryptedRecipeAllowed := !s.checkSubscription || subscription.IsPremium(req.UserSubscription)
+	input, err := dto.NewRecipeInput(req, false, isEncryptedRecipeAllowed)
 	if err != nil {
 		return nil, err
 	}
@@ -34,8 +37,8 @@ func (s *RecipeServer) GetRecipe(_ context.Context, req *api.GetRecipeRequest) (
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
 	}
-
-	recipe, err := s.service.GetRecipe(recipeId, userId, req.UserLanguage)
+	
+	recipe, err := s.service.GetRecipe(recipeId, userId, entity.ValidatedLanguage(req.UserLanguage))
 	if err != nil {
 		return nil, err
 	}
@@ -43,8 +46,9 @@ func (s *RecipeServer) GetRecipe(_ context.Context, req *api.GetRecipeRequest) (
 	return dto.NewGetRecipeResponse(recipe), nil
 }
 
-func (s *RecipeServer) UpdateRecipe(_ context.Context, req *api.UpdateRecipeRequest) (*api.UpdateRecipeResponse, error) {
-	input, err := dto.NewRecipeUpdateInput(req)
+func (s *RecipeServer) UpdateRecipe(_ context.Context, req *api.RecipeInput) (*api.UpdateRecipeResponse, error) {
+	isEncryptedRecipeAllowed := !s.checkSubscription || subscription.IsPremium(req.UserSubscription)
+	input, err := dto.NewRecipeInput(req, true, isEncryptedRecipeAllowed)
 	if err != nil {
 		return nil, err
 	}

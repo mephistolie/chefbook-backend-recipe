@@ -7,10 +7,11 @@ import (
 
 type RecipeServer struct {
 	api.UnsafeRecipeServiceServer
-	service service.Service
+	service           service.Service
+	checkSubscription bool
 }
 
-func NewServer(service service.Service) *RecipeServer {
+func NewServer(service service.Service, checkSubscription bool) *RecipeServer {
 	return &RecipeServer{
 		service: service,
 	}

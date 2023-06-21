@@ -27,7 +27,18 @@ func (r *Repository) GetRecipes(params entity.RecipesQuery, userId uuid.UUID) []
 
 	for rows.Next() {
 		recipe := dto.RecipeInfo{}
-		if err = rows.Scan(&recipe); err != nil {
+		if err = rows.Scan(
+			&recipe.Id, &recipe.Name,
+			&recipe.OwnerId,
+			&recipe.Visibility, &recipe.IsEncrypted,
+			&recipe.Language,
+			&recipe.Rating, &recipe.Votes, &recipe.Score,
+			&recipe.Tags, &recipe.Categories, &recipe.IsFavourite, &recipe.IsSaved,
+			&recipe.Pictures,
+			&recipe.Servings, &recipe.Time,
+			&recipe.Calories,
+			&recipe.CreationTimestamp, &recipe.UpdateTimestamp, &recipe.Version,
+		); err != nil {
 			log.Warnf("unable to parse recipe info: ", err)
 			continue
 		}
@@ -218,7 +229,7 @@ func (r *Repository) GetRandomRecipe(userId uuid.UUID, languages *[]string) (ent
 		LEFT JOIN
 			%[3]v ON %[3]v.recipe_id=%[1]v.recipe_id
 		WHERE
-			%[1]v.visibility='%[4]v' AND saved=false
+			%[1]v.visibility='%[4]v' AND saved=false AND owner_id<>$1
 	`, recipesTable, usersTable, scoresTable, entity.VisibilityPublic)
 
 	var args []interface{}
@@ -232,7 +243,18 @@ func (r *Repository) GetRandomRecipe(userId uuid.UUID, languages *[]string) (ent
 	query += " ORDER BY RANDOM() LIMIT 1"
 
 	row := r.db.QueryRow(query, args...)
-	if err := row.Scan(&recipe); err != nil {
+	if err := row.Scan(
+		&recipe.Id, &recipe.Name,
+		&recipe.OwnerId,
+		&recipe.Visibility, &recipe.IsEncrypted,
+		&recipe.Language, &recipe.Description,
+		&recipe.Rating, &recipe.Votes, &recipe.Score,
+		&recipe.Tags, &recipe.Categories, &recipe.IsFavourite, &recipe.IsSaved,
+		&recipe.Ingredients, &recipe.Cooking, &recipe.Pictures,
+		&recipe.Servings, &recipe.Time,
+		&recipe.Calories, &recipe.Protein, &recipe.Fats, &recipe.Carbohydrates,
+		&recipe.CreationTimestamp, &recipe.UpdateTimestamp, &recipe.Version,
+	); err != nil {
 		log.Warnf("unable to get random recipe for user %s: %s", userId, err)
 		return entity.BaseRecipe{}, fail.GrpcNotFound
 	}
@@ -245,24 +267,11 @@ func (r *Repository) GetRecipeBook(userId uuid.UUID) ([]entity.BaseRecipeState, 
 
 	query := fmt.Sprintf(`
 		SELECT
-			%[1]v.recipe_id, %[1]v.name,
+			%[1]v.recipe_id,
 			%[1]v.owner_id,
-			%[1]v.visibility, %[1]v.encrypted,
-			%[1]v.language, 
 			%[1]v.rating, %[1]v.votes, coalesce(%[3]v.score, 0),
 			%[1]v.tags, coalesce(%[2]v.categories, '[]'::jsonb), coalesce(%[2]v.favourite, false),
-			(
-				SELECT EXISTS
-				(
-					SELECT 1
-					FROM %[2]v
-					WHERE %[2]v.recipe_id=%[1]v.recipe_id AND user_id=$1
-				)
-			) AS saved,
-			%[1]v.pictures,
-			%[1]v.servings, %[1]v.cooking_time,
-			%[1]v.calories,
-			%[1]v.creation_timestamp, %[1]v.update_timestamp, %[1]v.version
+			%[1]v.version
 		FROM
 			%[1]v
 		LEFT JOIN
@@ -281,7 +290,13 @@ func (r *Repository) GetRecipeBook(userId uuid.UUID) ([]entity.BaseRecipeState, 
 
 	for rows.Next() {
 		recipe := dto.RecipeState{}
-		if err = rows.Scan(&recipe); err != nil {
+		if err = rows.Scan(
+			&recipe.Id,
+			&recipe.OwnerId,
+			&recipe.Rating, &recipe.Votes, &recipe.Score,
+			&recipe.Tags, &recipe.Categories, &recipe.IsFavourite,
+			&recipe.Version,
+		); err != nil {
 			log.Warnf("unable to parse recipe info: ", err)
 			continue
 		}
@@ -289,4 +304,32 @@ func (r *Repository) GetRecipeBook(userId uuid.UUID) ([]entity.BaseRecipeState, 
 	}
 
 	return recipes, nil
+}
+
+func (r *Repository) GetRecipeNames(recipeIds []uuid.UUID, userId uuid.UUID) (map[uuid.UUID]string, error) {
+	recipeNames := make(map[uuid.UUID]string)
+
+	query := fmt.Sprintf(`
+		SELECT recipe_id, name
+		FROM %[1]v
+		WHERE recipe_id=ANY($1) AND (owner_id=$2 OR visibility<>'%[2]v')
+	`, recipesTable, entity.VisibilityPrivate)
+
+	rows, err := r.db.Query(query, recipeIds, userId)
+	if err != nil {
+		log.Errorf("unable to get recipe names: %s", err)
+		return map[uuid.UUID]string{}, fail.GrpcUnknown
+	}
+
+	for rows.Next() {
+		var id uuid.UUID
+		var name string
+		if err = rows.Scan(&id, &name); err != nil {
+			log.Warnf("unable to parse recipe name: ", err)
+			continue
+		}
+		recipeNames[id] = name
+	}
+
+	return recipeNames, nil
 }

@@ -14,13 +14,8 @@ func newTags(tags map[string]entity.Tag) map[string]*api.RecipeTag {
 }
 
 func newTag(tag entity.Tag) *api.RecipeTag {
-	emoji := ""
-	if tag.Emoji != nil {
-		emoji = *tag.Emoji
-	}
-
 	return &api.RecipeTag{
 		Name:  tag.Name,
-		Emoji: emoji,
+		Emoji: tag.Emoji,
 	}
 }

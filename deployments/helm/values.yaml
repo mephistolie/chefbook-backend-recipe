@@ -13,8 +13,6 @@ config:
   # Leave empty for stdout only
   logsPath: ""
 
-  maxShoppingLists: 5
-  shoppingListKeyTtl: 24h
   checkSubscription: true
 
   postgres:

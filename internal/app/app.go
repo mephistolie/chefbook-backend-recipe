@@ -69,7 +69,7 @@ func Run(cfg *config.Config) {
 	)
 
 	healthServer := health.NewServer()
-	recipeServer := recipe.NewServer(*recipeService)
+	recipeServer := recipe.NewServer(*recipeService, *cfg.Recipe.CheckSubscription)
 
 	go monitorHealthChecking(db, healthServer)
 
