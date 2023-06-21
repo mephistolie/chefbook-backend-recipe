@@ -68,7 +68,7 @@ func (s *Service) importFirebaseRecipe(firebaseRecipe firebase.Recipe, userId uu
 		if categoryId, ok := (*categories)[category]; ok {
 			recipeCategories = append(recipeCategories, categoryId)
 		} else {
-			if res, err := s.grpc.Category.AddCategory(context.Background(), &categoryApi.AddCategoryRequest{
+			if res, err := s.grpc.Category.CreateCategory(context.Background(), &categoryApi.CreateCategoryRequest{
 				Name:   category,
 				UserId: userId.String(),
 			}); err == nil {

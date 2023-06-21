@@ -102,7 +102,7 @@ func NewRecipeInput(
 		UserId:         userId,
 		Visibility:     req.Visibility,
 		IsEncrypted:    req.IsEncrypted,
-		Language:       entity.ValidatedLanguage(&req.Language),
+		Language:       entity.ValidatedLanguage(req.Language),
 		Description:    req.Description,
 		Tags:           req.Tags,
 		Servings:       req.Servings,

@@ -13,7 +13,8 @@ type Recipe interface {
 
 	CreateRecipe(input entity.RecipeInput) (uuid.UUID, int32, error)
 	GetRecipe(recipeId, userId uuid.UUID) (entity.BaseRecipe, error)
-	UpdateRecipe(input entity.RecipeInput, incrementVersion bool) (int32, error)
+	UpdateRecipe(input entity.RecipeInput) (int32, error)
+	SetRecipeTags(recipeId uuid.UUID, tags []string) error
 	DeleteRecipe(recipeId uuid.UUID) error
 
 	GetRecipeRatingAndVotes(recipeId uuid.UUID) (float32, int, error)

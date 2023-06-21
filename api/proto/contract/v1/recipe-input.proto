@@ -13,7 +13,7 @@ message RecipeInput {
   string name = 3;
   string visibility = 4;
   bool isEncrypted = 5;
-  string language = 6;
+  optional string language = 6;
   optional string description = 7;
 
   repeated string tags = 8;

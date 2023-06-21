@@ -145,13 +145,8 @@ func (r *Repository) GetRecipe(recipeId, userId uuid.UUID) (entity.BaseRecipe, e
 	return recipe.Entity(userId), nil
 }
 
-func (r *Repository) UpdateRecipe(input entity.RecipeInput, incrementVersion bool) (int32, error) {
+func (r *Repository) UpdateRecipe(input entity.RecipeInput) (int32, error) {
 	var version int32
-
-	increment := 0
-	if incrementVersion {
-		increment = 1
-	}
 
 	query := fmt.Sprintf(`
 		UPDATE %[1]v
@@ -163,9 +158,9 @@ func (r *Repository) UpdateRecipe(input entity.RecipeInput, incrementVersion boo
 			ingredients=$7, cooking=$8,
 			servings=$9, cooking_time=$10,
 			calories=$11, protein=$12, fats=$13, carbohydrates=$14,
-			version=version+%[2]v
+			version=version+1
 		WHERE recipe_id=$15
-	`, recipesTable, increment)
+	`, recipesTable)
 
 	macronutrients := entity.Macronutrients{}
 	if input.Macronutrients != nil {
@@ -202,6 +197,20 @@ func (r *Repository) UpdateRecipe(input entity.RecipeInput, incrementVersion boo
 	}
 
 	return version, nil
+}
+
+func (r *Repository) SetRecipeTags(recipeId uuid.UUID, tags []string) error {
+	query := fmt.Sprintf(`
+		UPDATE %s
+		SET tags=$2
+		WHERE recipe_id=$1
+	`, recipesTable)
+
+	if _, err := r.db.Exec(query, recipeId, tags); err != nil {
+		log.Warnf("unable to set recipe %s tags: %s", recipeId, err)
+		return fail.GrpcNotFound
+	}
+	return nil
 }
 
 func (r *Repository) DeleteRecipe(recipeId uuid.UUID) error {

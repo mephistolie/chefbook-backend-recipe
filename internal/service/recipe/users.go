@@ -40,13 +40,13 @@ func (s *Service) SetRecipeCategories(recipeId, userId uuid.UUID, categories []u
 
 	err := s.repo.SetRecipeCategories(recipeId, userId, categories)
 	if err == nil {
-		go s.ValidateCategories(recipeId, userId, categories)
+		go s.validateCategories(recipeId, userId, categories)
 	}
 
 	return err
 }
 
-func (s *Service) ValidateCategories(recipeId, userId uuid.UUID, categories []uuid.UUID) {
+func (s *Service) validateCategories(recipeId, userId uuid.UUID, categories []uuid.UUID) {
 	if len(categories) == 0 {
 		return
 	}

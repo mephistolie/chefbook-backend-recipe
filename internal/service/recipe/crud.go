@@ -47,12 +47,8 @@ func (s *Service) fillBaseRecipe(baseRecipe entity.BaseRecipe, userId uuid.UUID,
 	authorsMap := s.getRecipeAuthorsInfo([]string{ownerId})
 
 	if info, ok := authorsMap[ownerId]; ok && info != nil {
-		if len(info.VisibleName) > 0 {
-			recipe.OwnerName = &info.VisibleName
-		}
-		if len(info.Avatar) > 0 {
-			recipe.OwnerAvatar = &info.Avatar
-		}
+		recipe.OwnerName = info.VisibleName
+		recipe.OwnerAvatar = info.Avatar
 	}
 
 	wg.Wait()
@@ -76,7 +72,7 @@ func (s *Service) UpdateRecipe(input entity.RecipeInput) (int32, error) {
 		return 0, recipeFail.GrpcChangedEncryptionStatus
 	}
 
-	version, err := s.repo.UpdateRecipe(input, true)
+	version, err := s.repo.UpdateRecipe(input)
 	if err == nil {
 		go s.validateTags(input)
 	}
@@ -112,8 +108,7 @@ func (s *Service) validateTags(input entity.RecipeInput) {
 			}
 		}
 		if len(usedTags) < len(input.Tags) {
-			input.Tags = usedTags
-			_, _ = s.repo.UpdateRecipe(input, false)
+			_ = s.repo.SetRecipeTags(*input.RecipeId, usedTags)
 		}
 	}
 }

@@ -38,17 +38,11 @@ func (s *Service) getRecipeInfos(
 ) entity.DetailedRecipesInfo {
 	var infos []entity.RecipeInfo
 	for _, baseRecipe := range recipes {
-		recipe := entity.RecipeInfo{
-			BaseRecipeInfo: baseRecipe,
-		}
+		recipe := entity.RecipeInfo{BaseRecipeInfo: baseRecipe}
 
 		if info, ok := authors[recipe.OwnerId.String()]; ok && info != nil {
-			if len(info.VisibleName) > 0 {
-				recipe.OwnerName = &info.VisibleName
-			}
-			if len(info.Avatar) > 0 {
-				recipe.OwnerAvatar = &info.Avatar
-			}
+			recipe.OwnerName = info.VisibleName
+			recipe.OwnerAvatar = info.Avatar
 		}
 
 		infos = append(infos, recipe)
@@ -103,17 +97,11 @@ func (s *Service) getRecipeStates(
 ) entity.DetailedRecipesState {
 	var states []entity.RecipeState
 	for _, baseRecipe := range recipes {
-		recipe := entity.RecipeState{
-			BaseRecipeState: baseRecipe,
-		}
+		recipe := entity.RecipeState{BaseRecipeState: baseRecipe}
 
 		if info, ok := authors[recipe.OwnerId.String()]; ok && info != nil {
-			if len(info.VisibleName) > 0 {
-				recipe.OwnerName = &info.VisibleName
-			}
-			if len(info.Avatar) > 0 {
-				recipe.OwnerAvatar = &info.Avatar
-			}
+			recipe.OwnerName = info.VisibleName
+			recipe.OwnerAvatar = info.Avatar
 		}
 
 		states = append(states, recipe)

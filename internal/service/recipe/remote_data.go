@@ -80,18 +80,11 @@ func (s *Service) getTags(
 	log.Debugf("found %d tags", len(res.Tags))
 	if err == nil {
 		for tagId, dto := range res.Tags {
-			var emoji *string
-			if len(dto.Emoji) > 0 {
-				emoji = &dto.Emoji
-			}
-
-			tag := entity.Tag{
+			(*destination)[tagId] = entity.Tag{
 				Id:    tagId,
 				Name:  dto.Name,
-				Emoji: emoji,
+				Emoji: dto.Emoji,
 			}
-
-			(*destination)[tagId] = tag
 		}
 	}
 
@@ -109,18 +102,11 @@ func (s *Service) getUserCategories(
 
 	if err == nil {
 		for _, dto := range res.Categories {
-			var emoji *string
-			if len(dto.Emoji) > 0 {
-				emoji = &dto.Emoji
-			}
-
-			category := entity.Category{
+			categories = append(categories, entity.Category{
 				Id:    dto.CategoryId,
 				Name:  dto.Name,
-				Emoji: emoji,
-			}
-
-			categories = append(categories, category)
+				Emoji: dto.Emoji,
+			})
 		}
 	}
 
@@ -148,18 +134,11 @@ func (s *Service) getCategoriesMap(
 
 	if err == nil {
 		for categoryId, dto := range res.Categories {
-			var emoji *string
-			if len(dto.Emoji) > 0 {
-				emoji = &dto.Emoji
-			}
-
-			category := entity.Category{
+			(*destination)[categoryId] = entity.Category{
 				Id:    categoryId,
 				Name:  dto.Name,
-				Emoji: emoji,
+				Emoji: dto.Emoji,
 			}
-
-			(*destination)[categoryId] = category
 		}
 	}
 
