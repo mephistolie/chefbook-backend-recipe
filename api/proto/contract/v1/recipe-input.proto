@@ -19,7 +19,7 @@ message RecipeInput {
   repeated string tags = 8;
 
   optional int32 servings = 9;
-  optional int32 cookingTime = 10;
+  optional int32 time = 10;
 
   optional int32 calories = 11;
   optional Macronutrients macronutrients = 12;

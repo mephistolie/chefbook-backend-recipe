@@ -59,8 +59,8 @@ func NewRecipeInput(
 	if req.Servings != nil && *req.Servings > maxServings {
 		*req.Servings = maxServings
 	}
-	if req.CookingTime != nil && *req.CookingTime > maxCookingTime {
-		*req.CookingTime = maxCookingTime
+	if req.Time != nil && *req.Time > maxCookingTime {
+		*req.Time = maxCookingTime
 	}
 	if req.Calories != nil && *req.Calories > maxCalories {
 		*req.Calories = maxCalories
@@ -106,7 +106,7 @@ func NewRecipeInput(
 		Description:    req.Description,
 		Tags:           req.Tags,
 		Servings:       req.Servings,
-		Time:           req.CookingTime,
+		Time:           req.Time,
 		Calories:       req.Calories,
 		Macronutrients: macronutrientsPtr,
 		Ingredients:    ingredients,
