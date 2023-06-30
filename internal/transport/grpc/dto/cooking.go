@@ -17,19 +17,19 @@ const (
 )
 
 func newCooking(cooking []*api.CookingItem, isEncrypted bool) ([]entity.CookingItem, error) {
-	if len(cooking) == 0 {
-		return nil, recipeFail.GrpcEmptyCooking
-	}
 	if isEncrypted && len(cooking) != encryptedCookingSize {
 		return nil, fail.GrpcInvalidBody
 	}
+
+	cookingItemIds := make(map[uuid.UUID]bool)
+	hasSteps := false
 
 	stepsCount := len(cooking)
 	if stepsCount > maxCookingStepsCount {
 		stepsCount = maxCookingStepsCount
 	}
 
-	response := make([]entity.CookingItem, maxCookingStepsCount)
+	response := make([]entity.CookingItem, stepsCount)
 	for i, rawItem := range cooking {
 		if i >= len(response) {
 			break
@@ -39,8 +39,23 @@ func newCooking(cooking []*api.CookingItem, isEncrypted bool) ([]entity.CookingI
 		if err != nil {
 			return nil, err
 		}
+
+		if exists, ok := cookingItemIds[item.Id]; ok && exists {
+			return nil, recipeFail.GrpcCookingMatchingIds
+		}
+		cookingItemIds[item.Id] = true
+
 		response[i] = item
+
+		if item.Type == entity.TypeStep {
+			hasSteps = true
+		}
 	}
+
+	if !hasSteps {
+		return nil, recipeFail.GrpcEmptyCooking
+	}
+
 	return response, nil
 }
 
@@ -60,7 +75,7 @@ func newCookingItem(item *api.CookingItem, isEncrypted bool) (entity.CookingItem
 	if err != nil {
 		return entity.CookingItem{}, recipeFail.GrpcInvalidCookingItemId
 	}
-	if item.Text != nil && len(*item.Text) > maxCookingItemTextLength {
+	if item.Text != nil && len(*item.Text) > maxCookingItemTextLength && !isEncrypted {
 		text := (*item.Text)[0:maxCookingItemTextLength]
 		item.Text = &text
 	}
@@ -72,6 +87,11 @@ func newCookingItem(item *api.CookingItem, isEncrypted bool) (entity.CookingItem
 	}
 	if item.Time != nil && *item.Time > maxCookingStepTime {
 		*item.Time = maxCookingStepTime
+	}
+
+	if item.Type != entity.TypeStep {
+		item.Time = nil
+		recipeId = nil
 	}
 
 	return entity.CookingItem{

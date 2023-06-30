@@ -13,6 +13,7 @@ type RecipeServer struct {
 
 func NewServer(service service.Service, checkSubscription bool) *RecipeServer {
 	return &RecipeServer{
-		service: service,
+		service:           service,
+		checkSubscription: checkSubscription,
 	}
 }

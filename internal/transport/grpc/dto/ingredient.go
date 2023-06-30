@@ -17,12 +17,12 @@ const (
 )
 
 func newIngredients(ingredients []*api.IngredientItem, isEncrypted bool) ([]entity.IngredientItem, error) {
-	if len(ingredients) == 0 {
-		return nil, recipeFail.GrpcEmptyIngredients
-	}
 	if isEncrypted && len(ingredients) != encryptedIngredientsSize {
 		return nil, recipeFail.GrpcInvalidEncryptedFormat
 	}
+
+	ingredientIds := make(map[uuid.UUID]bool)
+	hasIngredients := false
 
 	ingredientsCount := len(ingredients)
 	if ingredientsCount > maxIngredientsCount {
@@ -39,8 +39,23 @@ func newIngredients(ingredients []*api.IngredientItem, isEncrypted bool) ([]enti
 		if err != nil {
 			return nil, err
 		}
+
+		if exists, ok := ingredientIds[ingredient.Id]; ok && exists {
+			return nil, recipeFail.GrpcIngredientMatchingIds
+		}
+		ingredientIds[ingredient.Id] = true
+
 		response[i] = ingredient
+
+		if ingredient.Type == entity.TypeIngredient {
+			hasIngredients = true
+		}
 	}
+
+	if !hasIngredients {
+		return nil, recipeFail.GrpcEmptyIngredients
+	}
+
 	return response, nil
 }
 
@@ -61,7 +76,7 @@ func newIngredient(ingredient *api.IngredientItem, isEncrypted bool) (entity.Ing
 		return entity.IngredientItem{}, recipeFail.GrpcInvalidIngredientId
 	}
 
-	if ingredient.Text != nil && len(*ingredient.Text) > maxIngredientTextLength {
+	if ingredient.Text != nil && len(*ingredient.Text) > maxIngredientTextLength && !isEncrypted {
 		text := (*ingredient.Text)[0:maxIngredientTextLength]
 		ingredient.Text = &text
 	}
@@ -73,10 +88,16 @@ func newIngredient(ingredient *api.IngredientItem, isEncrypted bool) (entity.Ing
 		ingredient.Unit = &unit
 	}
 	var recipeId *uuid.UUID
-	if ingredient.RecipeId != nil {
+	if ingredient.Type == entity.TypeIngredient && ingredient.RecipeId != nil {
 		if id, err := uuid.Parse(*ingredient.RecipeId); err == nil {
 			recipeId = &id
 		}
+	}
+
+	if ingredient.Type != entity.TypeIngredient {
+		ingredient.Amount = nil
+		ingredient.Unit = nil
+		recipeId = nil
 	}
 
 	return entity.IngredientItem{

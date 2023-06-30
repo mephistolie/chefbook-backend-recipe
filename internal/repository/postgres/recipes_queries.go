@@ -80,7 +80,7 @@ func (r *Repository) getRecipesByParamsQuery(params entity.RecipesQuery, userId 
 	`, recipesTable, usersTable, scoresTable)
 	args = append(args, userId)
 
-	whereStatement, whereArgs, argNumber := r.getRecipesWhereStatementByParams(params, 1)
+	whereStatement, whereArgs, argNumber := r.getRecipesWhereStatementByParams(params, 2)
 	args = append(args, whereArgs...)
 
 	pagingStatement, pagingArgs := r.getPagingStatement(params, argNumber)
@@ -112,7 +112,9 @@ func (r *Repository) getRecipesWhereStatementByParams(params entity.RecipesQuery
 	}
 
 	if !params.Owned && !params.Saved && params.AuthorId != nil {
-		whereStatement += fmt.Sprintf(" AND %s.owner_id=%s", recipesTable, *params.AuthorId)
+		whereStatement += fmt.Sprintf(" AND %s.owner_id=$%d", recipesTable, argNumber)
+		args = append(args, *params.AuthorId)
+		argNumber += 1
 	}
 
 	if params.Languages != nil && len(*params.Languages) > 0 {
@@ -138,10 +140,10 @@ func (r *Repository) getRecipesWhereStatementByParams(params entity.RecipesQuery
 func (r *Repository) getRecipesRangeFilter(field string, min, max *int32) string {
 	filter := ""
 	if min != nil {
-		filter += fmt.Sprintf(" AND %s.%s>=%d", recipesTable, field, min)
+		filter += fmt.Sprintf(" AND %s.%s>=%d", recipesTable, field, *min)
 	}
 	if max != nil {
-		filter += fmt.Sprintf(" AND %s.%s<=%d", recipesTable, field, max)
+		filter += fmt.Sprintf(" AND %s.%s<=%d", recipesTable, field, *max)
 	}
 	return filter
 }
@@ -158,43 +160,79 @@ func (r *Repository) getPagingStatement(params entity.RecipesQuery, initArg int)
 	}
 
 	if params.Sorting == entity.SortingCreationTimestamp && params.LastCreationTimestamp != nil {
-		pagingStatement += fmt.Sprintf(" AND %s.creation_timestamp<%s", recipesTable, *params.LastCreationTimestamp)
+		if params.LastRecipeId != nil {
+			pagingStatement += fmt.Sprintf(" AND (%[1]v.creation_timestamp, %[1]v.recipe_id) < ($%d, $%d)", recipesTable, argNumber, argNumber+1)
+			args = append(args, *params.LastCreationTimestamp, *params.LastRecipeId)
+			argNumber += 2
+		} else {
+			pagingStatement += fmt.Sprintf(" AND %[1]v.creation_timestamp < $%d", recipesTable, argNumber)
+			args = append(args, *params.LastCreationTimestamp)
+			argNumber += 1
+		}
 	}
 	if params.Sorting == entity.SortingUpdateTimestamp && params.LastUpdateTimestamp != nil {
-		pagingStatement += fmt.Sprintf(" AND %s.update_timestamp<%s", recipesTable, *params.LastUpdateTimestamp)
+		if params.LastRecipeId != nil {
+			pagingStatement += fmt.Sprintf(" AND (%[1]v.update_timestamp, %[1]v.recipe_id) < ($%d, $%d)", recipesTable, argNumber, argNumber+1)
+			args = append(args, *params.LastUpdateTimestamp, *params.LastRecipeId)
+			argNumber += 2
+		} else {
+			pagingStatement += fmt.Sprintf(" AND %[1]v.update_timestamp < $%d", recipesTable, argNumber)
+			args = append(args, *params.LastUpdateTimestamp)
+			argNumber += 1
+		}
 	}
 	if params.Sorting == entity.SortingRating && params.LastRating != nil {
-		pagingStatement += fmt.Sprintf(" AND %s.rating<=$%d", recipesTable, argNumber)
-		args = append(args, *params.LastRating)
-		argNumber += 1
+		if params.LastRecipeId != nil {
+			pagingStatement += fmt.Sprintf(" AND (%[1]v.rating, %[1]v.recipe_id) < ($%d, $%d)", recipesTable, argNumber, argNumber+1)
+			args = append(args, *params.LastRating, *params.LastRecipeId)
+			argNumber += 2
+		} else {
+			pagingStatement += fmt.Sprintf(" AND %[1]v.rating < $%d", recipesTable, argNumber)
+			args = append(args, *params.LastRating)
+			argNumber += 1
+		}
 	}
 	if params.Sorting == entity.SortingVotes && params.LastVotes != nil {
-		pagingStatement += fmt.Sprintf(" AND %s.rating<=$%d", recipesTable, *params.LastVotes)
+		if params.LastRecipeId != nil {
+			pagingStatement += fmt.Sprintf(" AND (%[1]v.votes, %[1]v.recipe_id) < ($%d, $%d)", recipesTable, argNumber, argNumber+1)
+			args = append(args, *params.LastVotes, *params.LastRecipeId)
+			argNumber += 2
+		} else {
+			pagingStatement += fmt.Sprintf(" AND %[1]v.votes < $%d", recipesTable, argNumber)
+			args = append(args, *params.LastVotes)
+			argNumber += 1
+		}
 	}
 	if params.Sorting == entity.SortingTime && params.LastTime != nil {
-		pagingStatement += fmt.Sprintf(" AND %s.cooking_time>=$%d", recipesTable, *params.LastTime)
+		if params.LastRecipeId != nil {
+			pagingStatement += fmt.Sprintf(" AND (%[1]v.cooking_time, %[1]v.recipe_id) > ($%d, $%d)", recipesTable, argNumber, argNumber+1)
+			args = append(args, *params.LastTime, *params.LastRecipeId)
+			argNumber += 2
+		} else {
+			pagingStatement += fmt.Sprintf(" AND %[1]v.cooking_time > $%d", recipesTable, argNumber)
+			args = append(args, *params.LastTime)
+			argNumber += 1
+		}
 	}
 	if params.Sorting == entity.SortingCalories && params.LastCalories != nil {
-		pagingStatement += fmt.Sprintf(" AND %s.calories>=$%d", recipesTable, *params.LastCalories)
-	}
-
-	if params.LastRecipeId != nil {
-		if isAscending {
-			pagingStatement += fmt.Sprintf(" AND %s.recipe_id>$%d", recipesTable, *params.LastRecipeId)
+		if params.LastRecipeId != nil {
+			pagingStatement += fmt.Sprintf(" AND (%[1]v.calories, %[1]v.recipe_id) > ($%d, $%d)", recipesTable, argNumber, argNumber+1)
+			args = append(args, *params.LastCalories, *params.LastRecipeId)
+			argNumber += 2
 		} else {
-			pagingStatement += fmt.Sprintf(" AND %s.recipe_id<$%d", recipesTable, *params.LastRecipeId)
+			pagingStatement += fmt.Sprintf(" AND %[1]v.calories > $%d", recipesTable, argNumber)
+			args = append(args, *params.LastCalories)
+			argNumber += 1
 		}
 	}
 
 	order := "DESC"
 	if isAscending {
-		order += "ASC"
+		order = "ASC"
 	}
 	pagingStatement += fmt.Sprintf(" ORDER BY %[1]v %[2]v, recipe_id %[2]v", params.Sorting, order)
 
-	if params.PageSize != nil {
-		pagingStatement += fmt.Sprintf(" LIMIT %d", *params.PageSize)
-	}
+	pagingStatement += fmt.Sprintf(" LIMIT %d", params.PageSize)
 
 	return pagingStatement, args
 }
@@ -209,15 +247,7 @@ func (r *Repository) GetRandomRecipe(userId uuid.UUID, languages *[]string) (ent
 			%[1]v.visibility, %[1]v.encrypted,
 			%[1]v.language, %[1]v.description,
 			%[1]v.rating, %[1]v.votes, coalesce(%[3]v.score, 0),
-			%[1]v.tags, coalesce(%[2]v.categories, '[]'::jsonb), coalesce(%[2]v.favourite, false),
-			(
-				SELECT EXISTS
-				(
-					SELECT 1
-					FROM %[2]v
-					WHERE %[2]v.recipe_id=%[1]v.recipe_id AND user_id=$1
-				)
-			) AS saved,
+			%[1]v.tags,
 			%[1]v.ingredients, %[1]v.cooking, %[1]v.pictures,
 			%[1]v.servings, %[1]v.cooking_time,
 			%[1]v.calories, %[1]v.protein, %[1]v.fats, %[1]v.carbohydrates,
@@ -229,7 +259,13 @@ func (r *Repository) GetRandomRecipe(userId uuid.UUID, languages *[]string) (ent
 		LEFT JOIN
 			%[3]v ON %[3]v.recipe_id=%[1]v.recipe_id
 		WHERE
-			%[1]v.visibility='%[4]v' AND saved=false AND owner_id<>$1
+			%[1]v.visibility='%[4]v' AND %[1]v.owner_id<>$1 AND
+			NOT EXISTS
+			(
+				SELECT 1
+				FROM %[2]v
+				WHERE %[2]v.recipe_id=%[1]v.recipe_id AND user_id=$1
+			)
 	`, recipesTable, usersTable, scoresTable, entity.VisibilityPublic)
 
 	var args []interface{}
@@ -249,61 +285,17 @@ func (r *Repository) GetRandomRecipe(userId uuid.UUID, languages *[]string) (ent
 		&recipe.Visibility, &recipe.IsEncrypted,
 		&recipe.Language, &recipe.Description,
 		&recipe.Rating, &recipe.Votes, &recipe.Score,
-		&recipe.Tags, &recipe.Categories, &recipe.IsFavourite, &recipe.IsSaved,
+		&recipe.Tags,
 		&recipe.Ingredients, &recipe.Cooking, &recipe.Pictures,
 		&recipe.Servings, &recipe.Time,
 		&recipe.Calories, &recipe.Protein, &recipe.Fats, &recipe.Carbohydrates,
 		&recipe.CreationTimestamp, &recipe.UpdateTimestamp, &recipe.Version,
 	); err != nil {
-		log.Warnf("unable to get random recipe for user %s: %s", userId, err)
+		log.Debug("unable to get random recipe for user %s: %s", userId, err)
 		return entity.BaseRecipe{}, fail.GrpcNotFound
 	}
 
 	return recipe.Entity(userId), nil
-}
-
-func (r *Repository) GetRecipeBook(userId uuid.UUID) ([]entity.BaseRecipeState, error) {
-	var recipes []entity.BaseRecipeState
-
-	query := fmt.Sprintf(`
-		SELECT
-			%[1]v.recipe_id,
-			%[1]v.owner_id,
-			%[1]v.rating, %[1]v.votes, coalesce(%[3]v.score, 0),
-			%[1]v.tags, coalesce(%[2]v.categories, '[]'::jsonb), coalesce(%[2]v.favourite, false),
-			%[1]v.version
-		FROM
-			%[1]v
-		LEFT JOIN
-			%[2]v ON %[2]v.recipe_id=%[1]v.recipe_id
-		LEFT JOIN
-			%[3]v ON %[3]v.recipe_id=%[1]v.recipe_id
-		WHERE
-			%[2]v.user_id=$1 AND (%[1]v.owner_id=$1 OR %[1]v.visibility<>'%[4]v')
-	`, recipesTable, usersTable, scoresTable, entity.VisibilityPrivate)
-
-	rows, err := r.db.Query(query, userId)
-	if err != nil {
-		log.Errorf("unable to get recipes: %s", err)
-		return []entity.BaseRecipeState{}, fail.GrpcUnknown
-	}
-
-	for rows.Next() {
-		recipe := dto.RecipeState{}
-		if err = rows.Scan(
-			&recipe.Id,
-			&recipe.OwnerId,
-			&recipe.Rating, &recipe.Votes, &recipe.Score,
-			&recipe.Tags, &recipe.Categories, &recipe.IsFavourite,
-			&recipe.Version,
-		); err != nil {
-			log.Warnf("unable to parse recipe info: ", err)
-			continue
-		}
-		recipes = append(recipes, recipe.Entity())
-	}
-
-	return recipes, nil
 }
 
 func (r *Repository) GetRecipeNames(recipeIds []uuid.UUID, userId uuid.UUID) (map[uuid.UUID]string, error) {

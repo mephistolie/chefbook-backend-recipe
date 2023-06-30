@@ -11,6 +11,8 @@ var (
 var (
 	GrpcEmptyIngredients        = fail.CreateGrpcClient(fail.TypeInvalidBody, "ingredients mustn't be empty")
 	GrpcEmptyCooking            = fail.CreateGrpcClient(fail.TypeInvalidBody, "cooking mustn't be empty")
+	GrpcIngredientMatchingIds   = fail.CreateGrpcClient(fail.TypeInvalidBody, "ingredients have same ID")
+	GrpcCookingMatchingIds      = fail.CreateGrpcClient(fail.TypeInvalidBody, "cooking items have same ID")
 	GrpcEmptyIngredientText     = fail.CreateGrpcClient(fail.TypeInvalidBody, "ingredient text can't be empty")
 	GrpcEmptyCookingItemText    = fail.CreateGrpcClient(fail.TypeInvalidBody, "cooking item text can't be empty")
 	GrpcInvalidIngredientType   = fail.CreateGrpcClient(fail.TypeInvalidBody, "invalid ingredient type")
@@ -21,5 +23,6 @@ var (
 	GrpcInvalidEncryptedFormat  = fail.CreateGrpcClient(fail.TypeInvalidBody, "invalid format for encrypted recipe")
 	GrpcChangedEncryptionStatus = fail.CreateGrpcClient(fail.TypeInvalidBody, "changing encryption status is forbidden")
 
+	GrpcRecipeExists    = fail.CreateGrpcConflict(typeOutdatedVersion, "recipe with specified ID already exists")
 	GrpcOutdatedVersion = fail.CreateGrpcConflict(typeOutdatedVersion, "recipe version is outdated; process current version first")
 )

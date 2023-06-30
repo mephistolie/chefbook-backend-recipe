@@ -27,28 +27,24 @@ func (r *Repository) GetRecipeRatingAndVotes(recipeId uuid.UUID) (float32, int, 
 	return rating, votes, nil
 }
 
-func (r *Repository) GetUserRecipeScore(recipeId, userId uuid.UUID) (int, error) {
+func (r *Repository) GetUserRecipeScore(recipeId, userId uuid.UUID) int {
 	var score int
 
 	query := fmt.Sprintf(`
-		SELECT coalesce(score, 0)
+		SELECT score
 		FROM %s
 		WHERE recipe_id=$1 AND user_id=$2
 	`, scoresTable)
 
 	if err := r.db.Get(&score, query, recipeId, userId); err != nil {
-		log.Errorf("unable to parse user %s recipe %s score: %s", userId, recipeId, err)
-		return 0, fail.GrpcNotFound
+		return 0
 	}
 
-	return score, nil
+	return score
 }
 
 func (r *Repository) RateRecipe(recipeId, userId uuid.UUID, score int) error {
-	previousScore, err := r.GetUserRecipeScore(recipeId, userId)
-	if err != nil {
-		return err
-	}
+	previousScore := r.GetUserRecipeScore(recipeId, userId)
 
 	scoreDiff := score - previousScore
 	if scoreDiff == 0 {
@@ -61,7 +57,7 @@ func (r *Repository) RateRecipe(recipeId, userId uuid.UUID, score int) error {
 	}
 
 	if previousScore == 0 {
-		return r.addUserScore(tx, recipeId, userId, scoreDiff)
+		return r.addUserScore(tx, recipeId, userId, score)
 	} else if score == 0 {
 		return r.deleteUserScore(tx, recipeId, userId, scoreDiff)
 	} else {
@@ -69,13 +65,13 @@ func (r *Repository) RateRecipe(recipeId, userId uuid.UUID, score int) error {
 	}
 }
 
-func (r *Repository) addUserScore(tx *sql.Tx, recipeId, userId uuid.UUID, scoreDiff int) error {
+func (r *Repository) addUserScore(tx *sql.Tx, recipeId, userId uuid.UUID, score int) error {
 	addScoreQuery := fmt.Sprintf(`
 		INSERT INTO %s (recipe_id, user_id, score)
-		VALUES ($1, $2, $2)
+		VALUES ($1, $2, $3)
 	`, scoresTable)
 
-	if _, err := tx.Query(addScoreQuery, recipeId, userId, scoreDiff); err != nil {
+	if _, err := tx.Query(addScoreQuery, recipeId, userId, score); err != nil {
 		log.Errorf("unable to add user %s score for recipe %s: %s", userId, recipeId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcNotFound)
 	}
@@ -83,12 +79,12 @@ func (r *Repository) addUserScore(tx *sql.Tx, recipeId, userId uuid.UUID, scoreD
 	updateRatingQuery := fmt.Sprintf(`
 		UPDATE %s
 		SET
-			rating=((rating*votes)+$1)/(votes+1)
+			rating=(ceil(rating*votes)+$1)/(votes+1),
 			votes=votes+1
 		WHERE recipe_id=$2
-	`, scoresTable)
+	`, recipesTable)
 
-	if _, err := tx.Query(updateRatingQuery, scoreDiff, recipeId); err != nil {
+	if _, err := tx.Query(updateRatingQuery, score, recipeId); err != nil {
 		log.Errorf("unable to update rating for recipe %s: %s", recipeId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcNotFound)
 	}
@@ -100,7 +96,7 @@ func (r *Repository) changeUserScore(tx *sql.Tx, recipeId, userId uuid.UUID, sco
 	changeScoreQuery := fmt.Sprintf(`
 		UPDATE %s
 		SET score=score+$1
-		WHERE recipe_id=$1 AND user_id=$2
+		WHERE recipe_id=$2 AND user_id=$3
 	`, scoresTable)
 
 	if _, err := tx.Query(changeScoreQuery, scoreDiff, recipeId, userId); err != nil {
@@ -110,9 +106,9 @@ func (r *Repository) changeUserScore(tx *sql.Tx, recipeId, userId uuid.UUID, sco
 
 	updateRatingQuery := fmt.Sprintf(`
 		UPDATE %s
-		SET rating=((rating*votes)+$1)/votes
+		SET rating=(ceil(rating*votes)+$1)/votes
 		WHERE recipe_id=$2
-	`, scoresTable)
+	`, recipesTable)
 
 	if _, err := tx.Query(updateRatingQuery, scoreDiff, recipeId); err != nil {
 		log.Errorf("unable to update rating for recipe %s: %s", recipeId, err)
@@ -136,10 +132,10 @@ func (r *Repository) deleteUserScore(tx *sql.Tx, recipeId, userId uuid.UUID, sco
 	updateRatingQuery := fmt.Sprintf(`
 		UPDATE %s
 		SET
-			rating=((rating*votes)+$1)/(votes-1)
+			rating=(ceil(rating*votes)+$1)/greatest(votes-1, 1),
 			votes=votes-1
 		WHERE recipe_id=$2
-	`, scoresTable)
+	`, recipesTable)
 
 	if _, err := tx.Query(updateRatingQuery, scoreDiff, recipeId); err != nil {
 		log.Errorf("unable to update rating for recipe %s: %s", recipeId, err)

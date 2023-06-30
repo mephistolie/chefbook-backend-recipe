@@ -23,5 +23,5 @@ func (r *Repository) GetRecipePolicy(recipeId uuid.UUID) (entity.RecipePolicy, e
 		return entity.RecipePolicy{}, fail.GrpcNotFound
 	}
 
-	return entity.RecipePolicy{}, nil
+	return policy, nil
 }

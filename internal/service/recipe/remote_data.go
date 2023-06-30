@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 	categoryApi "github.com/mephistolie/chefbook-backend-category/api/proto/implementation/v1"
 	"github.com/mephistolie/chefbook-backend-common/log"
+	slices "github.com/mephistolie/chefbook-backend-common/utils/slices"
 	profileApi "github.com/mephistolie/chefbook-backend-profile/api/proto/implementation/v1"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
 	tagApi "github.com/mephistolie/chefbook-backend-tag/api/proto/implementation/v1"
@@ -13,7 +14,7 @@ import (
 )
 
 func (s *Service) getRecipeAuthorsInfo(authorIds []string) map[string]*profileApi.ProfileMinInfo {
-	uniqueAuthorIds := removeDuplicate(authorIds)
+	uniqueAuthorIds := slices.RemoveDuplicates(authorIds)
 	infos := make(map[string]*profileApi.ProfileMinInfo)
 	if len(uniqueAuthorIds) == 0 {
 		return infos
@@ -64,7 +65,7 @@ func (s *Service) getTags(
 	destination *map[string]entity.Tag,
 	wg *sync.WaitGroup,
 ) {
-	uniqueTagIds := removeDuplicate(tagIds)
+	uniqueTagIds := slices.RemoveDuplicates(tagIds)
 	if len(uniqueTagIds) == 0 {
 		wg.Done()
 		return
@@ -77,8 +78,8 @@ func (s *Service) getTags(
 	})
 	cancelCtx()
 
-	log.Debugf("found %d tags", len(res.Tags))
 	if err == nil {
+		log.Debugf("found %d tags", len(res.Tags))
 		for tagId, dto := range res.Tags {
 			(*destination)[tagId] = entity.Tag{
 				Id:    tagId,
@@ -86,6 +87,8 @@ func (s *Service) getTags(
 				Emoji: dto.Emoji,
 			}
 		}
+	} else {
+		log.Warn("unable to get recipe tags: ", err)
 	}
 
 	wg.Done()
@@ -119,7 +122,7 @@ func (s *Service) getCategoriesMap(
 	destination *map[string]entity.Category,
 	wg *sync.WaitGroup,
 ) {
-	uniqueCategoryIds := removeDuplicate(categoryIds)
+	uniqueCategoryIds := slices.RemoveDuplicates(categoryIds)
 	if len(uniqueCategoryIds) == 0 {
 		wg.Done()
 		return
@@ -143,16 +146,4 @@ func (s *Service) getCategoriesMap(
 	}
 
 	wg.Done()
-}
-
-func removeDuplicate[T string | int](sliceList []T) []T {
-	allKeys := make(map[T]bool)
-	var list []T
-	for _, item := range sliceList {
-		if _, value := allKeys[item]; !value {
-			allKeys[item] = true
-			list = append(list, item)
-		}
-	}
-	return list
 }

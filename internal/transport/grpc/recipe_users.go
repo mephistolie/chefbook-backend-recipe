@@ -4,7 +4,12 @@ import (
 	"context"
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
+	sliceUtils "github.com/mephistolie/chefbook-backend-common/utils/slices"
 	api "github.com/mephistolie/chefbook-backend-recipe/api/proto/implementation/v1"
+)
+
+const (
+	maxRecipeCategoriesCount = 20
 )
 
 func (s *RecipeServer) RateRecipe(_ context.Context, req *api.RateRecipeRequest) (*api.RateRecipeResponse, error) {
@@ -85,8 +90,12 @@ func (s *RecipeServer) SetRecipeCategories(_ context.Context, req *api.SetRecipe
 		return nil, fail.GrpcInvalidBody
 	}
 
+	req.CategoryIds = sliceUtils.RemoveDuplicates(req.CategoryIds)
 	var categoryIds []uuid.UUID
-	for _, rawId := range req.CategoryIds {
+	for i, rawId := range req.CategoryIds {
+		if i > maxRecipeCategoriesCount {
+			break
+		}
 		if id, err := uuid.Parse(rawId); err == nil {
 			categoryIds = append(categoryIds, id)
 		}

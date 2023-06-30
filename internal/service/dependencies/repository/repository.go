@@ -18,7 +18,7 @@ type Recipe interface {
 	DeleteRecipe(recipeId uuid.UUID) error
 
 	GetRecipeRatingAndVotes(recipeId uuid.UUID) (float32, int, error)
-	GetUserRecipeScore(recipeId, userId uuid.UUID) (int, error)
+	GetUserRecipeScore(recipeId, userId uuid.UUID) int
 	RateRecipe(recipeId, userId uuid.UUID, score int) error
 
 	SaveToRecipeBook(recipeId, userId uuid.UUID) error

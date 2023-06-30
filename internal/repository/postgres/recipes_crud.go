@@ -63,8 +63,11 @@ func (r *Repository) CreateRecipe(input entity.RecipeInput) (uuid.UUID, int32, e
 		input.Servings, input.Time,
 		input.Calories, macronutrients.Protein, macronutrients.Fats, macronutrients.Carbohydrates,
 	); err != nil {
+		if isUniqueViolationError(err) {
+			return uuid.UUID{}, 0, recipeFail.GrpcRecipeExists
+		}
 		log.Errorf("unable to create recipe: %s", err)
-		return uuid.UUID{}, 0, errorWithTransactionRollback(tx, err)
+		return uuid.UUID{}, 0, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
 	if input.CreationTimestamp != nil {
@@ -76,7 +79,7 @@ func (r *Repository) CreateRecipe(input entity.RecipeInput) (uuid.UUID, int32, e
 
 		if _, err = tx.Exec(setCreationTimestampQuery, id, *input.CreationTimestamp); err != nil {
 			log.Error("unable to set recipe creation timestamp: ", err)
-			return uuid.UUID{}, 0, errorWithTransactionRollback(tx, err)
+			return uuid.UUID{}, 0, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 		}
 	}
 
@@ -87,7 +90,7 @@ func (r *Repository) CreateRecipe(input entity.RecipeInput) (uuid.UUID, int32, e
 
 	if _, err = tx.Exec(addToRecipeBookQuery, id, input.UserId); err != nil {
 		log.Errorf("unable to add recipe to owner %s recipe book: %s", input.UserId, err)
-		return uuid.UUID{}, 0, errorWithTransactionRollback(tx, err)
+		return uuid.UUID{}, 0, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
 	return id, 1, commitTransaction(tx)
@@ -125,7 +128,7 @@ func (r *Repository) GetRecipe(recipeId, userId uuid.UUID) (entity.BaseRecipe, e
 		WHERE %[1]v.recipe_id=$1
 	`, recipesTable, usersTable, scoresTable)
 
-	row := r.db.QueryRow(query, recipeId)
+	row := r.db.QueryRow(query, recipeId, userId)
 	if err := row.Scan(
 		&recipe.Id, &recipe.Name,
 		&recipe.OwnerId,
@@ -151,14 +154,14 @@ func (r *Repository) UpdateRecipe(input entity.RecipeInput) (int32, error) {
 	query := fmt.Sprintf(`
 		UPDATE %[1]v
 		SET 
-			name=$1
+			name=$1,
 			visibility=$2, encrypted=$3,
 			language=$4, description=$5,
 			tags=$6,
 			ingredients=$7, cooking=$8,
 			servings=$9, cooking_time=$10,
 			calories=$11, protein=$12, fats=$13, carbohydrates=$14,
-			version=version+1
+			version=version+1, update_timestamp=now()::timestamp
 		WHERE recipe_id=$15
 	`, recipesTable)
 
@@ -169,10 +172,9 @@ func (r *Repository) UpdateRecipe(input entity.RecipeInput) (int32, error) {
 
 	args := []interface{}{
 		input.Name,
-		input.UserId,
 		input.Visibility, input.IsEncrypted,
 		input.Language, input.Description,
-		input.Tags,
+		dto.NewTags(input.Tags),
 		dto.NewIngredients(input.Ingredients), dto.NewCooking(input.Cooking),
 		input.Servings, input.Time,
 		input.Calories, macronutrients.Protein, macronutrients.Fats, macronutrients.Carbohydrates,
@@ -180,7 +182,7 @@ func (r *Repository) UpdateRecipe(input entity.RecipeInput) (int32, error) {
 	}
 
 	if input.Version != nil {
-		query += " AND version=$17"
+		query += " AND version=$16"
 		args = append(args, *input.Version)
 	}
 
@@ -188,7 +190,7 @@ func (r *Repository) UpdateRecipe(input entity.RecipeInput) (int32, error) {
 
 	if err := r.db.Get(&version, query, args...); err != nil {
 		if input.Version != nil {
-			log.Warnf("try to update recipe %s with outdated version %s: %s", *input.RecipeId, *input.Version, err)
+			log.Warnf("try to update recipe %s with outdated version %d: %s", *input.RecipeId, *input.Version, err)
 			return 0, recipeFail.GrpcOutdatedVersion
 		} else {
 			log.Errorf("unable to update recipe %s: %s", *input.RecipeId, err)

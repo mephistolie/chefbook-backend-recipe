@@ -13,11 +13,11 @@ func NewRepository(cfg *config.Config) (*Repository, error) {
 	if err != nil {
 		return nil, err
 	}
-	categoryService, err := NewCategory(*cfg.CategoryService.Addr)
+	tagService, err := NewTag(*cfg.TagService.Addr)
 	if err != nil {
 		return nil, err
 	}
-	tagService, err := NewTag(*cfg.CategoryService.Addr)
+	categoryService, err := NewCategory(*cfg.CategoryService.Addr)
 	if err != nil {
 		return nil, err
 	}

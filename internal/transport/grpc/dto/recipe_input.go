@@ -3,6 +3,7 @@ package dto
 import (
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
+	sliceUtils "github.com/mephistolie/chefbook-backend-common/utils/slices"
 	api "github.com/mephistolie/chefbook-backend-recipe/api/proto/implementation/v1"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
 	recipeFail "github.com/mephistolie/chefbook-backend-recipe/internal/entity/fail"
@@ -12,6 +13,8 @@ import (
 const (
 	maxNameLength        = 150
 	maxDescriptionLength = 1500
+
+	maxRecipeTagsCount = 10
 
 	maxServings    = 1000
 	maxCookingTime = 10080 // 1 week
@@ -56,6 +59,10 @@ func NewRecipeInput(
 		description := (*req.Description)[0:maxDescriptionLength]
 		req.Description = &description
 	}
+	req.Tags = sliceUtils.RemoveDuplicates(req.Tags)
+	if len(req.Tags) > maxRecipeTagsCount {
+		req.Tags = req.Tags[0:maxRecipeTagsCount]
+	}
 	if req.Servings != nil && *req.Servings > maxServings {
 		*req.Servings = maxServings
 	}
@@ -64,22 +71,6 @@ func NewRecipeInput(
 	}
 	if req.Calories != nil && *req.Calories > maxCalories {
 		*req.Calories = maxCalories
-	}
-	var macronutrientsPtr *entity.Macronutrients
-	if req.Macronutrients != nil {
-		macronutrients := entity.Macronutrients{}
-		if req.Macronutrients.Protein != nil && *req.Macronutrients.Protein > 0 {
-			macronutrients.Protein = req.Macronutrients.Protein
-		}
-		if req.Macronutrients.Fats != nil && *req.Macronutrients.Fats > 0 {
-			macronutrients.Fats = req.Macronutrients.Fats
-		}
-		if req.Macronutrients.Carbohydrates != nil && *req.Macronutrients.Carbohydrates > 0 {
-			macronutrients.Carbohydrates = req.Macronutrients.Carbohydrates
-		}
-		if macronutrients.Protein != nil || macronutrients.Fats != nil || macronutrients.Carbohydrates != nil {
-			macronutrientsPtr = &macronutrients
-		}
 	}
 
 	ingredients, err := newIngredients(req.Ingredients, req.IsEncrypted)
@@ -108,7 +99,7 @@ func NewRecipeInput(
 		Servings:       req.Servings,
 		Time:           req.Time,
 		Calories:       req.Calories,
-		Macronutrients: macronutrientsPtr,
+		Macronutrients: newMacronutrients(req.Macronutrients),
 		Ingredients:    ingredients,
 		Cooking:        cooking,
 		Version:        version,

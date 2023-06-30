@@ -9,11 +9,18 @@ import (
 	"time"
 )
 
-const maxPageSize = 50
+const (
+	defaultPageSize = 20
+	maxPageSize     = 50
+)
 
 func NewRecipesQuery(req *api.GetRecipesRequest) entity.RecipesQuery {
-	if req.PageSize != nil && *req.PageSize > 0 {
-		*req.PageSize = maxPageSize
+	var pageSize int32 = defaultPageSize
+	if req.PageSize != nil {
+		pageSize = *req.PageSize
+		if pageSize > maxPageSize {
+			pageSize = maxPageSize
+		}
 	}
 	var authorIdPtr *uuid.UUID
 	if req.AuthorId != nil {
@@ -45,9 +52,21 @@ func NewRecipesQuery(req *api.GetRecipesRequest) entity.RecipesQuery {
 	if len(req.RecipeLanguages) > 0 {
 		languages = &req.RecipeLanguages
 	}
+	if req.MinRating != nil && req.MaxRating != nil && *req.MinRating > *req.MaxRating {
+		*req.MinRating = *req.MaxRating
+	}
+	if req.MinTime != nil && req.MaxTime != nil && *req.MinTime > *req.MaxTime {
+		*req.MinTime = *req.MaxTime
+	}
+	if req.MinServings != nil && req.MaxServings != nil && *req.MinServings > *req.MaxServings {
+		*req.MinServings = *req.MaxServings
+	}
+	if req.MinCalories != nil && req.MaxCalories != nil && *req.MinCalories > *req.MaxCalories {
+		*req.MinCalories = *req.MaxCalories
+	}
 
 	return entity.RecipesQuery{
-		PageSize:              req.PageSize,
+		PageSize:              pageSize,
 		AuthorId:              authorIdPtr,
 		Owned:                 req.Owned,
 		Saved:                 req.Saved,

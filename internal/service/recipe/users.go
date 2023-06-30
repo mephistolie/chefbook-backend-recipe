@@ -9,9 +9,14 @@ import (
 )
 
 func (s *Service) RateRecipe(recipeId, userId uuid.UUID, score int) error {
-	if err := s.checkRecipeAccessible(recipeId, userId); err != nil {
+	policy, err := s.repo.GetRecipePolicy(recipeId)
+	if err != nil {
 		return err
 	}
+	if policy.Visibility != entity.VisibilityPublic {
+		return fail.GrpcAccessDenied
+	}
+
 	return s.repo.RateRecipe(recipeId, userId, score)
 }
 
@@ -55,7 +60,7 @@ func (s *Service) validateCategories(recipeId, userId uuid.UUID, categories []uu
 		context.Background(),
 		&api.GetUserCategoriesRequest{UserId: userId.String()},
 	); err == nil {
-		var ownedCategoryIds map[string]bool
+		ownedCategoryIds := make(map[string]bool)
 		for _, category := range res.Categories {
 			ownedCategoryIds[category.CategoryId] = true
 		}

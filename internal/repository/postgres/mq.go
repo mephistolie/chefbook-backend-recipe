@@ -90,7 +90,7 @@ func (r *Repository) handleMessageIdempotently(messageId uuid.UUID) (*sql.Tx, er
 		if !isUniqueViolationError(err) {
 			log.Error("unable to add message to inbox: ", err)
 		}
-		return nil, errorWithTransactionRollback(tx, err)
+		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
 	deleteOutdatedMessagesQuery := fmt.Sprintf(`
@@ -105,7 +105,7 @@ func (r *Repository) handleMessageIdempotently(messageId uuid.UUID) (*sql.Tx, er
 		`, inboxTable)
 
 	if _, err = tx.Exec(deleteOutdatedMessagesQuery); err != nil {
-		return nil, errorWithTransactionRollback(tx, err)
+		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
 	return tx, nil

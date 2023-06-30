@@ -6,7 +6,7 @@ const (
 	SortingRating            = "rating"
 	SortingVotes             = "votes"
 	SortingTime              = "cooking_time"
-	SortingCalories          = "link"
+	SortingCalories          = "calories"
 )
 
 var AvailableSortings = []string{
