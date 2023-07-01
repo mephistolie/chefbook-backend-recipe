@@ -17,7 +17,11 @@ func (s *Service) RateRecipe(recipeId, userId uuid.UUID, score int) error {
 		return fail.GrpcAccessDenied
 	}
 
-	return s.repo.RateRecipe(recipeId, userId, score)
+	msg, err := s.repo.RateRecipe(recipeId, userId, score)
+	if err == nil {
+		go s.mqPublisher.PublishMessage(msg)
+	}
+	return err
 }
 
 func (s *Service) SaveToRecipeBook(recipeId, userId uuid.UUID) error {

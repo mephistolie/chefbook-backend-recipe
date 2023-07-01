@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	amqpConfig "github.com/mephistolie/chefbook-backend-common/mq/config"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/app"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/config"
 	"github.com/peterbourgon/ff/v3"
@@ -41,7 +42,7 @@ func main() {
 			DBName:   fs.String("db-name", "", "service database name"),
 		},
 
-		Amqp: config.Amqp{
+		Amqp: amqpConfig.Amqp{
 			Host:     fs.String("amqp-host", "", "message broker host; leave empty to disable"),
 			Port:     fs.Int("amqp-port", 5672, "message broker port"),
 			User:     fs.String("amqp-user", "guest", "message broker user name"),

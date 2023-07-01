@@ -1,10 +1,14 @@
 package postgres
 
 import (
+	"database/sql"
+	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-common/log"
+	"github.com/mephistolie/chefbook-backend-common/mq/model"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
+	api "github.com/mephistolie/chefbook-backend-recipe/api/mq"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
 	recipeFail "github.com/mephistolie/chefbook-backend-recipe/internal/entity/fail"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/repository/postgres/dto"
@@ -215,16 +219,43 @@ func (r *Repository) SetRecipeTags(recipeId uuid.UUID, tags []string) error {
 	return nil
 }
 
-func (r *Repository) DeleteRecipe(recipeId uuid.UUID) error {
+func (r *Repository) DeleteRecipe(recipeId uuid.UUID) (*model.MessageData, error) {
+	tx, err := r.startTransaction()
+	if err != nil {
+		return nil, err
+	}
+
 	query := fmt.Sprintf(`
 		DELETE FROM %s
 		WHERE recipe_id=$1
 	`, recipesTable)
 
-	if _, err := r.db.Exec(query, recipeId); err != nil {
+	if _, err = tx.Exec(query, recipeId); err != nil {
 		log.Errorf("unable to delete recipe %s: %s", recipeId, err)
-		return fail.GrpcUnknown
+		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
-	return nil
+	msg, err := r.addRecipeDeletedMsg(recipeId, tx)
+	if err != nil {
+		return nil, err
+	}
+
+	return msg, commitTransaction(tx)
+}
+
+func (r *Repository) addRecipeDeletedMsg(recipeId uuid.UUID, tx *sql.Tx) (*model.MessageData, error) {
+	msgBody := api.MsgBodyRecipeDeleted{RecipeId: recipeId}
+	msgBodyBson, err := json.Marshal(msgBody)
+	if err != nil {
+		log.Error("unable to marshal recipe deleted message body: ", err)
+		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
+	}
+	msgInfo := model.MessageData{
+		Id:       uuid.New(),
+		Exchange: api.ExchangeRecipes,
+		Type:     api.MsgTypeRecipeDeleted,
+		Body:     msgBodyBson,
+	}
+
+	return &msgInfo, r.createOutboxMsg(&msgInfo, tx)
 }

@@ -87,7 +87,13 @@ func (s *Service) DeleteRecipe(recipeId, userId uuid.UUID) error {
 	if policy.OwnerId != userId {
 		return fail.GrpcAccessDenied
 	}
-	return s.repo.DeleteRecipe(recipeId)
+	msg, err := s.repo.DeleteRecipe(recipeId)
+
+	if err == nil {
+		go s.mqPublisher.PublishMessage(msg)
+	}
+
+	return err
 }
 
 func (s *Service) validateTags(input entity.RecipeInput) {

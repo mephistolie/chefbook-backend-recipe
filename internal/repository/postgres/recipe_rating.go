@@ -2,10 +2,14 @@ package postgres
 
 import (
 	"database/sql"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-common/log"
+	"github.com/mephistolie/chefbook-backend-common/mq/model"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
+	api "github.com/mephistolie/chefbook-backend-recipe/api/mq"
 )
 
 func (r *Repository) GetRecipeRatingAndVotes(recipeId uuid.UUID) (float32, int, error) {
@@ -43,26 +47,37 @@ func (r *Repository) GetUserRecipeScore(recipeId, userId uuid.UUID) int {
 	return score
 }
 
-func (r *Repository) RateRecipe(recipeId, userId uuid.UUID, score int) error {
+func (r *Repository) RateRecipe(recipeId, userId uuid.UUID, score int) (*model.MessageData, error) {
 	previousScore := r.GetUserRecipeScore(recipeId, userId)
 
 	scoreDiff := score - previousScore
 	if scoreDiff == 0 {
-		return nil
+		return nil, nil
 	}
 
 	tx, err := r.startTransaction()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
+	err = errors.New("stub")
 	if previousScore == 0 {
-		return r.addUserScore(tx, recipeId, userId, score)
+		err = r.addUserScore(tx, recipeId, userId, scoreDiff)
 	} else if score == 0 {
-		return r.deleteUserScore(tx, recipeId, userId, scoreDiff)
+		err = r.deleteUserScore(tx, recipeId, userId, scoreDiff)
 	} else {
-		return r.changeUserScore(tx, recipeId, userId, scoreDiff)
+		err = r.changeUserScore(tx, recipeId, userId, scoreDiff)
 	}
+	if err != nil {
+		return nil, err
+	}
+
+	msg, err := r.addRecipeRatingChangedMsg(recipeId, userId, scoreDiff, tx)
+	if err != nil {
+		return nil, err
+	}
+
+	return msg, commitTransaction(tx)
 }
 
 func (r *Repository) addUserScore(tx *sql.Tx, recipeId, userId uuid.UUID, score int) error {
@@ -89,7 +104,7 @@ func (r *Repository) addUserScore(tx *sql.Tx, recipeId, userId uuid.UUID, score 
 		return errorWithTransactionRollback(tx, fail.GrpcNotFound)
 	}
 
-	return commitTransaction(tx)
+	return nil
 }
 
 func (r *Repository) changeUserScore(tx *sql.Tx, recipeId, userId uuid.UUID, scoreDiff int) error {
@@ -115,7 +130,7 @@ func (r *Repository) changeUserScore(tx *sql.Tx, recipeId, userId uuid.UUID, sco
 		return errorWithTransactionRollback(tx, fail.GrpcNotFound)
 	}
 
-	return commitTransaction(tx)
+	return nil
 }
 
 func (r *Repository) deleteUserScore(tx *sql.Tx, recipeId, userId uuid.UUID, scoreDiff int) error {
@@ -142,5 +157,41 @@ func (r *Repository) deleteUserScore(tx *sql.Tx, recipeId, userId uuid.UUID, sco
 		return errorWithTransactionRollback(tx, fail.GrpcNotFound)
 	}
 
-	return commitTransaction(tx)
+	return nil
+}
+
+func (r *Repository) addRecipeRatingChangedMsg(recipeId, userId uuid.UUID, scoreDiff int, tx *sql.Tx) (*model.MessageData, error) {
+	var ownerId uuid.UUID
+
+	getOwnerIdQuery := fmt.Sprintf(`
+		SELECT owner_id
+		FROM %s
+		WHERE recipe_id=$1
+	`, recipesTable)
+
+	row := tx.QueryRow(getOwnerIdQuery, recipeId)
+	if err := row.Scan(&ownerId); err != nil {
+		log.Warnf("unable to get recipe %s owner: %s", recipeId, err)
+		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
+	}
+
+	msgBody := api.MsgBodyRecipeRatingChanged{
+		RecipeId:  recipeId,
+		OwnerId:   ownerId,
+		ScoreDiff: scoreDiff,
+		UserId:    userId,
+	}
+	msgBodyBson, err := json.Marshal(msgBody)
+	if err != nil {
+		log.Error("unable to marshal recipe rating changed message body: ", err)
+		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
+	}
+	msgInfo := model.MessageData{
+		Id:       uuid.New(),
+		Exchange: api.ExchangeRecipes,
+		Type:     api.MsgTypeRecipeRatingChanged,
+		Body:     msgBodyBson,
+	}
+
+	return &msgInfo, r.createOutboxMsg(&msgInfo, tx)
 }

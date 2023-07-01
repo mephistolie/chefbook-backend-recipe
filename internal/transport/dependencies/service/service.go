@@ -4,17 +4,19 @@ import (
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-common/firebase"
 	"github.com/mephistolie/chefbook-backend-common/log"
+	mq "github.com/mephistolie/chefbook-backend-common/mq/dependencies"
+	amqp "github.com/mephistolie/chefbook-backend-common/mq/publisher"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/config"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/repository/grpc"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/service/dependencies/repository"
-	"github.com/mephistolie/chefbook-backend-recipe/internal/service/mq"
+	mqInbox "github.com/mephistolie/chefbook-backend-recipe/internal/service/mq"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/service/recipe"
 )
 
 type Service struct {
 	Recipe
-	MQ
+	MQ mq.Inbox
 }
 
 type Recipe interface {
@@ -36,15 +38,11 @@ type Recipe interface {
 	GetRecipePolicy(userId uuid.UUID) (entity.RecipePolicy, error)
 }
 
-type MQ interface {
-	ImportFirebaseRecipes(userId uuid.UUID, firebaseId string, messageId uuid.UUID) error
-	DeleteUserRecipes(userId uuid.UUID, deleteSharedData bool, messageId uuid.UUID) error
-}
-
 func New(
 	cfg *config.Config,
 	repo repository.Recipe,
 	grpc *grpc.Repository,
+	mqPublisher *amqp.Publisher,
 ) (*Service, error) {
 	var err error = nil
 	var client *firebase.Client = nil
@@ -58,7 +56,7 @@ func New(
 	}
 
 	return &Service{
-		Recipe: recipe.NewService(repo, grpc),
-		MQ:     mq.NewService(repo, grpc, client),
+		Recipe: recipe.NewService(repo, grpc, mqPublisher),
+		MQ:     mqInbox.NewService(repo, grpc, client),
 	}, nil
 }

@@ -9,7 +9,6 @@ import (
 	"github.com/mephistolie/chefbook-backend-recipe/internal/config"
 	grpcRepo "github.com/mephistolie/chefbook-backend-recipe/internal/repository/grpc"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/repository/postgres"
-	"github.com/mephistolie/chefbook-backend-recipe/internal/transport/amqp"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/transport/dependencies/service"
 	recipe "github.com/mephistolie/chefbook-backend-recipe/internal/transport/grpc"
 	"google.golang.org/grpc"
@@ -37,23 +36,22 @@ func Run(cfg *config.Config) {
 		return
 	}
 
-	recipeService, err := service.New(cfg, repository, grpcRepository)
+	mqPublisher, err := NewMqPublisher(cfg.Amqp, repository)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	var mqServer *amqp.Server = nil
-	if len(*cfg.Amqp.Host) > 0 {
-		mqServer, err = amqp.NewServer(cfg.Amqp, recipeService.MQ)
-		if err != nil {
-			return
-		}
-		if err := mqServer.Start(); err != nil {
-			log.Fatal(err)
-			return
-		}
-		log.Info("MQ server initialized")
+	recipeService, err := service.New(cfg, repository, grpcRepository, mqPublisher)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	mqSubscriber, err := NewMqSubscriber(cfg.Amqp, recipeService.MQ)
+	if err != nil {
+		log.Fatal(err)
+		return
 	}
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *cfg.Port))
@@ -93,10 +91,9 @@ func Run(cfg *config.Config) {
 			return db.Close()
 		},
 		"mq": func(ctx context.Context) error {
-			if mqServer == nil {
-				return nil
-			}
-			return mqServer.Stop()
+			_ = mqPublisher.Stop()
+			_ = mqSubscriber.Stop()
+			return nil
 		},
 	})
 	<-wait

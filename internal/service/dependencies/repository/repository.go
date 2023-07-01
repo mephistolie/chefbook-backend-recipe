@@ -2,6 +2,7 @@ package repository
 
 import (
 	"github.com/google/uuid"
+	"github.com/mephistolie/chefbook-backend-common/mq/model"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
 )
 
@@ -15,11 +16,11 @@ type Recipe interface {
 	GetRecipe(recipeId, userId uuid.UUID) (entity.BaseRecipe, error)
 	UpdateRecipe(input entity.RecipeInput) (int32, error)
 	SetRecipeTags(recipeId uuid.UUID, tags []string) error
-	DeleteRecipe(recipeId uuid.UUID) error
+	DeleteRecipe(recipeId uuid.UUID) (*model.MessageData, error)
 
 	GetRecipeRatingAndVotes(recipeId uuid.UUID) (float32, int, error)
 	GetUserRecipeScore(recipeId, userId uuid.UUID) int
-	RateRecipe(recipeId, userId uuid.UUID, score int) error
+	RateRecipe(recipeId, userId uuid.UUID, score int) (*model.MessageData, error)
 
 	SaveToRecipeBook(recipeId, userId uuid.UUID) error
 	RemoveFromRecipeBook(recipeId, userId uuid.UUID) error

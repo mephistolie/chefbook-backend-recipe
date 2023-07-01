@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/mephistolie/chefbook-backend-common/log"
+	amqpConfig "github.com/mephistolie/chefbook-backend-common/mq/config"
 )
 
 const (
@@ -22,7 +23,7 @@ type Config struct {
 
 	Firebase Firebase
 	Database Database
-	Amqp     Amqp
+	Amqp     amqpConfig.Amqp
 }
 
 type Recipe struct {
@@ -51,14 +52,6 @@ type Database struct {
 	User     *string
 	Password *string
 	DBName   *string
-}
-
-type Amqp struct {
-	Host     *string
-	Port     *int
-	User     *string
-	Password *string
-	VHost    *string
 }
 
 func (c Config) Validate() error {
