@@ -15,7 +15,7 @@ import "v1/save-recipe.proto";
 import "v1/delete-recipe.proto";
 import "v1/set-recipe-favourite-status.proto";
 import "v1/set-recipe-categories.proto";
-import "v1/get-recipe-owner.proto";
+import "v1/get-recipe-policy.proto";
 import "v1/get-recipe-names.proto";
 
 service RecipeService {
@@ -34,6 +34,6 @@ service RecipeService {
   rpc SetRecipeFavouriteStatus(SetRecipeFavouriteStatusRequest) returns (SetRecipeFavouriteStatusResponse);
   rpc SetRecipeCategories(SetRecipeCategoriesRequest) returns (SetRecipeCategoriesResponse);
 
-  rpc GetRecipeOwner(GetRecipeOwnerRequest) returns (GetRecipeOwnerResponse);
+  rpc GetRecipePolicy(GetRecipePolicyRequest) returns (GetRecipePolicyResponse);
   rpc GetRecipeNames(GetRecipeNamesRequest) returns (GetRecipeNamesResponse);
 }

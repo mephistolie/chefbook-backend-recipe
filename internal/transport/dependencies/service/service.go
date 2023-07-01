@@ -33,7 +33,7 @@ type Recipe interface {
 	SetRecipeFavouriteStatus(recipeId, userId uuid.UUID, favourite bool) error
 	SetRecipeCategories(recipeId, userId uuid.UUID, categories []uuid.UUID) error
 
-	GetRecipeOwner(userId uuid.UUID) (uuid.UUID, error)
+	GetRecipePolicy(userId uuid.UUID) (entity.RecipePolicy, error)
 }
 
 type MQ interface {

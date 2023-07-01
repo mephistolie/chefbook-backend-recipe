@@ -1,8 +1,10 @@
 package recipe
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
+)
 
-func (s *Service) GetRecipeOwner(recipeId uuid.UUID) (uuid.UUID, error) {
-	policy, err := s.repo.GetRecipePolicy(recipeId)
-	return policy.OwnerId, err
+func (s *Service) GetRecipePolicy(recipeId uuid.UUID) (entity.RecipePolicy, error) {
+	return s.repo.GetRecipePolicy(recipeId)
 }

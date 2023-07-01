@@ -7,16 +7,20 @@ import (
 	api "github.com/mephistolie/chefbook-backend-recipe/api/proto/implementation/v1"
 )
 
-func (s *RecipeServer) GetRecipeOwner(_ context.Context, req *api.GetRecipeOwnerRequest) (*api.GetRecipeOwnerResponse, error) {
+func (s *RecipeServer) GetRecipePolicy(_ context.Context, req *api.GetRecipePolicyRequest) (*api.GetRecipePolicyResponse, error) {
 	recipeId, err := uuid.Parse(req.RecipeId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
 	}
 
-	ownerId, err := s.service.GetRecipeOwner(recipeId)
+	policy, err := s.service.GetRecipePolicy(recipeId)
 	if err != nil {
 		return nil, err
 	}
 
-	return &api.GetRecipeOwnerResponse{OwnerId: ownerId.String()}, nil
+	return &api.GetRecipePolicyResponse{
+		OwnerId:     policy.OwnerId.String(),
+		Visibility:  policy.Visibility,
+		IsEncrypted: policy.IsEncrypted,
+	}, nil
 }

@@ -31,7 +31,7 @@ const (
 	RecipeService_RemoveFromRecipeBook_FullMethodName     = "/v1.RecipeService/RemoveFromRecipeBook"
 	RecipeService_SetRecipeFavouriteStatus_FullMethodName = "/v1.RecipeService/SetRecipeFavouriteStatus"
 	RecipeService_SetRecipeCategories_FullMethodName      = "/v1.RecipeService/SetRecipeCategories"
-	RecipeService_GetRecipeOwner_FullMethodName           = "/v1.RecipeService/GetRecipeOwner"
+	RecipeService_GetRecipePolicy_FullMethodName          = "/v1.RecipeService/GetRecipePolicy"
 	RecipeService_GetRecipeNames_FullMethodName           = "/v1.RecipeService/GetRecipeNames"
 )
 
@@ -51,7 +51,7 @@ type RecipeServiceClient interface {
 	RemoveFromRecipeBook(ctx context.Context, in *RemoveFromRecipeBookRequest, opts ...grpc.CallOption) (*RemoveFromRecipeBookResponse, error)
 	SetRecipeFavouriteStatus(ctx context.Context, in *SetRecipeFavouriteStatusRequest, opts ...grpc.CallOption) (*SetRecipeFavouriteStatusResponse, error)
 	SetRecipeCategories(ctx context.Context, in *SetRecipeCategoriesRequest, opts ...grpc.CallOption) (*SetRecipeCategoriesResponse, error)
-	GetRecipeOwner(ctx context.Context, in *GetRecipeOwnerRequest, opts ...grpc.CallOption) (*GetRecipeOwnerResponse, error)
+	GetRecipePolicy(ctx context.Context, in *GetRecipePolicyRequest, opts ...grpc.CallOption) (*GetRecipePolicyResponse, error)
 	GetRecipeNames(ctx context.Context, in *GetRecipeNamesRequest, opts ...grpc.CallOption) (*GetRecipeNamesResponse, error)
 }
 
@@ -171,9 +171,9 @@ func (c *recipeServiceClient) SetRecipeCategories(ctx context.Context, in *SetRe
 	return out, nil
 }
 
-func (c *recipeServiceClient) GetRecipeOwner(ctx context.Context, in *GetRecipeOwnerRequest, opts ...grpc.CallOption) (*GetRecipeOwnerResponse, error) {
-	out := new(GetRecipeOwnerResponse)
-	err := c.cc.Invoke(ctx, RecipeService_GetRecipeOwner_FullMethodName, in, out, opts...)
+func (c *recipeServiceClient) GetRecipePolicy(ctx context.Context, in *GetRecipePolicyRequest, opts ...grpc.CallOption) (*GetRecipePolicyResponse, error) {
+	out := new(GetRecipePolicyResponse)
+	err := c.cc.Invoke(ctx, RecipeService_GetRecipePolicy_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -205,7 +205,7 @@ type RecipeServiceServer interface {
 	RemoveFromRecipeBook(context.Context, *RemoveFromRecipeBookRequest) (*RemoveFromRecipeBookResponse, error)
 	SetRecipeFavouriteStatus(context.Context, *SetRecipeFavouriteStatusRequest) (*SetRecipeFavouriteStatusResponse, error)
 	SetRecipeCategories(context.Context, *SetRecipeCategoriesRequest) (*SetRecipeCategoriesResponse, error)
-	GetRecipeOwner(context.Context, *GetRecipeOwnerRequest) (*GetRecipeOwnerResponse, error)
+	GetRecipePolicy(context.Context, *GetRecipePolicyRequest) (*GetRecipePolicyResponse, error)
 	GetRecipeNames(context.Context, *GetRecipeNamesRequest) (*GetRecipeNamesResponse, error)
 	mustEmbedUnimplementedRecipeServiceServer()
 }
@@ -250,8 +250,8 @@ func (UnimplementedRecipeServiceServer) SetRecipeFavouriteStatus(context.Context
 func (UnimplementedRecipeServiceServer) SetRecipeCategories(context.Context, *SetRecipeCategoriesRequest) (*SetRecipeCategoriesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetRecipeCategories not implemented")
 }
-func (UnimplementedRecipeServiceServer) GetRecipeOwner(context.Context, *GetRecipeOwnerRequest) (*GetRecipeOwnerResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetRecipeOwner not implemented")
+func (UnimplementedRecipeServiceServer) GetRecipePolicy(context.Context, *GetRecipePolicyRequest) (*GetRecipePolicyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRecipePolicy not implemented")
 }
 func (UnimplementedRecipeServiceServer) GetRecipeNames(context.Context, *GetRecipeNamesRequest) (*GetRecipeNamesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRecipeNames not implemented")
@@ -485,20 +485,20 @@ func _RecipeService_SetRecipeCategories_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
-func _RecipeService_GetRecipeOwner_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetRecipeOwnerRequest)
+func _RecipeService_GetRecipePolicy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRecipePolicyRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RecipeServiceServer).GetRecipeOwner(ctx, in)
+		return srv.(RecipeServiceServer).GetRecipePolicy(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RecipeService_GetRecipeOwner_FullMethodName,
+		FullMethod: RecipeService_GetRecipePolicy_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RecipeServiceServer).GetRecipeOwner(ctx, req.(*GetRecipeOwnerRequest))
+		return srv.(RecipeServiceServer).GetRecipePolicy(ctx, req.(*GetRecipePolicyRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -577,8 +577,8 @@ var RecipeService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _RecipeService_SetRecipeCategories_Handler,
 		},
 		{
-			MethodName: "GetRecipeOwner",
-			Handler:    _RecipeService_GetRecipeOwner_Handler,
+			MethodName: "GetRecipePolicy",
+			Handler:    _RecipeService_GetRecipePolicy_Handler,
 		},
 		{
 			MethodName: "GetRecipeNames",
