@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-common/log"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
+	"github.com/mephistolie/chefbook-backend-recipe/api/model"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/repository/postgres/dto"
 )
@@ -27,7 +28,7 @@ func (r *Repository) GetRecipeBook(userId uuid.UUID) ([]entity.BaseRecipeState, 
 			%[3]v ON %[3]v.recipe_id=%[1]v.recipe_id
 		WHERE
 			%[2]v.user_id=$1 AND (%[1]v.owner_id=$1 OR %[1]v.visibility<>'%[4]v')
-	`, recipesTable, usersTable, scoresTable, entity.VisibilityPrivate)
+	`, recipesTable, usersTable, scoresTable, model.VisibilityPrivate)
 
 	rows, err := r.db.Query(query, userId)
 	if err != nil {

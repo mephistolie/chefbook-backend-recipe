@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
+	"github.com/mephistolie/chefbook-backend-recipe/api/model"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
 	recipeFail "github.com/mephistolie/chefbook-backend-recipe/internal/entity/fail"
 	api "github.com/mephistolie/chefbook-backend-tag/api/proto/implementation/v1"
@@ -22,7 +23,7 @@ func (s *Service) GetRecipe(recipeId, userId uuid.UUID, language string) (entity
 	if err != nil {
 		return entity.DetailedRecipe{}, err
 	}
-	if baseRecipe.OwnerId != userId && baseRecipe.Visibility == entity.VisibilityPrivate {
+	if baseRecipe.OwnerId != userId && baseRecipe.Visibility == model.VisibilityPrivate {
 		return entity.DetailedRecipe{}, fail.GrpcAccessDenied
 	}
 	return s.fillBaseRecipe(baseRecipe, userId, language), nil

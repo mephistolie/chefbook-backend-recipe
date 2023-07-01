@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-common/log"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
+	"github.com/mephistolie/chefbook-backend-recipe/api/model"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/repository/postgres/dto"
 	"k8s.io/utils/strings/slices"
@@ -102,13 +103,13 @@ func (r *Repository) getRecipesWhereStatementByParams(params entity.RecipesQuery
 	} else if params.Saved {
 		if params.AuthorId != nil {
 			whereStatement += fmt.Sprintf(" %[1]v.user_id=$1 AND %[2]v.owner_id=%[3]v AND %[2]v.visibility<>'%[4]v'",
-				usersTable, recipesTable, *params.AuthorId, entity.VisibilityPrivate)
+				usersTable, recipesTable, *params.AuthorId, model.VisibilityPrivate)
 		} else {
 			whereStatement += fmt.Sprintf(" %[1]v.user_id=$1 AND (%[2]v.owner_id=$1 OR %[2]v.visibility<>'%[3]v')",
-				usersTable, recipesTable, entity.VisibilityPrivate)
+				usersTable, recipesTable, model.VisibilityPrivate)
 		}
 	} else {
-		whereStatement += fmt.Sprintf(" %[1]v.visibility='%[2]v'", recipesTable, entity.VisibilityPublic)
+		whereStatement += fmt.Sprintf(" %[1]v.visibility='%[2]v'", recipesTable, model.VisibilityPublic)
 	}
 
 	if !params.Owned && !params.Saved && params.AuthorId != nil {
@@ -266,7 +267,7 @@ func (r *Repository) GetRandomRecipe(userId uuid.UUID, languages *[]string) (ent
 				FROM %[2]v
 				WHERE %[2]v.recipe_id=%[1]v.recipe_id AND user_id=$1
 			)
-	`, recipesTable, usersTable, scoresTable, entity.VisibilityPublic)
+	`, recipesTable, usersTable, scoresTable, model.VisibilityPublic)
 
 	var args []interface{}
 	args = append(args, userId)
@@ -305,7 +306,7 @@ func (r *Repository) GetRecipeNames(recipeIds []uuid.UUID, userId uuid.UUID) (ma
 		SELECT recipe_id, name
 		FROM %[1]v
 		WHERE recipe_id=ANY($1) AND (owner_id=$2 OR visibility<>'%[2]v')
-	`, recipesTable, entity.VisibilityPrivate)
+	`, recipesTable, model.VisibilityPrivate)
 
 	rows, err := r.db.Query(query, recipeIds, userId)
 	if err != nil {

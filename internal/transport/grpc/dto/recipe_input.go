@@ -4,6 +4,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 	sliceUtils "github.com/mephistolie/chefbook-backend-common/utils/slices"
+	"github.com/mephistolie/chefbook-backend-recipe/api/model"
 	api "github.com/mephistolie/chefbook-backend-recipe/api/proto/implementation/v1"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
 	recipeFail "github.com/mephistolie/chefbook-backend-recipe/internal/entity/fail"
@@ -29,7 +30,7 @@ func NewRecipeInput(
 	if len(req.Name) == 0 {
 		return entity.RecipeInput{}, fail.GrpcInvalidBody
 	}
-	if req.IsEncrypted && req.Visibility == entity.VisibilityPublic {
+	if req.IsEncrypted && req.Visibility == model.VisibilityPublic {
 		return entity.RecipeInput{}, recipeFail.GrpcEncryptedPublicRecipe
 	}
 	if req.IsEncrypted && !isEncryptedRecipeAllowed {
@@ -52,8 +53,8 @@ func NewRecipeInput(
 	if len(req.Name) > maxNameLength {
 		req.Name = req.Name[0:maxNameLength]
 	}
-	if !slices.Contains(entity.AvailableVisibilities, req.Visibility) {
-		req.Visibility = entity.VisibilityPrivate
+	if !slices.Contains(model.AvailableVisibilities, req.Visibility) {
+		req.Visibility = model.VisibilityPrivate
 	}
 	if req.Description != nil && len(*req.Description) > maxDescriptionLength {
 		description := (*req.Description)[0:maxDescriptionLength]

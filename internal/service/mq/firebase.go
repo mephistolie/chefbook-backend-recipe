@@ -7,6 +7,7 @@ import (
 	categoryApi "github.com/mephistolie/chefbook-backend-category/api/proto/implementation/v1"
 	"github.com/mephistolie/chefbook-backend-common/firebase"
 	"github.com/mephistolie/chefbook-backend-common/log"
+	"github.com/mephistolie/chefbook-backend-recipe/api/model"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
 	"regexp"
 	"strconv"
@@ -52,7 +53,7 @@ func (s *Service) importFirebaseRecipe(firebaseRecipe firebase.Recipe, userId uu
 	recipe := entity.RecipeInput{
 		UserId:            userId,
 		Name:              firebaseRecipe.Name,
-		Visibility:        entity.VisibilityPrivate,
+		Visibility:        model.VisibilityPrivate,
 		IsEncrypted:       false,
 		Language:          "en",
 		Servings:          servingsPtr,

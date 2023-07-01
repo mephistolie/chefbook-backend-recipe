@@ -5,7 +5,7 @@ import (
 	"github.com/google/uuid"
 	api "github.com/mephistolie/chefbook-backend-category/api/proto/implementation/v1"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
-	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
+	"github.com/mephistolie/chefbook-backend-recipe/api/model"
 )
 
 func (s *Service) RateRecipe(recipeId, userId uuid.UUID, score int) error {
@@ -13,7 +13,7 @@ func (s *Service) RateRecipe(recipeId, userId uuid.UUID, score int) error {
 	if err != nil {
 		return err
 	}
-	if policy.Visibility != entity.VisibilityPublic {
+	if policy.Visibility != model.VisibilityPublic {
 		return fail.GrpcAccessDenied
 	}
 
@@ -87,7 +87,7 @@ func (s *Service) checkRecipeAccessible(recipeId, userId uuid.UUID) error {
 		return err
 	}
 
-	if userId != policy.OwnerId && policy.Visibility == entity.VisibilityPrivate {
+	if userId != policy.OwnerId && policy.Visibility == model.VisibilityPrivate {
 		return fail.GrpcAccessDenied
 	}
 
