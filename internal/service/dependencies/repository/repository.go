@@ -30,5 +30,6 @@ type Recipe interface {
 	GetRecipePolicy(recipeId uuid.UUID) (entity.RecipePolicy, error)
 
 	ConfirmFirebaseDataLoad(messageId uuid.UUID) error
+	DeleteUserEncryptedRecipes(userId uuid.UUID, messageId uuid.UUID) error
 	DeleteUserRecipes(userId uuid.UUID, deleteSharedData bool, messageId uuid.UUID) error
 }

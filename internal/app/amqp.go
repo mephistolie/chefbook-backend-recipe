@@ -7,6 +7,7 @@ import (
 	mqConsumer "github.com/mephistolie/chefbook-backend-common/mq/consumer"
 	mqApi "github.com/mephistolie/chefbook-backend-common/mq/dependencies"
 	mqPublisher "github.com/mephistolie/chefbook-backend-common/mq/publisher"
+	encryption "github.com/mephistolie/chefbook-backend-encryption/api/mq"
 	api "github.com/mephistolie/chefbook-backend-recipe/api/mq"
 	mqRecipeApi "github.com/mephistolie/chefbook-backend-recipe/api/mq"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/repository/postgres"
@@ -14,10 +15,12 @@ import (
 )
 
 const queueProfiles = "recipe.profiles"
+const queueVaults = "recipe.vaults"
 
 var supportedMsgTypes = []string{
 	auth.MsgTypeProfileFirebaseImport,
 	auth.MsgTypeProfileDeleted,
+	encryption.MsgTypeVaultDeleted,
 }
 
 func NewMqPublisher(
@@ -67,6 +70,18 @@ func NewMqSubscriber(
 					amqp.WithConsumerOptionsQueueQuorum,
 					amqp.WithConsumerOptionsQueueDurable,
 					amqp.WithConsumerOptionsExchangeName(auth.ExchangeProfiles),
+					amqp.WithConsumerOptionsExchangeKind("fanout"),
+					amqp.WithConsumerOptionsExchangeDurable,
+					amqp.WithConsumerOptionsExchangeDeclare,
+					amqp.WithConsumerOptionsRoutingKey(""),
+				},
+			},
+			mqConsumer.Params{
+				QueueName: queueVaults,
+				Options: []func(*amqp.ConsumerOptions){
+					amqp.WithConsumerOptionsQueueQuorum,
+					amqp.WithConsumerOptionsQueueDurable,
+					amqp.WithConsumerOptionsExchangeName(encryption.ExchangeEncryption),
 					amqp.WithConsumerOptionsExchangeKind("fanout"),
 					amqp.WithConsumerOptionsExchangeDurable,
 					amqp.WithConsumerOptionsExchangeDeclare,

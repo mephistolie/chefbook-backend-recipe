@@ -20,6 +20,29 @@ func (r *Repository) ConfirmFirebaseDataLoad(messageId uuid.UUID) error {
 	return commitTransaction(tx)
 }
 
+func (r *Repository) DeleteUserEncryptedRecipes(userId uuid.UUID, messageId uuid.UUID) error {
+	tx, err := r.handleMessageIdempotently(messageId)
+	if err != nil {
+		if isUniqueViolationError(err) {
+			return nil
+		} else {
+			return fail.GrpcUnknown
+		}
+	}
+
+	deleteRecipesQuery := fmt.Sprintf(`
+		DELETE FROM %s
+		WHERE owner_id=$1 AND encrypted=true
+	`, recipesTable)
+
+	if _, err := tx.Exec(deleteRecipesQuery, userId); err != nil {
+		log.Errorf("unable to delete user %s encrypted recipes: %s", userId, err)
+		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
+	}
+
+	return commitTransaction(tx)
+}
+
 func (r *Repository) DeleteUserRecipes(userId uuid.UUID, deleteSharedData bool, messageId uuid.UUID) error {
 	tx, err := r.handleMessageIdempotently(messageId)
 	if err != nil {
@@ -31,9 +54,9 @@ func (r *Repository) DeleteUserRecipes(userId uuid.UUID, deleteSharedData bool, 
 	}
 
 	deleteRecipeBookQuery := fmt.Sprintf(`
-			DELETE FROM %s
-			WHERE user_id=$1
-		`, usersTable)
+		DELETE FROM %s
+		WHERE user_id=$1
+	`, usersTable)
 
 	if _, err := tx.Exec(deleteRecipeBookQuery, userId); err != nil {
 		log.Errorf("unable to delete user %s recipe book: %s", userId, err)
@@ -90,7 +113,7 @@ func (r *Repository) handleMessageIdempotently(messageId uuid.UUID) (*sql.Tx, er
 		if !isUniqueViolationError(err) {
 			log.Error("unable to add message to inbox: ", err)
 		}
-		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
+		return nil, errorWithTransactionRollback(tx, err)
 	}
 
 	deleteOutdatedMessagesQuery := fmt.Sprintf(`
@@ -105,7 +128,7 @@ func (r *Repository) handleMessageIdempotently(messageId uuid.UUID) (*sql.Tx, er
 		`, inboxTable)
 
 	if _, err = tx.Exec(deleteOutdatedMessagesQuery); err != nil {
-		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
+		return nil, errorWithTransactionRollback(tx, err)
 	}
 
 	return tx, nil

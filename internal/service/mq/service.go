@@ -8,6 +8,7 @@ import (
 	"github.com/mephistolie/chefbook-backend-common/firebase"
 	"github.com/mephistolie/chefbook-backend-common/log"
 	"github.com/mephistolie/chefbook-backend-common/mq/model"
+	encryption "github.com/mephistolie/chefbook-backend-encryption/api/mq"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/repository/grpc"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/service/dependencies/repository"
 )
@@ -37,6 +38,8 @@ func (s *Service) HandleMessage(msg model.MessageData) error {
 		return s.handleFirebaseImportMsg(msg.Id, msg.Body)
 	case auth.MsgTypeProfileDeleted:
 		return s.handleProfileDeletedMsg(msg.Id, msg.Body)
+	case encryption.MsgTypeVaultDeleted:
+		return s.handleVaultDeletedMsg(msg.Id, msg.Body)
 	default:
 		log.Warnf("got unsupported message type %s for message %s", msg.Type, msg.Id)
 		return errors.New("not implemented")
@@ -71,4 +74,14 @@ func (s *Service) handleProfileDeletedMsg(messageId uuid.UUID, data []byte) erro
 
 	log.Infof("deleting user %s...", body.UserId)
 	return s.DeleteUserRecipes(userId, body.DeleteSharedData, messageId)
+}
+
+func (s *Service) handleVaultDeletedMsg(messageId uuid.UUID, data []byte) error {
+	var body encryption.MsgBodyVaultDeleted
+	if err := json.Unmarshal(data, &body); err != nil {
+		return err
+	}
+
+	log.Infof("deleting encrypted recipes for user %s...", body.UserId)
+	return s.DeleteUserEncryptedRecipes(body.UserId, messageId)
 }
