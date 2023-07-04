@@ -11,22 +11,25 @@ import (
 type Cooking []CookingItem
 
 func (c *Cooking) Entity(pictures RecipePictures) []entity.CookingItem {
-	picturesMap := make(map[uuid.UUID][]string)
+	picturesMap := make(map[uuid.UUID][]uuid.UUID)
 	if pictures.Cooking != nil {
 		picturesMap = *pictures.Cooking
 	}
 
 	var cooking []entity.CookingItem
 	for _, dto := range *c {
-		stepPictures, _ := picturesMap[dto.Id]
+		var stepPictures []uuid.UUID
+		if dto.Type == entity.TypeStep {
+			stepPictures, _ = picturesMap[dto.Id]
+		}
 
 		step := entity.CookingItem{
-			Id:       dto.Id,
-			Text:     dto.Text,
-			Type:     dto.Type,
-			Time:     dto.Time,
-			Pictures: stepPictures,
-			RecipeId: dto.RecipeId,
+			Id:         dto.Id,
+			Text:       dto.Text,
+			Type:       dto.Type,
+			Time:       dto.Time,
+			PictureIds: stepPictures,
+			RecipeId:   dto.RecipeId,
 		}
 		cooking = append(cooking, step)
 	}

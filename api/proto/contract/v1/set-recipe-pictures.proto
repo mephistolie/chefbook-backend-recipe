@@ -1,0 +1,20 @@
+syntax = "proto3";
+package v1;
+
+option go_package = "github.com/mephistolie/chefbook-backend-recipe/api/proto/v1";
+
+message StepPictures {
+  repeated string pictures = 1;
+}
+
+message SetRecipePicturesRequest {
+  string recipeId = 1;
+  string userId = 2;
+  optional string preview = 3;
+  map<string, StepPictures> cookingPicturesMap = 4;
+  string subscription = 5;
+}
+
+message SetRecipePicturesResponse {
+  int32 version = 1;
+}

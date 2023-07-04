@@ -13,11 +13,12 @@ import (
 )
 
 const (
-	recipesTable = "recipes"
-	usersTable   = "recipes_users"
-	scoresTable  = "scores"
-	inboxTable   = "inbox"
-	outboxTable  = "inbox"
+	recipesTable               = "recipes"
+	recipePicturesUploadsTable = "recipe_pictures_uploads"
+	usersTable                 = "recipes_users"
+	scoresTable                = "scores"
+	inboxTable                 = "inbox"
+	outboxTable                = "inbox"
 
 	errUniqueViolation = "23505"
 )

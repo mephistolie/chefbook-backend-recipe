@@ -37,10 +37,17 @@ CREATE TABLE recipes
 );
 
 CREATE INDEX recipes_owner_id_key ON recipes (owner_id);
+CREATE INDEX recipes_language_key ON recipes (language);
 CREATE INDEX recipes_creation_timestamp_key ON recipes (creation_timestamp);
 CREATE INDEX recipes_update_timestamp_key ON recipes (update_timestamp);
 CREATE INDEX recipes_rating_key ON recipes (rating);
 CREATE INDEX recipes_votes_key ON recipes (votes);
+
+CREATE TABLE recipe_pictures_uploads
+(
+    recipe_id uuid REFERENCES recipes (recipe_id) ON DELETE CASCADE NOT NULL UNIQUE,
+    pictures  JSONB                                                 NOT NULL
+);
 
 CREATE TABLE recipes_users
 (

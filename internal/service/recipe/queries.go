@@ -45,6 +45,11 @@ func (s *Service) getRecipeInfos(
 			recipe.OwnerAvatar = info.Avatar
 		}
 
+		if recipe.PreviewId != nil {
+			preview := s.s3.GetRecipePictureLink(recipe.Id, *recipe.PreviewId)
+			recipe.Preview = &preview
+		}
+
 		infos = append(infos, recipe)
 	}
 

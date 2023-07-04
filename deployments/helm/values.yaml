@@ -14,11 +14,21 @@ config:
   logsPath: ""
 
   checkSubscription: true
+  maxPicturesFree: 5
+  maxPicturesPremium: 15
+  pictureMaxSizeFree: 786432 # 0.75MB
+  pictureMaxSizePremium: 1572864 # 1.5MB
 
   postgres:
     host: ""
     port: 5432
     dbName: chefbook-shoppinglist
+
+  s3:
+    host: ""
+    accessKeyId: ""
+    bucket: images
+    region: "us-east-1"
 
   rabbitmq:
     name: ""
@@ -48,6 +58,10 @@ secrets:
     name: postgres-secrets
     userRef: user
     passwordRef: password
+  s3:
+    name: s3-secrets
+    accessKeyIdRef: accessKeyId
+    secretAccessKeyRef: secretAccessKey
   rabbitmq:
     name: rabbitmq-secrets
     userRef: user

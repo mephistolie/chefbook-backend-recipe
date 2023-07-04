@@ -7,8 +7,10 @@ import (
 	"github.com/mephistolie/chefbook-backend-common/shutdown"
 	recipepb "github.com/mephistolie/chefbook-backend-recipe/api/proto/implementation/v1"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/config"
+	"github.com/mephistolie/chefbook-backend-recipe/internal/helpers"
 	grpcRepo "github.com/mephistolie/chefbook-backend-recipe/internal/repository/grpc"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/repository/postgres"
+	"github.com/mephistolie/chefbook-backend-recipe/internal/repository/s3"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/transport/dependencies/service"
 	recipe "github.com/mephistolie/chefbook-backend-recipe/internal/transport/grpc"
 	"google.golang.org/grpc"
@@ -21,6 +23,8 @@ import (
 func Run(cfg *config.Config) {
 	log.Init(*cfg.LogsPath, *cfg.Environment == config.EnvDev)
 	cfg.Print()
+
+	subscriptionLimiter := helpers.NewSubscriptionLimiter(cfg.Subscription)
 
 	db, err := postgres.Connect(cfg.Database)
 	if err != nil {
@@ -36,13 +40,19 @@ func Run(cfg *config.Config) {
 		return
 	}
 
+	s3Repository, err := s3.NewRepository(cfg, subscriptionLimiter)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
 	mqPublisher, err := NewMqPublisher(cfg.Amqp, repository)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	recipeService, err := service.New(cfg, repository, grpcRepository, mqPublisher)
+	recipeService, err := service.New(cfg, repository, grpcRepository, s3Repository, mqPublisher, subscriptionLimiter)
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -67,7 +77,7 @@ func Run(cfg *config.Config) {
 	)
 
 	healthServer := health.NewServer()
-	recipeServer := recipe.NewServer(*recipeService, *cfg.Recipe.CheckSubscription)
+	recipeServer := recipe.NewServer(recipeService.Recipe, subscriptionLimiter)
 
 	go monitorHealthChecking(db, healthServer)
 

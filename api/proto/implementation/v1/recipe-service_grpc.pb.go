@@ -19,20 +19,22 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	RecipeService_GetRecipes_FullMethodName               = "/v1.RecipeService/GetRecipes"
-	RecipeService_GetRandomRecipe_FullMethodName          = "/v1.RecipeService/GetRandomRecipe"
-	RecipeService_GetRecipeBook_FullMethodName            = "/v1.RecipeService/GetRecipeBook"
-	RecipeService_CreateRecipe_FullMethodName             = "/v1.RecipeService/CreateRecipe"
-	RecipeService_GetRecipe_FullMethodName                = "/v1.RecipeService/GetRecipe"
-	RecipeService_UpdateRecipe_FullMethodName             = "/v1.RecipeService/UpdateRecipe"
-	RecipeService_DeleteRecipe_FullMethodName             = "/v1.RecipeService/DeleteRecipe"
-	RecipeService_RateRecipe_FullMethodName               = "/v1.RecipeService/RateRecipe"
-	RecipeService_SaveToRecipeBook_FullMethodName         = "/v1.RecipeService/SaveToRecipeBook"
-	RecipeService_RemoveFromRecipeBook_FullMethodName     = "/v1.RecipeService/RemoveFromRecipeBook"
-	RecipeService_SetRecipeFavouriteStatus_FullMethodName = "/v1.RecipeService/SetRecipeFavouriteStatus"
-	RecipeService_SetRecipeCategories_FullMethodName      = "/v1.RecipeService/SetRecipeCategories"
-	RecipeService_GetRecipePolicy_FullMethodName          = "/v1.RecipeService/GetRecipePolicy"
-	RecipeService_GetRecipeNames_FullMethodName           = "/v1.RecipeService/GetRecipeNames"
+	RecipeService_GetRecipes_FullMethodName                        = "/v1.RecipeService/GetRecipes"
+	RecipeService_GetRandomRecipe_FullMethodName                   = "/v1.RecipeService/GetRandomRecipe"
+	RecipeService_GetRecipeBook_FullMethodName                     = "/v1.RecipeService/GetRecipeBook"
+	RecipeService_CreateRecipe_FullMethodName                      = "/v1.RecipeService/CreateRecipe"
+	RecipeService_GetRecipe_FullMethodName                         = "/v1.RecipeService/GetRecipe"
+	RecipeService_UpdateRecipe_FullMethodName                      = "/v1.RecipeService/UpdateRecipe"
+	RecipeService_DeleteRecipe_FullMethodName                      = "/v1.RecipeService/DeleteRecipe"
+	RecipeService_GenerateRecipePicturesUploadLinks_FullMethodName = "/v1.RecipeService/GenerateRecipePicturesUploadLinks"
+	RecipeService_SetRecipePictures_FullMethodName                 = "/v1.RecipeService/SetRecipePictures"
+	RecipeService_RateRecipe_FullMethodName                        = "/v1.RecipeService/RateRecipe"
+	RecipeService_SaveToRecipeBook_FullMethodName                  = "/v1.RecipeService/SaveToRecipeBook"
+	RecipeService_RemoveFromRecipeBook_FullMethodName              = "/v1.RecipeService/RemoveFromRecipeBook"
+	RecipeService_SetRecipeFavouriteStatus_FullMethodName          = "/v1.RecipeService/SetRecipeFavouriteStatus"
+	RecipeService_SetRecipeCategories_FullMethodName               = "/v1.RecipeService/SetRecipeCategories"
+	RecipeService_GetRecipePolicy_FullMethodName                   = "/v1.RecipeService/GetRecipePolicy"
+	RecipeService_GetRecipeNames_FullMethodName                    = "/v1.RecipeService/GetRecipeNames"
 )
 
 // RecipeServiceClient is the client API for RecipeService service.
@@ -46,6 +48,8 @@ type RecipeServiceClient interface {
 	GetRecipe(ctx context.Context, in *GetRecipeRequest, opts ...grpc.CallOption) (*GetRecipeResponse, error)
 	UpdateRecipe(ctx context.Context, in *RecipeInput, opts ...grpc.CallOption) (*UpdateRecipeResponse, error)
 	DeleteRecipe(ctx context.Context, in *DeleteRecipeRequest, opts ...grpc.CallOption) (*DeleteRecipeResponse, error)
+	GenerateRecipePicturesUploadLinks(ctx context.Context, in *GenerateRecipePicturesUploadLinksRequest, opts ...grpc.CallOption) (*GenerateRecipePicturesUploadLinksResponse, error)
+	SetRecipePictures(ctx context.Context, in *SetRecipePicturesRequest, opts ...grpc.CallOption) (*SetRecipePicturesResponse, error)
 	RateRecipe(ctx context.Context, in *RateRecipeRequest, opts ...grpc.CallOption) (*RateRecipeResponse, error)
 	SaveToRecipeBook(ctx context.Context, in *SaveToRecipeBookRequest, opts ...grpc.CallOption) (*SaveToRecipeBookResponse, error)
 	RemoveFromRecipeBook(ctx context.Context, in *RemoveFromRecipeBookRequest, opts ...grpc.CallOption) (*RemoveFromRecipeBookResponse, error)
@@ -126,6 +130,24 @@ func (c *recipeServiceClient) DeleteRecipe(ctx context.Context, in *DeleteRecipe
 	return out, nil
 }
 
+func (c *recipeServiceClient) GenerateRecipePicturesUploadLinks(ctx context.Context, in *GenerateRecipePicturesUploadLinksRequest, opts ...grpc.CallOption) (*GenerateRecipePicturesUploadLinksResponse, error) {
+	out := new(GenerateRecipePicturesUploadLinksResponse)
+	err := c.cc.Invoke(ctx, RecipeService_GenerateRecipePicturesUploadLinks_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *recipeServiceClient) SetRecipePictures(ctx context.Context, in *SetRecipePicturesRequest, opts ...grpc.CallOption) (*SetRecipePicturesResponse, error) {
+	out := new(SetRecipePicturesResponse)
+	err := c.cc.Invoke(ctx, RecipeService_SetRecipePictures_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *recipeServiceClient) RateRecipe(ctx context.Context, in *RateRecipeRequest, opts ...grpc.CallOption) (*RateRecipeResponse, error) {
 	out := new(RateRecipeResponse)
 	err := c.cc.Invoke(ctx, RecipeService_RateRecipe_FullMethodName, in, out, opts...)
@@ -200,6 +222,8 @@ type RecipeServiceServer interface {
 	GetRecipe(context.Context, *GetRecipeRequest) (*GetRecipeResponse, error)
 	UpdateRecipe(context.Context, *RecipeInput) (*UpdateRecipeResponse, error)
 	DeleteRecipe(context.Context, *DeleteRecipeRequest) (*DeleteRecipeResponse, error)
+	GenerateRecipePicturesUploadLinks(context.Context, *GenerateRecipePicturesUploadLinksRequest) (*GenerateRecipePicturesUploadLinksResponse, error)
+	SetRecipePictures(context.Context, *SetRecipePicturesRequest) (*SetRecipePicturesResponse, error)
 	RateRecipe(context.Context, *RateRecipeRequest) (*RateRecipeResponse, error)
 	SaveToRecipeBook(context.Context, *SaveToRecipeBookRequest) (*SaveToRecipeBookResponse, error)
 	RemoveFromRecipeBook(context.Context, *RemoveFromRecipeBookRequest) (*RemoveFromRecipeBookResponse, error)
@@ -234,6 +258,12 @@ func (UnimplementedRecipeServiceServer) UpdateRecipe(context.Context, *RecipeInp
 }
 func (UnimplementedRecipeServiceServer) DeleteRecipe(context.Context, *DeleteRecipeRequest) (*DeleteRecipeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteRecipe not implemented")
+}
+func (UnimplementedRecipeServiceServer) GenerateRecipePicturesUploadLinks(context.Context, *GenerateRecipePicturesUploadLinksRequest) (*GenerateRecipePicturesUploadLinksResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GenerateRecipePicturesUploadLinks not implemented")
+}
+func (UnimplementedRecipeServiceServer) SetRecipePictures(context.Context, *SetRecipePicturesRequest) (*SetRecipePicturesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetRecipePictures not implemented")
 }
 func (UnimplementedRecipeServiceServer) RateRecipe(context.Context, *RateRecipeRequest) (*RateRecipeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RateRecipe not implemented")
@@ -391,6 +421,42 @@ func _RecipeService_DeleteRecipe_Handler(srv interface{}, ctx context.Context, d
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RecipeServiceServer).DeleteRecipe(ctx, req.(*DeleteRecipeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RecipeService_GenerateRecipePicturesUploadLinks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GenerateRecipePicturesUploadLinksRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RecipeServiceServer).GenerateRecipePicturesUploadLinks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RecipeService_GenerateRecipePicturesUploadLinks_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RecipeServiceServer).GenerateRecipePicturesUploadLinks(ctx, req.(*GenerateRecipePicturesUploadLinksRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RecipeService_SetRecipePictures_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetRecipePicturesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RecipeServiceServer).SetRecipePictures(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RecipeService_SetRecipePictures_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RecipeServiceServer).SetRecipePictures(ctx, req.(*SetRecipePicturesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -555,6 +621,14 @@ var RecipeService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteRecipe",
 			Handler:    _RecipeService_DeleteRecipe_Handler,
+		},
+		{
+			MethodName: "GenerateRecipePicturesUploadLinks",
+			Handler:    _RecipeService_GenerateRecipePicturesUploadLinks_Handler,
+		},
+		{
+			MethodName: "SetRecipePictures",
+			Handler:    _RecipeService_SetRecipePictures_Handler,
 		},
 		{
 			MethodName: "RateRecipe",

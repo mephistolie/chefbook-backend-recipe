@@ -54,6 +54,19 @@ func (s *Service) fillBaseRecipe(baseRecipe entity.BaseRecipe, userId uuid.UUID,
 
 	wg.Wait()
 
+	if recipe.PreviewId != nil {
+		preview := s.s3.GetRecipePictureLink(recipe.Id, *recipe.PreviewId)
+		recipe.Preview = &preview
+	}
+
+	for i, step := range recipe.Cooking {
+		var pictures []string
+		for _, pictureId := range step.PictureIds {
+			pictures = append(pictures, s.s3.GetRecipePictureLink(recipe.Id, pictureId))
+		}
+		recipe.Cooking[i].Pictures = pictures
+	}
+
 	return entity.DetailedRecipe{
 		Recipe:     recipe,
 		Tags:       tags,

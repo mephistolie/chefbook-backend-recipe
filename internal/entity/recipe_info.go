@@ -16,8 +16,8 @@ type BaseRecipeInfo struct {
 	Visibility  string
 	IsEncrypted bool
 
-	Language string
-	Preview  *string
+	Language  string
+	PreviewId *uuid.UUID
 
 	CreationTimestamp time.Time
 	UpdateTimestamp   time.Time
@@ -42,6 +42,8 @@ type RecipeInfo struct {
 
 	OwnerName   *string
 	OwnerAvatar *string
+
+	Preview *string
 }
 
 type DetailedRecipesInfo struct {

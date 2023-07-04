@@ -18,7 +18,7 @@ type BaseRecipe struct {
 
 	Language    string
 	Description *string
-	Preview     *string
+	PreviewId   *uuid.UUID
 
 	CreationTimestamp time.Time
 	UpdateTimestamp   time.Time
@@ -47,6 +47,8 @@ type Recipe struct {
 
 	OwnerName   *string
 	OwnerAvatar *string
+
+	Preview *string
 }
 
 type DetailedRecipe struct {

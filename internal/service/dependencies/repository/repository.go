@@ -18,6 +18,9 @@ type Recipe interface {
 	SetRecipeTags(recipeId uuid.UUID, tags []string) error
 	DeleteRecipe(recipeId uuid.UUID) (*model.MessageData, error)
 
+	GetRecipePictureIdsToUpload(recipeId uuid.UUID, picturesCount int) ([]uuid.UUID, error)
+	SetRecipePictures(recipeId uuid.UUID, pictures entity.RecipePictures) (int32, error)
+
 	GetRecipeRatingAndVotes(recipeId uuid.UUID) (float32, int, error)
 	GetUserRecipeScore(recipeId, userId uuid.UUID) int
 	RateRecipe(recipeId, userId uuid.UUID, score int) (*model.MessageData, error)

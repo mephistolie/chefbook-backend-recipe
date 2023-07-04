@@ -15,7 +15,7 @@ type Config struct {
 	Port        *int
 	LogsPath    *string
 
-	Recipe Recipe
+	Subscription Subscription
 
 	ProfileService  ProfileService
 	TagService      TagService
@@ -23,11 +23,18 @@ type Config struct {
 
 	Firebase Firebase
 	Database Database
+	S3       S3
 	Amqp     amqpConfig.Amqp
 }
 
-type Recipe struct {
+type Subscription struct {
 	CheckSubscription *bool
+
+	MaxPicturesFree    *int
+	MaxPicturesPremium *int
+
+	PictureMaxSizeFree    *int64
+	PictureMaxSizePremium *int64
 }
 
 type ProfileService struct {
@@ -54,6 +61,14 @@ type Database struct {
 	DBName   *string
 }
 
+type S3 struct {
+	Host            *string
+	AccessKeyId     *string
+	SecretAccessKey *string
+	Bucket          *string
+	Region          *string
+}
+
 func (c Config) Validate() error {
 	if *c.Environment != EnvProd {
 		*c.Environment = EnvDev
@@ -73,13 +88,17 @@ func (c Config) Print() {
 		"Database host: %v\n"+
 		"Database port: %v\n"+
 		"Database name: %v\n\n"+
+		"S3 host: %v\n"+
+		"S3 bucket: %v\n"+
+		"S3 region: %v\n\n"+
 		"MQ host: %v\n"+
 		"MQ port: %v\n"+
 		"MQ vhost: %v\n\n",
 		*c.Environment, *c.Port, *c.LogsPath,
-		*c.Recipe.CheckSubscription,
+		*c.Subscription.CheckSubscription,
 		*c.ProfileService.Addr, *c.TagService.Addr, *c.CategoryService.Addr,
 		*c.Database.Host, *c.Database.Port, *c.Database.DBName,
+		*c.S3.Host, *c.S3.Bucket, *c.S3.Region,
 		*c.Amqp.Host, *c.Amqp.Port, *c.Amqp.VHost,
 	)
 }

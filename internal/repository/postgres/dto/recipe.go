@@ -72,7 +72,7 @@ func (r *Recipe) Entity(userId uuid.UUID) entity.BaseRecipe {
 
 		Language:    r.Language,
 		Description: r.Description,
-		Preview:     r.Pictures.Preview,
+		PreviewId:   r.Pictures.Preview,
 
 		CreationTimestamp: r.CreationTimestamp,
 		UpdateTimestamp:   r.UpdateTimestamp,

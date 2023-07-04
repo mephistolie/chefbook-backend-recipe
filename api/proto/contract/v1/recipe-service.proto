@@ -13,6 +13,8 @@ import "v1/update-recipe.proto";
 import "v1/rate-recipe.proto";
 import "v1/save-recipe.proto";
 import "v1/delete-recipe.proto";
+import "v1/generate-recipe-pictures-upload-links.proto";
+import "v1/set-recipe-pictures.proto";
 import "v1/set-recipe-favourite-status.proto";
 import "v1/set-recipe-categories.proto";
 import "v1/get-recipe-policy.proto";
@@ -27,6 +29,9 @@ service RecipeService {
   rpc GetRecipe(GetRecipeRequest) returns (GetRecipeResponse);
   rpc UpdateRecipe(RecipeInput) returns (UpdateRecipeResponse);
   rpc DeleteRecipe(DeleteRecipeRequest) returns (DeleteRecipeResponse);
+
+  rpc GenerateRecipePicturesUploadLinks(GenerateRecipePicturesUploadLinksRequest) returns (GenerateRecipePicturesUploadLinksResponse);
+  rpc SetRecipePictures(SetRecipePicturesRequest) returns (SetRecipePicturesResponse);
 
   rpc RateRecipe(RateRecipeRequest) returns (RateRecipeResponse);
   rpc SaveToRecipeBook(SaveToRecipeBookRequest) returns (SaveToRecipeBookResponse);

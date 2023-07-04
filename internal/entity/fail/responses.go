@@ -25,4 +25,7 @@ var (
 
 	GrpcRecipeExists    = fail.CreateGrpcConflict(typeOutdatedVersion, "recipe with specified ID already exists")
 	GrpcOutdatedVersion = fail.CreateGrpcConflict(typeOutdatedVersion, "recipe version is outdated; process current version first")
+
+	GrpcRecipePictureNotFound    = fail.CreateGrpcNotFound(fail.TypeNotFound, "one or more entered pictures hasn't been found")
+	GrpcRecipePicturesCountLimit = fail.CreateGrpcAccessDenied(fail.TypeAccessDenied, "recipe pictures count out of limit")
 )

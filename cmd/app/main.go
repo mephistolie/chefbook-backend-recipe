@@ -16,8 +16,12 @@ func main() {
 		Port:        fs.Int("port", 8080, "service port"),
 		LogsPath:    fs.String("logs-path", "", "logs file path"),
 
-		Recipe: config.Recipe{
-			CheckSubscription: fs.Bool("check-subscription", true, "enable free subscription limits"),
+		Subscription: config.Subscription{
+			CheckSubscription:     fs.Bool("check-subscription", true, "enable free subscription limits"),
+			MaxPicturesFree:       fs.Int("max-pictures-free", 5, "max pictures count per recipe for free subscription"),
+			MaxPicturesPremium:    fs.Int("max-pictures-premium", 15, "max pictures count per recipe for premium subscription"),
+			PictureMaxSizeFree:    fs.Int64("picture-max-size-free", 1024*768, "max picture size for free subscription"),
+			PictureMaxSizePremium: fs.Int64("picture-max-size-premium", 1024*768, "max picture size for premium subscription"),
 		},
 
 		ProfileService: config.ProfileService{
