@@ -18,8 +18,12 @@ func (s *RecipeServer) GenerateRecipePicturesUploadLinks(_ context.Context, req 
 		return nil, fail.GrpcInvalidBody
 	}
 
-	maxPictures := s.subscriptionLimiter.GetMaxPicturesCount(req.Subscription)
 	picturesCount := int(req.PicturesCount)
+	if picturesCount == 0 {
+		return nil, fail.GrpcInvalidBody
+	}
+
+	maxPictures := s.subscriptionLimiter.GetMaxPicturesCount(req.Subscription)
 	if picturesCount > maxPictures {
 		picturesCount = maxPictures
 	}
@@ -52,7 +56,7 @@ func (s *RecipeServer) SetRecipePictures(_ context.Context, req *api.SetRecipePi
 
 	pictures := dto.NewRecipePictures(req)
 
-	version, err := s.service.SetRecipePictures(recipeId, userId, pictures, req.Subscription)
+	version, err := s.service.SetRecipePictures(recipeId, userId, pictures, req.Version, req.Subscription)
 	if err != nil {
 		return nil, err
 	}

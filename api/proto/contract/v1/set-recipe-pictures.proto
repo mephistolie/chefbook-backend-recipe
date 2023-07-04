@@ -13,6 +13,7 @@ message SetRecipePicturesRequest {
   optional string preview = 3;
   map<string, StepPictures> cookingPicturesMap = 4;
   string subscription = 5;
+  optional int32 version = 6;
 }
 
 message SetRecipePicturesResponse {

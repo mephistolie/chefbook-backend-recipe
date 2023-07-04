@@ -101,7 +101,7 @@ func (r *Repository) updateRecipePicturesUploadRequest(recipeId uuid.UUID, pictu
 	return nil
 }
 
-func (r *Repository) SetRecipePictures(recipeId uuid.UUID, pictures entity.RecipePictures) (int32, error) {
+func (r *Repository) SetRecipePictures(recipeId uuid.UUID, pictures entity.RecipePictures, version *int32) (int32, error) {
 	tx, err := r.startTransaction()
 	if err != nil {
 		return 0, err
@@ -111,23 +111,28 @@ func (r *Repository) SetRecipePictures(recipeId uuid.UUID, pictures entity.Recip
 		return 0, err
 	}
 
-	var version int32
+	var newVersion int32
 	dtos := dto.NewRecipePicturesDto(pictures)
 
 	updateRecipeQuery := fmt.Sprintf(`
 		UPDATE %[1]v
 		SET pictures=$2 version=version+1
 		WHERE recipe_id=$1
-		RETURNING version
 	`, recipesTable)
 
+	if version != nil {
+		updateRecipeQuery += fmt.Sprintf(" AND version=%d", *version)
+	}
+
+	updateRecipeQuery += " RETURNING version"
+
 	row := tx.QueryRow(updateRecipeQuery, recipeId, dtos)
-	if err = row.Scan(&version); err != nil {
+	if err = row.Scan(&newVersion); err != nil {
 		log.Errorf("unable to set recipe %s pictures: %s", recipeId, err)
 		return 0, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
-	return version, commitTransaction(tx)
+	return newVersion, commitTransaction(tx)
 }
 
 func (r *Repository) deleteUsedPictureIds(recipeId uuid.UUID, pictures entity.RecipePictures, tx *sql.Tx) error {

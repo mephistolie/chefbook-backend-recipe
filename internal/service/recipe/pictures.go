@@ -27,7 +27,13 @@ func (s *Service) GenerateRecipePicturesUploadLinks(recipeId, userId uuid.UUID, 
 	return uploads, nil
 }
 
-func (s *Service) SetRecipePictures(recipeId, userId uuid.UUID, pictures entity.RecipePictures, subscriptionPlan string) (int32, error) {
+func (s *Service) SetRecipePictures(
+	recipeId,
+	userId uuid.UUID,
+	pictures entity.RecipePictures,
+	version *int32,
+	subscriptionPlan string,
+) (int32, error) {
 	if policy, err := s.repo.GetRecipePolicy(recipeId); err == nil || policy.OwnerId != userId {
 		return 0, fail.GrpcAccessDenied
 	}
@@ -42,7 +48,7 @@ func (s *Service) SetRecipePictures(recipeId, userId uuid.UUID, pictures entity.
 		return 0, recipeFail.GrpcRecipePictureNotFound
 	}
 
-	version, err := s.repo.SetRecipePictures(recipeId, pictures)
+	newVersion, err := s.repo.SetRecipePictures(recipeId, pictures, version)
 	if err != nil {
 		return 0, err
 	}
@@ -51,5 +57,5 @@ func (s *Service) SetRecipePictures(recipeId, userId uuid.UUID, pictures entity.
 		s.s3.DeleteUnusedRecipePictures(recipeId, pictureIds)
 	}()
 
-	return version, nil
+	return newVersion, nil
 }
