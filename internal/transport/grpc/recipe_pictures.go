@@ -19,7 +19,7 @@ func (s *RecipeServer) GenerateRecipePicturesUploadLinks(_ context.Context, req 
 	}
 
 	picturesCount := int(req.PicturesCount)
-	if picturesCount == 0 {
+	if picturesCount <= 0 {
 		return nil, fail.GrpcInvalidBody
 	}
 
@@ -36,8 +36,10 @@ func (s *RecipeServer) GenerateRecipePicturesUploadLinks(_ context.Context, req 
 	dtos := make([]*api.RecipePictureUploadLink, len(uploads))
 	for i, upload := range uploads {
 		dtos[i] = &api.RecipePictureUploadLink{
-			Link:     upload.URL,
-			FormData: upload.FormData,
+			PictureId: upload.PictureId.String(),
+			Link:      upload.URL,
+			FormData:  upload.FormData,
+			MaxSize:   upload.MaxSize,
 		}
 	}
 

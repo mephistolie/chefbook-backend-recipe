@@ -8,7 +8,7 @@ import (
 )
 
 func (s *Service) GenerateRecipePicturesUploadLinks(recipeId, userId uuid.UUID, picturesCount int, subscriptionPlan string) ([]entity.PictureUpload, error) {
-	if policy, err := s.repo.GetRecipePolicy(recipeId); err == nil || policy.OwnerId != userId {
+	if policy, err := s.repo.GetRecipePolicy(recipeId); err != nil || policy.OwnerId != userId {
 		return nil, fail.GrpcAccessDenied
 	}
 
@@ -20,6 +20,7 @@ func (s *Service) GenerateRecipePicturesUploadLinks(recipeId, userId uuid.UUID, 
 	var uploads []entity.PictureUpload
 	for _, pictureId := range pictureIds {
 		if upload, err := s.s3.GenerateRecipePictureUploadLink(recipeId, pictureId, subscriptionPlan); err == nil {
+			upload.PictureId = pictureId
 			uploads = append(uploads, upload)
 		}
 	}
@@ -34,7 +35,7 @@ func (s *Service) SetRecipePictures(
 	version *int32,
 	subscriptionPlan string,
 ) (int32, error) {
-	if policy, err := s.repo.GetRecipePolicy(recipeId); err == nil || policy.OwnerId != userId {
+	if policy, err := s.repo.GetRecipePolicy(recipeId); err != nil || policy.OwnerId != userId {
 		return 0, fail.GrpcAccessDenied
 	}
 

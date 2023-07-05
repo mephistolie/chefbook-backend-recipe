@@ -21,7 +21,7 @@ func main() {
 			MaxPicturesFree:       fs.Int("max-pictures-free", 5, "max pictures count per recipe for free subscription"),
 			MaxPicturesPremium:    fs.Int("max-pictures-premium", 15, "max pictures count per recipe for premium subscription"),
 			PictureMaxSizeFree:    fs.Int64("picture-max-size-free", 1024*768, "max picture size for free subscription"),
-			PictureMaxSizePremium: fs.Int64("picture-max-size-premium", 1024*768, "max picture size for premium subscription"),
+			PictureMaxSizePremium: fs.Int64("picture-max-size-premium", 1024*1536, "max picture size for premium subscription"),
 		},
 
 		ProfileService: config.ProfileService{
@@ -44,6 +44,14 @@ func main() {
 			User:     fs.String("db-user", "", "database user name"),
 			Password: fs.String("db-password", "", "database user password"),
 			DBName:   fs.String("db-name", "", "service database name"),
+		},
+
+		S3: config.S3{
+			Host:            fs.String("s3-host", "", "S3 host"),
+			AccessKeyId:     fs.String("s3-access-key-id", "", "S3 access key ID"),
+			SecretAccessKey: fs.String("s3-secret-access-key", "", "S3 access key ID"),
+			Bucket:          fs.String("s3-bucket", "images", "S3 bucket"),
+			Region:          fs.String("s3-region", "us-east-1", "S3 region"),
 		},
 
 		Amqp: amqpConfig.Amqp{

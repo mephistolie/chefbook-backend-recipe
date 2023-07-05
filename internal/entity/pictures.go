@@ -3,8 +3,10 @@ package entity
 import "github.com/google/uuid"
 
 type PictureUpload struct {
-	URL      string
-	FormData map[string]string
+	PictureId uuid.UUID
+	URL       string
+	FormData  map[string]string
+	MaxSize   int64
 }
 
 type RecipePictures struct {

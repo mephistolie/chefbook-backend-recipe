@@ -64,14 +64,26 @@ func NewRecipeInput(
 	if len(req.Tags) > maxRecipeTagsCount {
 		req.Tags = req.Tags[0:maxRecipeTagsCount]
 	}
-	if req.Servings != nil && *req.Servings > maxServings {
-		*req.Servings = maxServings
+	if req.Servings != nil {
+		if *req.Servings <= 0 {
+			req.Servings = nil
+		} else if *req.Servings > maxServings {
+			*req.Servings = maxServings
+		}
 	}
-	if req.Time != nil && *req.Time > maxCookingTime {
-		*req.Time = maxCookingTime
+	if req.Time != nil {
+		if *req.Time <= 0 {
+			req.Time = nil
+		} else if *req.Time > maxCookingTime {
+			*req.Time = maxCookingTime
+		}
 	}
-	if req.Calories != nil && *req.Calories > maxCalories {
-		*req.Calories = maxCalories
+	if req.Calories != nil {
+		if *req.Calories <= 0 {
+			req.Calories = nil
+		} else if *req.Calories > maxCalories {
+			*req.Calories = maxCalories
+		}
 	}
 
 	ingredients, err := newIngredients(req.Ingredients, req.IsEncrypted)

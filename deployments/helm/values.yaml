@@ -16,8 +16,8 @@ config:
   checkSubscription: true
   maxPicturesFree: 5
   maxPicturesPremium: 15
-  pictureMaxSizeFree: 786432 # 0.75MB
-  pictureMaxSizePremium: 1572864 # 1.5MB
+  pictureMaxSizeFree: "786432"
+  pictureMaxSizePremium: "1572864"
 
   postgres:
     host: ""

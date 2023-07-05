@@ -80,8 +80,12 @@ func newIngredient(ingredient *api.IngredientItem, isEncrypted bool) (entity.Ing
 		text := (*ingredient.Text)[0:maxIngredientTextLength]
 		ingredient.Text = &text
 	}
-	if ingredient.Amount != nil && *ingredient.Amount > maxIngredientAmount {
-		*ingredient.Amount = maxIngredientAmount
+	if ingredient.Amount != nil {
+		if *ingredient.Amount <= 0 {
+			ingredient.Amount = nil
+		} else if *ingredient.Amount > maxIngredientAmount {
+			*ingredient.Amount = maxIngredientAmount
+		}
 	}
 	if ingredient.Unit != nil && len(*ingredient.Unit) > maxIngredientUnitLength {
 		unit := (*ingredient.Unit)[0:maxIngredientUnitLength]

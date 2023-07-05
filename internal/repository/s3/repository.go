@@ -52,7 +52,7 @@ func (r *Repository) GetRecipePictureLink(recipeId, pictureId uuid.UUID) string 
 
 func (r *Repository) GenerateRecipePictureUploadLink(recipeId, pictureId uuid.UUID, subscriptionPlan string) (entity.PictureUpload, error) {
 	maxPictureSize := r.subscriptionLimiter.GetPictureMaxSize(subscriptionPlan)
-	return r.generatePictureUploadLink(r.getRecipePicturePath(recipeId, pictureId), maxPictureSize)
+	return r.generatePictureUploadLink(pictureId, r.getRecipePicturePath(recipeId, pictureId), maxPictureSize)
 }
 
 func (r *Repository) CheckRecipePicturesExist(recipeId uuid.UUID, pictures []uuid.UUID) bool {
@@ -115,7 +115,7 @@ func (r *Repository) getRecipePicturePath(recipeId, pictureId uuid.UUID) string 
 	return fmt.Sprintf("%s/%s/%s/%s", recipesDir, recipeId, picturesDir, pictureId)
 }
 
-func (r *Repository) generatePictureUploadLink(objectName string, maxSize int64) (entity.PictureUpload, error) {
+func (r *Repository) generatePictureUploadLink(pictureId uuid.UUID, objectName string, maxSize int64) (entity.PictureUpload, error) {
 	policy := minio.NewPostPolicy()
 
 	if err := policy.SetBucket(r.bucket); err != nil {
@@ -147,7 +147,9 @@ func (r *Repository) generatePictureUploadLink(objectName string, maxSize int64)
 	url := fmt.Sprintf("https://%s", r.bucket)
 
 	return entity.PictureUpload{
-		URL:      url,
-		FormData: formData,
+		PictureId: pictureId,
+		URL:       url,
+		FormData:  formData,
+		MaxSize:   maxSize,
 	}, nil
 }

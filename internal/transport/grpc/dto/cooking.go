@@ -85,8 +85,12 @@ func newCookingItem(item *api.CookingItem, isEncrypted bool) (entity.CookingItem
 			recipeId = &id
 		}
 	}
-	if item.Time != nil && *item.Time > maxCookingStepTime {
-		*item.Time = maxCookingStepTime
+	if item.Time != nil {
+		if *item.Time <= 0 {
+			item.Time = nil
+		} else if *item.Time > maxCookingStepTime {
+			*item.Time = maxCookingStepTime
+		}
 	}
 
 	if item.Type != entity.TypeStep {

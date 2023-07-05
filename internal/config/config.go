@@ -81,7 +81,11 @@ func (c Config) Print() {
 		"Environment: %v\n"+
 		"Port: %v\n"+
 		"Logs path: %v\n\n"+
-		"Check subscription: %v\n\n"+
+		"Check subscription: %v\n"+
+		"Max recipe pictures for free subscription: %v\n"+
+		"Max recipe pictures for premium subscription: %v\n"+
+		"Max recipe picture size for free subscription: %vB\n"+
+		"Max recipe picture size for premium subscription: %vB\n\n"+
 		"Profile Service Address: %v\n"+
 		"Tag Service Address: %v\n"+
 		"Category Service Address: %v\n\n"+
@@ -95,7 +99,8 @@ func (c Config) Print() {
 		"MQ port: %v\n"+
 		"MQ vhost: %v\n\n",
 		*c.Environment, *c.Port, *c.LogsPath,
-		*c.Subscription.CheckSubscription,
+		*c.Subscription.CheckSubscription, *c.Subscription.MaxPicturesFree, *c.Subscription.MaxPicturesPremium,
+		*c.Subscription.PictureMaxSizeFree, *c.Subscription.PictureMaxSizePremium,
 		*c.ProfileService.Addr, *c.TagService.Addr, *c.CategoryService.Addr,
 		*c.Database.Host, *c.Database.Port, *c.Database.DBName,
 		*c.S3.Host, *c.S3.Bucket, *c.S3.Region,
