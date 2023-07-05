@@ -7,6 +7,7 @@ import (
 	"github.com/mephistolie/chefbook-backend-common/log"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
+	recipeFail "github.com/mephistolie/chefbook-backend-recipe/internal/entity/fail"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/repository/postgres/dto"
 )
 
@@ -116,7 +117,7 @@ func (r *Repository) SetRecipePictures(recipeId uuid.UUID, pictures entity.Recip
 
 	updateRecipeQuery := fmt.Sprintf(`
 		UPDATE %[1]v
-		SET pictures=$2 version=version+1
+		SET pictures=$2, version=version+1
 		WHERE recipe_id=$1
 	`, recipesTable)
 
@@ -128,6 +129,9 @@ func (r *Repository) SetRecipePictures(recipeId uuid.UUID, pictures entity.Recip
 
 	row := tx.QueryRow(updateRecipeQuery, recipeId, dtos)
 	if err = row.Scan(&newVersion); err != nil {
+		if version != nil {
+			return 0, errorWithTransactionRollback(tx, recipeFail.GrpcOutdatedVersion)
+		}
 		log.Errorf("unable to set recipe %s pictures: %s", recipeId, err)
 		return 0, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
@@ -145,12 +149,16 @@ func (r *Repository) deleteUsedPictureIds(recipeId uuid.UUID, pictures entity.Re
 		usedPictures := pictures.GetIds()
 		var unusedPictures []uuid.UUID
 		for _, uploadId := range picturesUploads {
+			isUsed := false
 			for _, usedPicture := range usedPictures {
 				if usedPicture == uploadId {
-					continue
+					isUsed = true
+					break
 				}
 			}
-			unusedPictures = append(unusedPictures, uploadId)
+			if !isUsed {
+				unusedPictures = append(unusedPictures, uploadId)
+			}
 		}
 
 		if len(unusedPictures) > 0 {

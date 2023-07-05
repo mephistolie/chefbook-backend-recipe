@@ -50,14 +50,14 @@ func (r *Repository) GetRecipePictureLink(recipeId, pictureId uuid.UUID) string 
 	return fmt.Sprintf("https://%s/%s", r.bucket, objectPath)
 }
 
-func (r *Repository) GenerateRecipePictureUploadLink(recipeId, pictureId uuid.UUID, subscriptionPlan string) (entity.PictureUpload, error) {
+func (r *Repository) GenerateRecipePictureUploadLink(recipeId, pictureId uuid.UUID, subscriptionPlan string, isEncrypted bool) (entity.PictureUpload, error) {
 	maxPictureSize := r.subscriptionLimiter.GetPictureMaxSize(subscriptionPlan)
-	return r.generatePictureUploadLink(pictureId, r.getRecipePicturePath(recipeId, pictureId), maxPictureSize)
+	return r.generatePictureUploadLink(pictureId, r.getRecipePicturePath(recipeId, pictureId), maxPictureSize, isEncrypted)
 }
 
 func (r *Repository) CheckRecipePicturesExist(recipeId uuid.UUID, pictures []uuid.UUID) bool {
 	picturesPath := fmt.Sprintf("%s/%s/%s", recipesDir, recipeId, picturesDir)
-	var existingPictures map[uuid.UUID]bool
+	existingPictures := make(map[uuid.UUID]bool)
 
 	for object := range r.client.ListObjects(context.Background(), r.bucket, minio.ListObjectsOptions{
 		Prefix:    picturesPath,
@@ -86,7 +86,7 @@ func (r *Repository) DeleteUnusedRecipePictures(recipeId uuid.UUID, usedPictures
 	picturesPath := fmt.Sprintf("%s/%s/%s", recipesDir, recipeId, picturesDir)
 	opts := minio.RemoveObjectOptions{ForceDelete: true}
 
-	var usedPicturesMap map[uuid.UUID]bool
+	usedPicturesMap := make(map[uuid.UUID]bool)
 	for _, usedPicture := range usedPictures {
 		usedPicturesMap[usedPicture] = true
 	}
@@ -96,8 +96,8 @@ func (r *Repository) DeleteUnusedRecipePictures(recipeId uuid.UUID, usedPictures
 		Recursive: true,
 	}) {
 		keyLength := len(object.Key)
-		rawPicureId := object.Key[keyLength-idLength : keyLength]
-		pictureId, err := uuid.Parse(rawPicureId)
+		rawPictureId := object.Key[keyLength-idLength : keyLength]
+		pictureId, err := uuid.Parse(rawPictureId)
 		if err != nil {
 			log.Debugf("unable to parse picture id by key %s: %s", object.Key, err)
 			continue
@@ -115,7 +115,7 @@ func (r *Repository) getRecipePicturePath(recipeId, pictureId uuid.UUID) string 
 	return fmt.Sprintf("%s/%s/%s/%s", recipesDir, recipeId, picturesDir, pictureId)
 }
 
-func (r *Repository) generatePictureUploadLink(pictureId uuid.UUID, objectName string, maxSize int64) (entity.PictureUpload, error) {
+func (r *Repository) generatePictureUploadLink(pictureId uuid.UUID, objectName string, maxSize int64, isEncrypted bool) (entity.PictureUpload, error) {
 	policy := minio.NewPostPolicy()
 
 	if err := policy.SetBucket(r.bucket); err != nil {
@@ -126,9 +126,11 @@ func (r *Repository) generatePictureUploadLink(pictureId uuid.UUID, objectName s
 		log.Errorf("unable to set object %s in post policy: %s", objectName, err)
 		return entity.PictureUpload{}, fail.GrpcUnknown
 	}
-	if err := policy.SetContentTypeStartsWith("image"); err != nil {
-		log.Errorf("unable to set content type in post policy: %s", objectName, err)
-		return entity.PictureUpload{}, fail.GrpcUnknown
+	if !isEncrypted {
+		if err := policy.SetContentTypeStartsWith("image"); err != nil {
+			log.Errorf("unable to set content type in post policy: %s", objectName, err)
+			return entity.PictureUpload{}, fail.GrpcUnknown
+		}
 	}
 	if err := policy.SetContentLengthRange(0, maxSize); err != nil {
 		log.Errorf("unable to set content length in post policy: %s", objectName, err)
@@ -139,16 +141,16 @@ func (r *Repository) generatePictureUploadLink(pictureId uuid.UUID, objectName s
 		return entity.PictureUpload{}, fail.GrpcUnknown
 	}
 
-	_, formData, err := r.client.PresignedPostPolicy(context.Background(), policy)
+	originalUrl, formData, err := r.client.PresignedPostPolicy(context.Background(), policy)
 	if err != nil {
 		log.Errorf("unable to generate presigned link for uploading object %s: %s", objectName, err)
 		return entity.PictureUpload{}, fail.GrpcUnknown
 	}
-	url := fmt.Sprintf("https://%s", r.bucket)
+	_ = fmt.Sprintf("https://%s", r.bucket)
 
 	return entity.PictureUpload{
 		PictureId: pictureId,
-		URL:       url,
+		URL:       originalUrl.String(),
 		FormData:  formData,
 		MaxSize:   maxSize,
 	}, nil

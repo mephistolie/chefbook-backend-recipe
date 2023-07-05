@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 	api "github.com/mephistolie/chefbook-backend-recipe/api/proto/implementation/v1"
+	recipeFail "github.com/mephistolie/chefbook-backend-recipe/internal/entity/fail"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/transport/grpc/dto"
 )
 
@@ -57,6 +58,14 @@ func (s *RecipeServer) SetRecipePictures(_ context.Context, req *api.SetRecipePi
 	}
 
 	pictures := dto.NewRecipePictures(req)
+
+	usedIds := make(map[uuid.UUID]bool)
+	for _, id := range pictures.GetIds() {
+		if exists, ok := usedIds[id]; ok && exists {
+			return nil, recipeFail.GrpcDuplicatePictures
+		}
+		usedIds[id] = true
+	}
 
 	version, err := s.service.SetRecipePictures(recipeId, userId, pictures, req.Version, req.Subscription)
 	if err != nil {
