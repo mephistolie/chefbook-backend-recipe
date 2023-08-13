@@ -100,6 +100,9 @@ func Run(cfg *config.Config) {
 		"database": func(ctx context.Context) error {
 			return db.Close()
 		},
+		"services": func(ctx context.Context) error {
+			return grpcRepository.Stop()
+		},
 		"mq": func(ctx context.Context) error {
 			_ = mqPublisher.Stop()
 			_ = mqSubscriber.Stop()
