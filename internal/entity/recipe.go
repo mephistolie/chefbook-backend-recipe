@@ -40,6 +40,7 @@ type BaseRecipe struct {
 
 	Ingredients []IngredientItem
 	Cooking     []CookingItem
+	PictureIds  RecipePictureIds
 }
 
 type Recipe struct {
@@ -48,7 +49,7 @@ type Recipe struct {
 	OwnerName   *string
 	OwnerAvatar *string
 
-	Preview *string
+	Pictures RecipePictures
 }
 
 type DetailedRecipe struct {

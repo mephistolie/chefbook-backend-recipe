@@ -7,6 +7,7 @@ import "google/protobuf/timestamp.proto";
 import "v1/macronutrients.proto";
 import "v1/ingredient.proto";
 import "v1/cooking.proto";
+import "v1/pictures.proto";
 
 message Recipe {
   string recipeId = 1;
@@ -23,26 +24,26 @@ message Recipe {
 
   string language = 10;
   optional string description = 11;
-  optional string preview = 12;
 
-  google.protobuf.Timestamp creationTimestamp = 13;
-  google.protobuf.Timestamp updateTimestamp = 14;
-  int32 version = 15;
+  google.protobuf.Timestamp creationTimestamp = 12;
+  google.protobuf.Timestamp updateTimestamp = 13;
+  int32 version = 14;
 
-  float rating = 16;
-  optional int32 score = 17;
-  int32 votes = 18;
+  float rating = 15;
+  optional int32 score = 16;
+  int32 votes = 17;
 
-  repeated string tags = 19;
-  repeated string categories = 20;
-  bool isFavourite = 21;
+  repeated string tags = 18;
+  repeated string categories = 19;
+  bool isFavourite = 20;
 
-  optional int32 servings = 22;
-  optional int32 time = 23;
+  optional int32 servings = 21;
+  optional int32 time = 22;
 
-  optional int32 calories = 24;
-  optional Macronutrients macronutrients = 25;
+  optional int32 calories = 23;
+  optional Macronutrients macronutrients = 24;
 
-  repeated IngredientItem ingredients = 26;
-  repeated CookingItem cooking = 27;
+  repeated IngredientItem ingredients = 25;
+  repeated CookingItem cooking = 26;
+  RecipePictures pictures = 27;
 }

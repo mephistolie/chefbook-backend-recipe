@@ -93,6 +93,7 @@ func (r *Recipe) Entity(userId uuid.UUID) entity.BaseRecipe {
 		Macronutrients: macronutrients,
 
 		Ingredients: r.Ingredients.Entity(),
-		Cooking:     r.Cooking.Entity(r.Pictures),
+		Cooking:     r.Cooking.Entity(),
+		PictureIds:  r.Pictures.Entity(),
 	}
 }

@@ -17,11 +17,9 @@ var AvailableCookingTypes = []string{
 }
 
 type CookingItem struct {
-	Id         uuid.UUID
-	Text       *string
-	Type       string
-	Time       *int32
-	PictureIds []uuid.UUID
-	Pictures   []string
-	RecipeId   *uuid.UUID
+	Id       uuid.UUID
+	Text     *string
+	Type     string
+	Time     *int32
+	RecipeId *uuid.UUID
 }

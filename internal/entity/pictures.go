@@ -9,12 +9,12 @@ type PictureUpload struct {
 	MaxSize   int64
 }
 
-type RecipePictures struct {
+type RecipePictureIds struct {
 	Preview *uuid.UUID
 	Cooking map[uuid.UUID][]uuid.UUID
 }
 
-func (p *RecipePictures) GetIds() []uuid.UUID {
+func (p *RecipePictureIds) GetIds() []uuid.UUID {
 	var ids []uuid.UUID
 
 	if p.Preview != nil {
@@ -28,4 +28,9 @@ func (p *RecipePictures) GetIds() []uuid.UUID {
 	}
 
 	return ids
+}
+
+type RecipePictures struct {
+	Preview *string
+	Cooking map[uuid.UUID][]string
 }

@@ -32,7 +32,7 @@ func (s *Service) GenerateRecipePicturesUploadLinks(recipeId, userId uuid.UUID, 
 func (s *Service) SetRecipePictures(
 	recipeId,
 	userId uuid.UUID,
-	pictures entity.RecipePictures,
+	pictures entity.RecipePictureIds,
 	version *int32,
 	subscriptionPlan string,
 ) (int32, error) {

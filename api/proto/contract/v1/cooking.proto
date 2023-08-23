@@ -9,6 +9,5 @@ message CookingItem {
   string type = 3;
   optional int32 time = 4;
   optional string recipeId = 5;
-  repeated string pictures = 6;
 }
 

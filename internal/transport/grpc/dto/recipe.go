@@ -43,7 +43,6 @@ func newRecipe(recipe entity.Recipe) *api.Recipe {
 
 		Language:    recipe.Language,
 		Description: recipe.Description,
-		Preview:     recipe.Preview,
 
 		CreationTimestamp: timestamppb.New(recipe.CreationTimestamp),
 		UpdateTimestamp:   timestamppb.New(recipe.UpdateTimestamp),
@@ -65,5 +64,6 @@ func newRecipe(recipe entity.Recipe) *api.Recipe {
 
 		Ingredients: newIngredientsResponse(recipe.Ingredients),
 		Cooking:     newCookingResponse(recipe.Cooking),
+		Pictures:    newRecipesResponse(recipe.Pictures),
 	}
 }

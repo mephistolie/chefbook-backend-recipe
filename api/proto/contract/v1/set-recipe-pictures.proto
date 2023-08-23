@@ -3,9 +3,7 @@ package v1;
 
 option go_package = "github.com/mephistolie/chefbook-backend-recipe/api/proto/v1";
 
-message StepPictures {
-  repeated string pictures = 1;
-}
+import "v1/pictures.proto";
 
 message SetRecipePicturesRequest {
   string recipeId = 1;

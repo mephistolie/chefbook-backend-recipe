@@ -128,6 +128,5 @@ func newCookingItemResponse(cookingItem entity.CookingItem) *api.CookingItem {
 		Type:     cookingItem.Type,
 		Time:     cookingItem.Time,
 		RecipeId: recipeId,
-		Pictures: cookingItem.Pictures,
 	}
 }

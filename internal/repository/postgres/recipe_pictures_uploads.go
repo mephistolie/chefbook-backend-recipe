@@ -102,7 +102,7 @@ func (r *Repository) updateRecipePicturesUploadRequest(recipeId uuid.UUID, pictu
 	return nil
 }
 
-func (r *Repository) SetRecipePictures(recipeId uuid.UUID, pictures entity.RecipePictures, version *int32) (int32, error) {
+func (r *Repository) SetRecipePictures(recipeId uuid.UUID, pictures entity.RecipePictureIds, version *int32) (int32, error) {
 	tx, err := r.startTransaction()
 	if err != nil {
 		return 0, err
@@ -139,7 +139,7 @@ func (r *Repository) SetRecipePictures(recipeId uuid.UUID, pictures entity.Recip
 	return newVersion, commitTransaction(tx)
 }
 
-func (r *Repository) deleteUsedPictureIds(recipeId uuid.UUID, pictures entity.RecipePictures, tx *sql.Tx) error {
+func (r *Repository) deleteUsedPictureIds(recipeId uuid.UUID, pictures entity.RecipePictureIds, tx *sql.Tx) error {
 	picturesUploads, hasRequest, err := r.getExistingRecipePicturesUploadsQuery(recipeId, tx)
 	if err != nil {
 		return err
