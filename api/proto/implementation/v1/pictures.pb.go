@@ -56,7 +56,7 @@ func (x *RecipePictures) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Pictures.ProtoReflect.Descriptor instead.
+// Deprecated: Use RecipePictures.ProtoReflect.Descriptor instead.
 func (*RecipePictures) Descriptor() ([]byte, []int) {
 	return file_v1_pictures_proto_rawDescGZIP(), []int{0}
 }
@@ -163,13 +163,13 @@ func file_v1_pictures_proto_rawDescGZIP() []byte {
 
 var file_v1_pictures_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_v1_pictures_proto_goTypes = []interface{}{
-	(*RecipePictures)(nil), // 0: v1.Pictures
+	(*RecipePictures)(nil), // 0: v1.RecipePictures
 	(*StepPictures)(nil),   // 1: v1.StepPictures
-	nil,                    // 2: v1.Pictures.CookingEntry
+	nil,                    // 2: v1.RecipePictures.CookingEntry
 }
 var file_v1_pictures_proto_depIdxs = []int32{
-	2, // 0: v1.Pictures.cooking:type_name -> v1.Pictures.CookingEntry
-	1, // 1: v1.Pictures.CookingEntry.value:type_name -> v1.StepPictures
+	2, // 0: v1.RecipePictures.cooking:type_name -> v1.RecipePictures.CookingEntry
+	1, // 1: v1.RecipePictures.CookingEntry.value:type_name -> v1.StepPictures
 	2, // [2:2] is the sub-list for method output_type
 	2, // [2:2] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name

@@ -381,7 +381,7 @@ var file_v1_recipe_proto_goTypes = []interface{}{
 	(*Macronutrients)(nil),        // 2: v1.Macronutrients
 	(*IngredientItem)(nil),        // 3: v1.IngredientItem
 	(*CookingItem)(nil),           // 4: v1.CookingItem
-	(*RecipePictures)(nil),        // 5: v1.Pictures
+	(*RecipePictures)(nil),        // 5: v1.RecipePictures
 }
 var file_v1_recipe_proto_depIdxs = []int32{
 	1, // 0: v1.Recipe.creationTimestamp:type_name -> google.protobuf.Timestamp
@@ -389,7 +389,7 @@ var file_v1_recipe_proto_depIdxs = []int32{
 	2, // 2: v1.Recipe.macronutrients:type_name -> v1.Macronutrients
 	3, // 3: v1.Recipe.ingredients:type_name -> v1.IngredientItem
 	4, // 4: v1.Recipe.cooking:type_name -> v1.CookingItem
-	5, // 5: v1.Recipe.pictures:type_name -> v1.Pictures
+	5, // 5: v1.Recipe.pictures:type_name -> v1.RecipePictures
 	6, // [6:6] is the sub-list for method output_type
 	6, // [6:6] is the sub-list for method input_type
 	6, // [6:6] is the sub-list for extension type_name

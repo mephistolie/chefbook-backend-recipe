@@ -67,10 +67,15 @@ func (s *RecipeServer) SetRecipePictures(_ context.Context, req *api.SetRecipePi
 		usedIds[id] = true
 	}
 
-	version, err := s.service.SetRecipePictures(recipeId, userId, pictures, req.Version, req.Subscription)
+	links, version, err := s.service.SetRecipePictures(recipeId, userId, pictures, req.Version, req.Subscription)
 	if err != nil {
 		return nil, err
 	}
 
-	return &api.SetRecipePicturesResponse{Version: version}, nil
+	rawLinks := make(map[string]string)
+	for pictureId, link := range links {
+		rawLinks[pictureId.String()] = link
+	}
+
+	return &api.SetRecipePicturesResponse{Links: rawLinks, Version: version}, nil
 }

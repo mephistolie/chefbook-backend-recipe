@@ -32,7 +32,7 @@ type Recipe interface {
 	DeleteRecipe(recipeId, userId uuid.UUID) error
 
 	GenerateRecipePicturesUploadLinks(recipeId, userId uuid.UUID, picturesCount int, subscriptionPlan string) ([]entity.PictureUpload, error)
-	SetRecipePictures(recipeId, userId uuid.UUID, pictures entity.RecipePictureIds, version *int32, subscriptionPlan string) (int32, error)
+	SetRecipePictures(recipeId, userId uuid.UUID, pictures entity.RecipePictureIds, version *int32, subscriptionPlan string) (map[uuid.UUID]string, int32, error)
 
 	RateRecipe(recipeId, userId uuid.UUID, score int) error
 	SaveToRecipeBook(recipeId, userId uuid.UUID) error
