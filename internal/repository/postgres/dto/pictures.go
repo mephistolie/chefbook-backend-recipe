@@ -9,21 +9,31 @@ import (
 )
 
 type RecipePictures struct {
-	Preview *uuid.UUID                `json:"preview,omitempty"`
-	Cooking map[uuid.UUID][]uuid.UUID `json:"cooking,omitempty"`
+	Preview *uuid.UUID                 `json:"preview,omitempty"`
+	Cooking *map[uuid.UUID][]uuid.UUID `json:"cooking,omitempty"`
 }
 
 func NewRecipePicturesDto(entity entity.RecipePictureIds) RecipePictures {
+	var cooking *map[uuid.UUID][]uuid.UUID
+	if len(entity.Cooking) > 0 {
+		cooking = &entity.Cooking
+	}
+
 	return RecipePictures{
 		Preview: entity.Preview,
-		Cooking: entity.Cooking,
+		Cooking: cooking,
 	}
 }
 
 func (p RecipePictures) Entity() entity.RecipePictureIds {
+	cooking := make(map[uuid.UUID][]uuid.UUID)
+	if p.Cooking != nil {
+		cooking = *p.Cooking
+	}
+
 	return entity.RecipePictureIds{
 		Preview: p.Preview,
-		Cooking: p.Cooking,
+		Cooking: cooking,
 	}
 }
 
