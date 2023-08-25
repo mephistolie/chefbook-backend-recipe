@@ -37,10 +37,11 @@ func (s *RecipeServer) GenerateRecipePicturesUploadLinks(_ context.Context, req 
 	dtos := make([]*api.RecipePictureUploadLink, len(uploads))
 	for i, upload := range uploads {
 		dtos[i] = &api.RecipePictureUploadLink{
-			PictureId: upload.PictureId.String(),
-			Link:      upload.URL,
-			FormData:  upload.FormData,
-			MaxSize:   upload.MaxSize,
+			PictureId:   upload.PictureId.String(),
+			PictureLink: upload.PictureLink,
+			UploadLink:  upload.UploadUrl,
+			FormData:    upload.FormData,
+			MaxSize:     upload.MaxSize,
 		}
 	}
 

@@ -52,7 +52,7 @@ func (r *Repository) GetRecipePictureLink(recipeId, pictureId uuid.UUID) string 
 
 func (r *Repository) GenerateRecipePictureUploadLink(recipeId, pictureId uuid.UUID, subscriptionPlan string, isEncrypted bool) (entity.PictureUpload, error) {
 	maxPictureSize := r.subscriptionLimiter.GetPictureMaxSize(subscriptionPlan)
-	return r.generatePictureUploadLink(pictureId, r.getRecipePicturePath(recipeId, pictureId), maxPictureSize, isEncrypted)
+	return r.generatePictureUploadLink(recipeId, pictureId, maxPictureSize, isEncrypted)
 }
 
 func (r *Repository) CheckRecipePicturesExist(recipeId uuid.UUID, pictures []uuid.UUID) bool {
@@ -115,7 +115,9 @@ func (r *Repository) getRecipePicturePath(recipeId, pictureId uuid.UUID) string 
 	return fmt.Sprintf("%s/%s/%s/%s", recipesDir, recipeId, picturesDir, pictureId)
 }
 
-func (r *Repository) generatePictureUploadLink(pictureId uuid.UUID, objectName string, maxSize int64, isEncrypted bool) (entity.PictureUpload, error) {
+func (r *Repository) generatePictureUploadLink(recipeId uuid.UUID, pictureId uuid.UUID, maxSize int64, isEncrypted bool) (entity.PictureUpload, error) {
+	objectName := r.getRecipePicturePath(recipeId, pictureId)
+
 	policy := minio.NewPostPolicy()
 
 	if err := policy.SetBucket(r.bucket); err != nil {
@@ -141,17 +143,17 @@ func (r *Repository) generatePictureUploadLink(pictureId uuid.UUID, objectName s
 		return entity.PictureUpload{}, fail.GrpcUnknown
 	}
 
-	originalUrl, formData, err := r.client.PresignedPostPolicy(context.Background(), policy)
+	uploadUrl, formData, err := r.client.PresignedPostPolicy(context.Background(), policy)
 	if err != nil {
 		log.Errorf("unable to generate presigned link for uploading object %s: %s", objectName, err)
 		return entity.PictureUpload{}, fail.GrpcUnknown
 	}
-	_ = fmt.Sprintf("https://%s", r.bucket)
 
 	return entity.PictureUpload{
-		PictureId: pictureId,
-		URL:       originalUrl.String(),
-		FormData:  formData,
-		MaxSize:   maxSize,
+		PictureId:   pictureId,
+		PictureLink: r.GetRecipePictureLink(recipeId, pictureId),
+		UploadUrl:   uploadUrl.String(),
+		FormData:    formData,
+		MaxSize:     maxSize,
 	}, nil
 }
