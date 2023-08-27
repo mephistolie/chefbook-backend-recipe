@@ -13,16 +13,24 @@ func newCategories(categories []entity.Category) []*api.RecipeCategory {
 	return response
 }
 
-func newCategoriesMap(categories map[string]entity.Category) map[string]*api.RecipeCategory {
-	response := make(map[string]*api.RecipeCategory)
+func newCategoriesMap(categories map[string]entity.Category) map[string]*api.RecipeCategoryInfo {
+	response := make(map[string]*api.RecipeCategoryInfo)
 	for id, category := range categories {
-		response[id] = newCategory(category)
+		response[id] = newCategoryInfo(category)
 	}
 	return response
 }
 
+func newCategoryInfo(category entity.Category) *api.RecipeCategoryInfo {
+	return &api.RecipeCategoryInfo{
+		Name:  category.Name,
+		Emoji: category.Emoji,
+	}
+}
+
 func newCategory(category entity.Category) *api.RecipeCategory {
 	return &api.RecipeCategory{
+		Id:    category.Id,
 		Name:  category.Name,
 		Emoji: category.Emoji,
 	}

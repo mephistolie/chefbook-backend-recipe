@@ -79,5 +79,5 @@ message GetRecipesRequest {
 message GetRecipesResponse {
   repeated RecipeInfo recipes = 1;
   map<string, RecipeTag> tags = 2;
-  map<string, RecipeCategory> categories = 3;
+  map<string, RecipeCategoryInfo> categories = 3;
 }

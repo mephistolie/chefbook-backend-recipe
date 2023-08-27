@@ -3,7 +3,13 @@ package v1;
 
 option go_package = "github.com/mephistolie/chefbook-backend-recipe/api/proto/v1";
 
-message RecipeCategory {
+message RecipeCategoryInfo {
   string name = 1;
   optional string emoji = 2;
+}
+
+message RecipeCategory {
+  string id = 1;
+  string name = 2;
+  optional string emoji = 3;
 }
