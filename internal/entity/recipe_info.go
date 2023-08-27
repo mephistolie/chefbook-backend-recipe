@@ -16,8 +16,8 @@ type BaseRecipeInfo struct {
 	Visibility  string
 	IsEncrypted bool
 
-	Language  string
-	PreviewId *uuid.UUID
+	Language string
+	Preview  *string
 
 	CreationTimestamp time.Time
 	UpdateTimestamp   time.Time

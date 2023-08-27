@@ -9,12 +9,12 @@ import (
 )
 
 type RecipePictures struct {
-	Preview *uuid.UUID                 `json:"preview,omitempty"`
-	Cooking *map[uuid.UUID][]uuid.UUID `json:"cooking,omitempty"`
+	Preview *string                 `json:"preview,omitempty"`
+	Cooking *map[uuid.UUID][]string `json:"cooking,omitempty"`
 }
 
-func NewRecipePicturesDto(entity entity.RecipePictureIds) RecipePictures {
-	var cooking *map[uuid.UUID][]uuid.UUID
+func NewRecipePicturesDto(entity entity.RecipePictures) RecipePictures {
+	var cooking *map[uuid.UUID][]string
 	if len(entity.Cooking) > 0 {
 		cooking = &entity.Cooking
 	}
@@ -25,13 +25,13 @@ func NewRecipePicturesDto(entity entity.RecipePictureIds) RecipePictures {
 	}
 }
 
-func (p RecipePictures) Entity() entity.RecipePictureIds {
-	cooking := make(map[uuid.UUID][]uuid.UUID)
+func (p RecipePictures) Entity() entity.RecipePictures {
+	cooking := make(map[uuid.UUID][]string)
 	if p.Cooking != nil {
 		cooking = *p.Cooking
 	}
 
-	return entity.RecipePictureIds{
+	return entity.RecipePictures{
 		Preview: p.Preview,
 		Cooking: cooking,
 	}

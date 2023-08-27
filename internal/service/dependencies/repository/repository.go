@@ -19,7 +19,7 @@ type Recipe interface {
 	DeleteRecipe(recipeId uuid.UUID) (*model.MessageData, error)
 
 	GetRecipePictureIdsToUpload(recipeId uuid.UUID, picturesCount int) ([]uuid.UUID, error)
-	SetRecipePictures(recipeId uuid.UUID, pictures entity.RecipePictureIds, version *int32) (int32, error)
+	SetRecipePictures(recipeId uuid.UUID, pictures entity.RecipePictures, pictureIds []uuid.UUID, version *int32) (int32, error)
 
 	GetRecipeRatingAndVotes(recipeId uuid.UUID) (float32, int, error)
 	GetUserRecipeScore(recipeId, userId uuid.UUID) int

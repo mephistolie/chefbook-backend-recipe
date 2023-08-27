@@ -18,7 +18,6 @@ type BaseRecipe struct {
 
 	Language    string
 	Description *string
-	PreviewId   *uuid.UUID
 
 	CreationTimestamp time.Time
 	UpdateTimestamp   time.Time
@@ -40,7 +39,7 @@ type BaseRecipe struct {
 
 	Ingredients []IngredientItem
 	Cooking     []CookingItem
-	PictureIds  RecipePictureIds
+	Pictures    RecipePictures
 }
 
 type Recipe struct {
@@ -48,8 +47,6 @@ type Recipe struct {
 
 	OwnerName   *string
 	OwnerAvatar *string
-
-	Pictures RecipePictures
 }
 
 type DetailedRecipe struct {

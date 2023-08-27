@@ -38,13 +38,7 @@ func (s *Service) GetRandomRecipe(userId uuid.UUID, recipeLanguages *[]string, u
 }
 
 func (s *Service) fillBaseRecipe(baseRecipe entity.BaseRecipe, userId uuid.UUID, language string) entity.DetailedRecipe {
-	recipe := entity.Recipe{
-		BaseRecipe: baseRecipe,
-		Pictures: entity.RecipePictures{
-			Preview: nil,
-			Cooking: make(map[uuid.UUID][]string),
-		},
-	}
+	recipe := entity.Recipe{BaseRecipe: baseRecipe}
 
 	tags := make(map[string]entity.Tag)
 	categories := make(map[string]entity.Category)
@@ -59,19 +53,6 @@ func (s *Service) fillBaseRecipe(baseRecipe entity.BaseRecipe, userId uuid.UUID,
 	}
 
 	wg.Wait()
-
-	if recipe.PreviewId != nil {
-		preview := s.s3.GetRecipePictureLink(recipe.Id, *recipe.PreviewId)
-		recipe.Pictures.Preview = &preview
-	}
-
-	for stepId, pictureIds := range recipe.PictureIds.Cooking {
-		var pictures []string
-		for _, pictureId := range pictureIds {
-			pictures = append(pictures, s.s3.GetRecipePictureLink(recipe.Id, pictureId))
-		}
-		recipe.Pictures.Cooking[stepId] = pictures
-	}
 
 	return entity.DetailedRecipe{
 		Recipe:     recipe,

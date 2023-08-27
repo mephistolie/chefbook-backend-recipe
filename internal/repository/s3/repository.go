@@ -11,6 +11,8 @@ import (
 	"github.com/mephistolie/chefbook-backend-recipe/internal/helpers"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"net/url"
+	"strings"
 	"time"
 )
 
@@ -50,13 +52,32 @@ func (r *Repository) GetRecipePictureLink(recipeId, pictureId uuid.UUID) string 
 	return fmt.Sprintf("https://%s/%s", r.bucket, objectPath)
 }
 
+func (r *Repository) GetRecipePictureIdByLink(recipeId uuid.UUID, link string) *uuid.UUID {
+	pictureUrl, err := url.Parse(link)
+	if err != nil || pictureUrl.Host != r.bucket {
+		return nil
+	}
+	fragments := strings.Split(pictureUrl.Path, "/")
+	if len(fragments) != 4 ||
+		fragments[0] != recipesDir ||
+		fragments[1] != recipeId.String() ||
+		fragments[2] != picturesDir {
+		return nil
+	}
+	pictureId, err := uuid.Parse(fragments[3])
+	if err != nil {
+		return nil
+	}
+	return &pictureId
+}
+
 func (r *Repository) GenerateRecipePictureUploadLink(recipeId, pictureId uuid.UUID, subscriptionPlan string, isEncrypted bool) (entity.PictureUpload, error) {
 	maxPictureSize := r.subscriptionLimiter.GetPictureMaxSize(subscriptionPlan)
 	return r.generatePictureUploadLink(recipeId, pictureId, maxPictureSize, isEncrypted)
 }
 
 func (r *Repository) CheckRecipePicturesExist(recipeId uuid.UUID, pictures []uuid.UUID) bool {
-	picturesPath := fmt.Sprintf("%s/%s/%s", recipesDir, recipeId, picturesDir)
+	picturesPath := r.getRecipePicturesPath(recipeId)
 	existingPictures := make(map[uuid.UUID]bool)
 
 	for object := range r.client.ListObjects(context.Background(), r.bucket, minio.ListObjectsOptions{
@@ -112,7 +133,11 @@ func (r *Repository) DeleteUnusedRecipePictures(recipeId uuid.UUID, usedPictures
 }
 
 func (r *Repository) getRecipePicturePath(recipeId, pictureId uuid.UUID) string {
-	return fmt.Sprintf("%s/%s/%s/%s", recipesDir, recipeId, picturesDir, pictureId)
+	return fmt.Sprintf("%s/%s", r.getRecipePicturesPath(recipeId), pictureId)
+}
+
+func (r *Repository) getRecipePicturesPath(recipeId uuid.UUID) string {
+	return fmt.Sprintf("%s/%s/%s", recipesDir, recipeId, picturesDir)
 }
 
 func (r *Repository) generatePictureUploadLink(recipeId uuid.UUID, pictureId uuid.UUID, maxSize int64, isEncrypted bool) (entity.PictureUpload, error) {
@@ -150,7 +175,6 @@ func (r *Repository) generatePictureUploadLink(recipeId uuid.UUID, pictureId uui
 	}
 
 	return entity.PictureUpload{
-		PictureId:   pictureId,
 		PictureLink: r.GetRecipePictureLink(recipeId, pictureId),
 		UploadUrl:   uploadUrl.String(),
 		FormData:    formData,

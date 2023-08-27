@@ -15,6 +15,5 @@ message SetRecipePicturesRequest {
 }
 
 message SetRecipePicturesResponse {
-  map<string, string> links = 1;
-  int32 version = 2;
+  int32 version = 1;
 }

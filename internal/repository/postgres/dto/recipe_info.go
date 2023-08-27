@@ -56,8 +56,8 @@ func (r *RecipeInfo) Entity(userId uuid.UUID) entity.BaseRecipeInfo {
 		Visibility:  r.Visibility,
 		IsEncrypted: r.IsEncrypted,
 
-		Language:  r.Language,
-		PreviewId: r.Pictures.Preview,
+		Language: r.Language,
+		Preview:  r.Pictures.Preview,
 
 		CreationTimestamp: r.CreationTimestamp,
 		UpdateTimestamp:   r.UpdateTimestamp,

@@ -72,7 +72,6 @@ func (r *Recipe) Entity(userId uuid.UUID) entity.BaseRecipe {
 
 		Language:    r.Language,
 		Description: r.Description,
-		PreviewId:   r.Pictures.Preview,
 
 		CreationTimestamp: r.CreationTimestamp,
 		UpdateTimestamp:   r.UpdateTimestamp,
@@ -94,6 +93,6 @@ func (r *Recipe) Entity(userId uuid.UUID) entity.BaseRecipe {
 
 		Ingredients: r.Ingredients.Entity(),
 		Cooking:     r.Cooking.Entity(),
-		PictureIds:  r.Pictures.Entity(),
+		Pictures:    r.Pictures.Entity(),
 	}
 }

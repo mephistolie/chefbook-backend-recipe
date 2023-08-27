@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 	api "github.com/mephistolie/chefbook-backend-recipe/api/proto/implementation/v1"
+	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
 	recipeFail "github.com/mephistolie/chefbook-backend-recipe/internal/entity/fail"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/transport/grpc/dto"
 )
@@ -37,7 +38,6 @@ func (s *RecipeServer) GenerateRecipePicturesUploadLinks(_ context.Context, req 
 	dtos := make([]*api.RecipePictureUploadLink, len(uploads))
 	for i, upload := range uploads {
 		dtos[i] = &api.RecipePictureUploadLink{
-			PictureId:   upload.PictureId.String(),
 			PictureLink: upload.PictureLink,
 			UploadLink:  upload.UploadUrl,
 			FormData:    upload.FormData,
@@ -59,24 +59,30 @@ func (s *RecipeServer) SetRecipePictures(_ context.Context, req *api.SetRecipePi
 	}
 
 	pictures := dto.NewRecipePictures(req)
-
-	usedIds := make(map[uuid.UUID]bool)
-	for _, id := range pictures.GetIds() {
-		if exists, ok := usedIds[id]; ok && exists {
-			return nil, recipeFail.GrpcDuplicatePictures
-		}
-		usedIds[id] = true
+	if !s.checkForPictureDuplicates(pictures) {
+		return nil, recipeFail.GrpcDuplicatePictures
 	}
 
-	links, version, err := s.service.SetRecipePictures(recipeId, userId, pictures, req.Version, req.Subscription)
+	version, err := s.service.SetRecipePictures(recipeId, userId, pictures, req.Version, req.Subscription)
 	if err != nil {
 		return nil, err
 	}
 
-	rawLinks := make(map[string]string)
-	for pictureId, link := range links {
-		rawLinks[pictureId.String()] = link
-	}
+	return &api.SetRecipePicturesResponse{Version: version}, nil
+}
 
-	return &api.SetRecipePicturesResponse{Links: rawLinks, Version: version}, nil
+func (s *RecipeServer) checkForPictureDuplicates(pictures entity.RecipePictures) bool {
+	usedIds := make(map[string]bool)
+	if pictures.Preview != nil {
+		usedIds[*pictures.Preview] = true
+	}
+	for _, stepPictures := range pictures.Cooking {
+		for _, stepPicture := range stepPictures {
+			if exists, ok := usedIds[stepPicture]; ok && exists {
+				return false
+			}
+			usedIds[stepPicture] = true
+		}
+	}
+	return true
 }

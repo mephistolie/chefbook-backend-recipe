@@ -21,7 +21,6 @@ func (s *Service) GenerateRecipePicturesUploadLinks(recipeId, userId uuid.UUID, 
 	var uploads []entity.PictureUpload
 	for _, pictureId := range pictureIds {
 		if upload, err := s.s3.GenerateRecipePictureUploadLink(recipeId, pictureId, subscriptionPlan, policy.IsEncrypted); err == nil {
-			upload.PictureId = pictureId
 			uploads = append(uploads, upload)
 		}
 	}
@@ -32,42 +31,67 @@ func (s *Service) GenerateRecipePicturesUploadLinks(recipeId, userId uuid.UUID, 
 func (s *Service) SetRecipePictures(
 	recipeId,
 	userId uuid.UUID,
-	pictures entity.RecipePictureIds,
+	pictures entity.RecipePictures,
 	version *int32,
 	subscriptionPlan string,
-) (map[uuid.UUID]string, int32, error) {
+) (int32, error) {
 	if policy, err := s.repo.GetRecipePolicy(recipeId); err != nil || policy.OwnerId != userId {
-		return map[uuid.UUID]string{}, 0, fail.GrpcAccessDenied
+		return 0, fail.GrpcAccessDenied
 	}
 
-	pictureIds := pictures.GetIds()
+	validatedPictures, pictureIds := s.validatePictureLinks(recipeId, pictures)
+
 	maxPicturesCount := s.subscriptionLimiter.GetMaxPicturesCount(subscriptionPlan)
 	if len(pictureIds) > maxPicturesCount {
-		return map[uuid.UUID]string{}, 0, recipeFail.GrpcRecipePicturesCountLimit
+		return 0, recipeFail.GrpcRecipePicturesCountLimit
 	}
 
-	if !s.s3.CheckRecipePicturesExist(recipeId, pictures.GetIds()) {
-		return map[uuid.UUID]string{}, 0, recipeFail.GrpcRecipePictureNotFound
+	if !s.s3.CheckRecipePicturesExist(recipeId, pictureIds) {
+		return 0, recipeFail.GrpcRecipePictureNotFound
 	}
 
-	newVersion, err := s.repo.SetRecipePictures(recipeId, pictures, version)
+	newVersion, err := s.repo.SetRecipePictures(recipeId, validatedPictures, pictureIds, version)
 	if err != nil {
-		return map[uuid.UUID]string{}, 0, err
+		return 0, err
 	}
 
 	go func() {
 		s.s3.DeleteUnusedRecipePictures(recipeId, pictureIds)
 	}()
 
-	links := make(map[uuid.UUID]string)
-	if pictures.Preview != nil {
-		links[*pictures.Preview] = s.s3.GetRecipePictureLink(recipeId, *pictures.Preview)
-	}
-	for _, stepPictures := range pictures.Cooking {
-		for _, pictureId := range stepPictures {
-			links[pictureId] = s.s3.GetRecipePictureLink(recipeId, pictureId)
+	return newVersion, nil
+}
+
+func (s *Service) validatePictureLinks(recipeId uuid.UUID, pictures entity.RecipePictures) (entity.RecipePictures, []uuid.UUID) {
+	validatedPictures := pictures
+	var pictureIds []uuid.UUID
+	if validatedPictures.Preview != nil {
+		if pictureId := s.s3.GetRecipePictureIdByLink(recipeId, *validatedPictures.Preview); pictureId != nil {
+			pictureIds = append(pictureIds, *pictureId)
+		} else {
+			validatedPictures.Preview = nil
 		}
 	}
-
-	return links, newVersion, nil
+	for stepId, stepPictures := range validatedPictures.Cooking {
+		validatedStepPictures := stepPictures
+		for _, stepPicture := range stepPictures {
+			if pictureId := s.s3.GetRecipePictureIdByLink(recipeId, stepPicture); pictureId != nil {
+				pictureIds = append(pictureIds, *pictureId)
+			} else {
+				var filteredPictures []string
+				for _, filteredPicture := range stepPictures {
+					if filteredPicture != stepPicture {
+						filteredPictures = append(filteredPictures, filteredPicture)
+					}
+				}
+				validatedStepPictures = filteredPictures
+			}
+		}
+		if len(validatedStepPictures) > 0 {
+			validatedPictures.Cooking[stepId] = validatedStepPictures
+		} else {
+			validatedPictures.Cooking[stepId] = nil
+		}
+	}
+	return validatedPictures, pictureIds
 }

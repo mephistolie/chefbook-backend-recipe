@@ -102,13 +102,18 @@ func (r *Repository) updateRecipePicturesUploadRequest(recipeId uuid.UUID, pictu
 	return nil
 }
 
-func (r *Repository) SetRecipePictures(recipeId uuid.UUID, pictures entity.RecipePictureIds, version *int32) (int32, error) {
+func (r *Repository) SetRecipePictures(
+	recipeId uuid.UUID,
+	pictures entity.RecipePictures,
+	pictureIds []uuid.UUID,
+	version *int32,
+) (int32, error) {
 	tx, err := r.startTransaction()
 	if err != nil {
 		return 0, err
 	}
 
-	if err = r.deleteUsedPictureIds(recipeId, pictures, tx); err != nil {
+	if err = r.deleteUsedPictureIds(recipeId, pictureIds, tx); err != nil {
 		return 0, err
 	}
 
@@ -139,18 +144,17 @@ func (r *Repository) SetRecipePictures(recipeId uuid.UUID, pictures entity.Recip
 	return newVersion, commitTransaction(tx)
 }
 
-func (r *Repository) deleteUsedPictureIds(recipeId uuid.UUID, pictures entity.RecipePictureIds, tx *sql.Tx) error {
+func (r *Repository) deleteUsedPictureIds(recipeId uuid.UUID, picturesIds []uuid.UUID, tx *sql.Tx) error {
 	picturesUploads, hasRequest, err := r.getExistingRecipePicturesUploadsQuery(recipeId, tx)
 	if err != nil {
 		return err
 	}
 
 	if hasRequest {
-		usedPictures := pictures.GetIds()
 		var unusedPictures []uuid.UUID
 		for _, uploadId := range picturesUploads {
 			isUsed := false
-			for _, usedPicture := range usedPictures {
+			for _, usedPicture := range picturesIds {
 				if usedPicture == uploadId {
 					isUsed = true
 					break
