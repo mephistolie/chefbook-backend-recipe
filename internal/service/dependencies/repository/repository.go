@@ -30,6 +30,10 @@ type Recipe interface {
 	SetRecipeFavouriteStatus(recipeId, userId uuid.UUID, isFavourite bool) error
 	SetRecipeCategories(recipeId, userId uuid.UUID, categories []uuid.UUID) error
 
+	GetRecipeTranslation(recipeId uuid.UUID, language string, authorId *uuid.UUID) *entity.RecipeTranslation
+	TranslateRecipe(recipeId uuid.UUID, translation entity.RecipeTranslation) error
+	DeleteRecipeTranslation(recipeId uuid.UUID, userId uuid.UUID, language string) error
+
 	GetRecipePolicy(recipeId uuid.UUID) (entity.RecipePolicy, error)
 
 	ConfirmFirebaseDataLoad(messageId uuid.UUID) error

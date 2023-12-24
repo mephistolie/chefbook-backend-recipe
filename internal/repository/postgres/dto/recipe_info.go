@@ -16,13 +16,14 @@ type RecipeInfo struct {
 	Visibility  string `db:"visibility"`
 	IsEncrypted bool   `db:"encrypted"`
 
-	Language string `db:"language"`
+	Language     string   `db:"language"`
+	Translations []string `db:"translations"`
 
 	Rating float32 `db:"rating"`
 	Score  int32   `db:"score"`
 	Votes  int32   `db:"votes"`
 
-	Tags Tags `db:"tags"`
+	Tags []string `db:"tags"`
 
 	IsFavourite bool       `db:"favourite"`
 	Categories  Categories `db:"categories"`

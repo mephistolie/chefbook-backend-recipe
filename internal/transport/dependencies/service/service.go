@@ -27,7 +27,7 @@ type Recipe interface {
 	GetRecipesBook(userId uuid.UUID, language string) (entity.DetailedRecipesState, error)
 	GetRecipeNames(recipeIds []uuid.UUID, userId uuid.UUID) (map[uuid.UUID]string, error)
 	CreateRecipe(input entity.RecipeInput) (uuid.UUID, int32, error)
-	GetRecipe(recipeId, userId uuid.UUID, language string) (entity.DetailedRecipe, error)
+	GetRecipe(recipeId, userId uuid.UUID, language string, translatorId *uuid.UUID) (entity.DetailedRecipe, error)
 	UpdateRecipe(input entity.RecipeInput) (int32, error)
 	DeleteRecipe(recipeId, userId uuid.UUID) error
 
@@ -39,6 +39,9 @@ type Recipe interface {
 	RemoveFromRecipeBook(recipeId, userId uuid.UUID) error
 	SetRecipeFavouriteStatus(recipeId, userId uuid.UUID, favourite bool) error
 	SetRecipeCategories(recipeId, userId uuid.UUID, categories []uuid.UUID) error
+
+	TranslateRecipe(recipeId uuid.UUID, translation entity.RecipeTranslation) error
+	DeleteRecipeTranslation(recipeId, userId uuid.UUID, language string) error
 
 	GetRecipePolicy(userId uuid.UUID) (entity.RecipePolicy, error)
 }

@@ -2,5 +2,5 @@ apiVersion: v2
 name: chefbook-backend-recipe-service
 description: ChefBook Recipe Microservice Helm chart
 type: application
-version: 1.3.5
-appVersion: "1.3.5"
+version: 1.4.0
+appVersion: "1.4.0"

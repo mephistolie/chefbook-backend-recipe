@@ -29,4 +29,6 @@ var (
 	GrpcDuplicatePictures        = fail.CreateGrpcClient(fail.TypeInvalidBody, "requests contains duplicate pictures")
 	GrpcRecipePictureNotFound    = fail.CreateGrpcNotFound(fail.TypeNotFound, "one or more entered pictures hasn't been found")
 	GrpcRecipePicturesCountLimit = fail.CreateGrpcAccessDenied(fail.TypeAccessDenied, "recipe pictures count out of limit")
+
+	GrpcTranslationMismatch = fail.CreateGrpcAccessDenied(fail.TypeInvalidBody, "recipe translation fields mismatch with original one")
 )

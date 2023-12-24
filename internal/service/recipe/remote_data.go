@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-func (s *Service) getRecipeAuthorsInfo(authorIds []string) map[string]*profileApi.ProfileMinInfo {
+func (s *Service) getProfilesInfo(authorIds []string) map[string]*profileApi.ProfileMinInfo {
 	uniqueAuthorIds := slices.RemoveDuplicates(authorIds)
 	infos := make(map[string]*profileApi.ProfileMinInfo)
 	if len(uniqueAuthorIds) == 0 {

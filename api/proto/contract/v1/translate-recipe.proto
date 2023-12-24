@@ -1,0 +1,23 @@
+syntax = "proto3";
+package v1;
+
+option go_package = "github.com/mephistolie/chefbook-backend-recipe/api/proto/v1";
+
+message IngredientTranslation {
+  string text = 1;
+  optional string unit = 2;
+}
+
+message TranslateRecipeRequest {
+  string recipeId = 1;
+  string translatorId = 2;
+  string language = 3;
+  string name = 4;
+  optional string description = 5;
+  map<string, IngredientTranslation> ingredients = 6;
+  map<string, string> cooking = 7;
+}
+
+message TranslateRecipeResponse {
+  string message = 1;
+}

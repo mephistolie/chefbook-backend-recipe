@@ -36,8 +36,14 @@ func (s *RecipeServer) GetRecipe(_ context.Context, req *api.GetRecipeRequest) (
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
 	}
+	var translatorIdPtr *uuid.UUID
+	if req.TranslatorId != nil {
+		if id, err := uuid.Parse(*req.TranslatorId); err == nil {
+			translatorIdPtr = &id
+		}
+	}
 
-	recipe, err := s.service.GetRecipe(recipeId, userId, entity.ValidatedLanguage(req.UserLanguage))
+	recipe, err := s.service.GetRecipe(recipeId, userId, entity.ValidatedLanguage(req.Language), translatorIdPtr)
 	if err != nil {
 		return nil, err
 	}

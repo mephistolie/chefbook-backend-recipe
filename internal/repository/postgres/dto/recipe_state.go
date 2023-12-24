@@ -15,7 +15,7 @@ type RecipeState struct {
 	Score  int32   `db:"score"`
 	Votes  int32   `db:"votes"`
 
-	Tags        Tags       `db:"tags"`
+	Tags        []string   `db:"tags"`
 	Categories  Categories `db:"categories"`
 	IsFavourite bool       `db:"favourite"`
 }

@@ -23,7 +23,7 @@ func (s *Service) GetRecipes(params entity.RecipesQuery, userId uuid.UUID, langu
 	categories := make(map[string]entity.Category)
 	wg := s.getCategoriesAndTagsAsync(tagIds, categoryIds, userId, language, &tags, &categories)
 
-	authorsMap := s.getRecipeAuthorsInfo(authors)
+	authorsMap := s.getProfilesInfo(authors)
 
 	wg.Wait()
 
@@ -56,6 +56,15 @@ func (s *Service) getRecipeInfos(
 }
 
 func (s *Service) GetRecipesBook(userId uuid.UUID, language string) (entity.DetailedRecipesState, error) {
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+
+	var categories []entity.Category
+	go func() {
+		categories = s.getUserCategories(userId)
+		wg.Done()
+	}()
+
 	recipes, err := s.repo.GetRecipeBook(userId)
 	if err != nil {
 		return entity.DetailedRecipesState{}, err
@@ -71,18 +80,9 @@ func (s *Service) GetRecipesBook(userId uuid.UUID, language string) (entity.Deta
 	}
 
 	tags := make(map[string]entity.Tag)
-	var categories []entity.Category
-
-	wg := sync.WaitGroup{}
-	wg.Add(2)
-
 	go s.getTags(language, tagIds, &tags, &wg)
-	go func() {
-		categories = s.getUserCategories(userId)
-		wg.Done()
-	}()
 
-	authorsMap := s.getRecipeAuthorsInfo(authors)
+	authorsMap := s.getProfilesInfo(authors)
 
 	wg.Wait()
 

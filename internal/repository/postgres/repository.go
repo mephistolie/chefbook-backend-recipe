@@ -14,6 +14,7 @@ import (
 
 const (
 	recipesTable               = "recipes"
+	translationsTable          = "translations"
 	recipePicturesUploadsTable = "recipe_pictures_uploads"
 	usersTable                 = "recipes_users"
 	scoresTable                = "scores"

@@ -20,24 +20,25 @@ message RecipeInfo {
   string visibility = 8;
   bool isEncrypted = 9;
   string language = 10;
-  optional string preview = 11;
+  repeated string translations = 11;
+  optional string preview = 12;
 
-  google.protobuf.Timestamp creationTimestamp = 12;
-  google.protobuf.Timestamp updateTimestamp = 13;
-  int32 version = 14;
+  google.protobuf.Timestamp creationTimestamp = 13;
+  google.protobuf.Timestamp updateTimestamp = 14;
+  int32 version = 15;
 
-  float rating = 15;
-  optional int32 score = 16;
-  int32 votes = 17;
+  float rating = 16;
+  optional int32 score = 17;
+  int32 votes = 18;
 
-  repeated string tags = 18;
-  repeated string categories = 19;
-  bool isFavourite = 20;
+  repeated string tags = 19;
+  repeated string categories = 20;
+  bool isFavourite = 21;
 
-  optional int32 servings = 21;
-  optional int32 time = 22;
+  optional int32 servings = 22;
+  optional int32 time = 23;
 
-  optional int32 calories = 23;
+  optional int32 calories = 24;
 }
 
 message GetRecipesRequest {

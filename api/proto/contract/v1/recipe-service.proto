@@ -17,8 +17,10 @@ import "v1/generate-recipe-pictures-upload-links.proto";
 import "v1/set-recipe-pictures.proto";
 import "v1/set-recipe-favourite-status.proto";
 import "v1/set-recipe-categories.proto";
+import "v1/translate-recipe.proto";
 import "v1/get-recipe-policy.proto";
 import "v1/get-recipe-names.proto";
+import "v1/delete-recipe-translation.proto";
 
 service RecipeService {
   rpc GetRecipes(GetRecipesRequest) returns (GetRecipesResponse);
@@ -38,6 +40,9 @@ service RecipeService {
   rpc RemoveFromRecipeBook(RemoveFromRecipeBookRequest) returns (RemoveFromRecipeBookResponse);
   rpc SetRecipeFavouriteStatus(SetRecipeFavouriteStatusRequest) returns (SetRecipeFavouriteStatusResponse);
   rpc SetRecipeCategories(SetRecipeCategoriesRequest) returns (SetRecipeCategoriesResponse);
+
+  rpc TranslateRecipe(TranslateRecipeRequest) returns (TranslateRecipeResponse);
+  rpc DeleteRecipeTranslation(DeleteRecipeTranslationRequest) returns (DeleteRecipeTranslationResponse);
 
   rpc GetRecipePolicy(GetRecipePolicyRequest) returns (GetRecipePolicyResponse);
   rpc GetRecipeNames(GetRecipeNamesRequest) returns (GetRecipeNamesResponse);

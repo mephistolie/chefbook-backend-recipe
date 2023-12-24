@@ -18,7 +18,7 @@ func (s *Service) CreateRecipe(input entity.RecipeInput) (uuid.UUID, int32, erro
 	return id, version, err
 }
 
-func (s *Service) GetRecipe(recipeId, userId uuid.UUID, language string) (entity.DetailedRecipe, error) {
+func (s *Service) GetRecipe(recipeId, userId uuid.UUID, language string, translatorId *uuid.UUID) (entity.DetailedRecipe, error) {
 	baseRecipe, err := s.repo.GetRecipe(recipeId, userId)
 	if err != nil {
 		return entity.DetailedRecipe{}, err
@@ -26,7 +26,7 @@ func (s *Service) GetRecipe(recipeId, userId uuid.UUID, language string) (entity
 	if baseRecipe.OwnerId != userId && baseRecipe.Visibility == model.VisibilityPrivate {
 		return entity.DetailedRecipe{}, fail.GrpcAccessDenied
 	}
-	return s.fillBaseRecipe(baseRecipe, userId, language), nil
+	return s.fillBaseRecipe(baseRecipe, userId, language, translatorId), nil
 }
 
 func (s *Service) GetRandomRecipe(userId uuid.UUID, recipeLanguages *[]string, userLanguage string) (entity.DetailedRecipe, error) {
@@ -34,23 +34,18 @@ func (s *Service) GetRandomRecipe(userId uuid.UUID, recipeLanguages *[]string, u
 	if err != nil {
 		return entity.DetailedRecipe{}, err
 	}
-	return s.fillBaseRecipe(baseRecipe, userId, userLanguage), nil
+	return s.fillBaseRecipe(baseRecipe, userId, userLanguage, nil), nil
 }
 
-func (s *Service) fillBaseRecipe(baseRecipe entity.BaseRecipe, userId uuid.UUID, language string) entity.DetailedRecipe {
+func (s *Service) fillBaseRecipe(baseRecipe entity.BaseRecipe, userId uuid.UUID, language string, translatorId *uuid.UUID) entity.DetailedRecipe {
 	recipe := entity.Recipe{BaseRecipe: baseRecipe}
 
 	tags := make(map[string]entity.Tag)
 	categories := make(map[string]entity.Category)
 	wg := s.getCategoriesAndTagsAsync(baseRecipe.Tags, baseRecipe.Categories, userId, language, &tags, &categories)
 
-	ownerId := baseRecipe.OwnerId.String()
-	authorsMap := s.getRecipeAuthorsInfo([]string{ownerId})
-
-	if info, ok := authorsMap[ownerId]; ok && info != nil {
-		recipe.OwnerName = info.VisibleName
-		recipe.OwnerAvatar = info.Avatar
-	}
+	s.fillRecipeTranslation(&recipe, language, translatorId)
+	s.fillProfilesData(&recipe)
 
 	wg.Wait()
 
@@ -58,6 +53,64 @@ func (s *Service) fillBaseRecipe(baseRecipe entity.BaseRecipe, userId uuid.UUID,
 		Recipe:     recipe,
 		Tags:       tags,
 		Categories: categories,
+	}
+}
+
+func (s *Service) fillRecipeTranslation(recipe *entity.Recipe, language string, translatorId *uuid.UUID) {
+	if recipe.Language == language {
+		return
+	}
+	if _, ok := recipe.Translations[language]; !ok {
+		return
+	}
+
+	translation := s.repo.GetRecipeTranslation(recipe.Id, language, translatorId)
+	if translation == nil {
+		return
+	}
+
+	recipe.Name = translation.Name
+	if translation.Description != nil {
+		recipe.Description = translation.Description
+	}
+	for i, ingredient := range recipe.Ingredients {
+		if ingredientTranslation, ok := translation.Ingredients[ingredient.Id]; ok {
+			recipe.Ingredients[i].Text = &ingredientTranslation.Text
+			if ingredientTranslation.Unit != nil {
+				recipe.Ingredients[i].Unit = ingredientTranslation.Unit
+			}
+		}
+	}
+	for i, step := range recipe.Cooking {
+		if stepTranslation, ok := translation.Cooking[step.Id]; ok {
+			recipe.Cooking[i].Text = &stepTranslation
+		}
+	}
+}
+
+func (s *Service) fillProfilesData(recipe *entity.Recipe) {
+	profiles := []string{recipe.OwnerId.String()}
+	for i, _ := range recipe.Translations {
+		for j, _ := range recipe.Translations[i] {
+			profiles = append(profiles, recipe.Translations[i][j].AuthorId.String())
+		}
+	}
+
+	profilesMap := s.getProfilesInfo(profiles)
+
+	if info, ok := profilesMap[recipe.OwnerId.String()]; ok && info != nil {
+		recipe.OwnerName = info.VisibleName
+		recipe.OwnerAvatar = info.Avatar
+	}
+
+	for i, _ := range recipe.Translations {
+		for j, _ := range recipe.Translations[i] {
+			if info, ok := profilesMap[recipe.Translations[i][j].AuthorId.String()]; ok && info != nil {
+				recipe.Translations[i][j].AuthorName = info.VisibleName
+				recipe.Translations[i][j].AuthorAvatar = info.Avatar
+			}
+
+		}
 	}
 }
 

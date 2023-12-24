@@ -23,27 +23,40 @@ message Recipe {
   bool isEncrypted = 9;
 
   string language = 10;
-  optional string description = 11;
+  optional string translation = 11;
+  map<string, RecipeTranslations> translations = 12;
+  optional string description = 13;
 
-  google.protobuf.Timestamp creationTimestamp = 12;
-  google.protobuf.Timestamp updateTimestamp = 13;
-  int32 version = 14;
+  google.protobuf.Timestamp creationTimestamp = 14;
+  google.protobuf.Timestamp updateTimestamp = 15;
+  int32 version = 16;
 
-  float rating = 15;
-  optional int32 score = 16;
-  int32 votes = 17;
+  float rating = 17;
+  optional int32 score = 18;
+  int32 votes = 19;
 
-  repeated string tags = 18;
-  repeated string categories = 19;
-  bool isFavourite = 20;
+  repeated string tags = 20;
+  repeated string categories = 21;
+  bool isFavourite = 22;
 
-  optional int32 servings = 21;
-  optional int32 time = 22;
+  optional int32 servings = 23;
+  optional int32 time = 24;
 
-  optional int32 calories = 23;
-  optional Macronutrients macronutrients = 24;
+  optional int32 calories = 25;
+  optional Macronutrients macronutrients = 26;
 
-  repeated IngredientItem ingredients = 25;
-  repeated CookingItem cooking = 26;
-  RecipePictures pictures = 27;
+  repeated IngredientItem ingredients = 27;
+  repeated CookingItem cooking = 28;
+  RecipePictures pictures = 29;
+}
+
+
+message RecipeTranslations {
+  repeated RecipeTranslationInfo translation = 1;
+}
+
+message RecipeTranslationInfo {
+  string authorId = 1;
+  optional string authorName = 2;
+  optional string authorAvatar = 3;
 }

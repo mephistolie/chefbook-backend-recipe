@@ -3,6 +3,7 @@ package postgres
 import (
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"github.com/mephistolie/chefbook-backend-common/log"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 	"github.com/mephistolie/chefbook-backend-recipe/api/model"
@@ -32,9 +33,9 @@ func (r *Repository) GetRecipes(params entity.RecipesQuery, userId uuid.UUID) []
 			&recipe.Id, &recipe.Name,
 			&recipe.OwnerId,
 			&recipe.Visibility, &recipe.IsEncrypted,
-			&recipe.Language,
+			&recipe.Language, pq.Array(&recipe.Translations),
 			&recipe.Rating, &recipe.Votes, &recipe.Score,
-			&recipe.Tags, &recipe.Categories, &recipe.IsFavourite, &recipe.IsSaved,
+			pq.Array(&recipe.Tags), &recipe.Categories, &recipe.IsFavourite, &recipe.IsSaved,
 			&recipe.Pictures,
 			&recipe.Servings, &recipe.Time,
 			&recipe.Calories,
@@ -57,7 +58,7 @@ func (r *Repository) getRecipesByParamsQuery(params entity.RecipesQuery, userId 
 			%[1]v.recipe_id, %[1]v.name,
 			%[1]v.owner_id,
 			%[1]v.visibility, %[1]v.encrypted,
-			%[1]v.language, 
+			%[1]v.language, %[1]v.translations,
 			%[1]v.rating, %[1]v.votes, coalesce(%[3]v.score, 0),
 			%[1]v.tags, coalesce(%[2]v.categories, '[]'::jsonb), coalesce(%[2]v.favourite, false),
 			(
@@ -119,7 +120,7 @@ func (r *Repository) getRecipesWhereStatementByParams(params entity.RecipesQuery
 	}
 
 	if params.Languages != nil && len(*params.Languages) > 0 {
-		whereStatement += fmt.Sprintf(" AND %s.language=ANY($%d)", recipesTable, argNumber)
+		whereStatement += fmt.Sprintf(" AND %s.translations && $%d", recipesTable, argNumber)
 		args = append(args, *params.Languages)
 		argNumber += 1
 	}

@@ -12,12 +12,13 @@ CREATE TABLE recipes
     CHECK ( encrypted = false OR visibility <> 'public' ),
 
     language           VARCHAR(2)                                         NOT NULL        DEFAULT 'en',
+    translations       TEXT[] NOT NULL DEFAULT '{}',
     description        VARCHAR(1500)                                                      DEFAULT NULL,
 
     rating             DECIMAL(7, 6) CHECK ( rating >= 0 AND rating <= 5) NOT NULL        DEFAULT 0.0,
     votes              INT CHECK ( votes >= 0 )                           NOT NULL        DEFAULT 0,
 
-    tags               JSONB                                              NOT NULL        DEFAULT '[]'::jsonb,
+    tags               TEXT[] NOT NULL DEFAULT '{}',
 
     ingredients        JSONB                                              NOT NULL,
     cooking            JSONB                                              NOT NULL,
@@ -43,16 +44,29 @@ CREATE INDEX recipes_update_timestamp_key ON recipes (update_timestamp);
 CREATE INDEX recipes_rating_key ON recipes (rating);
 CREATE INDEX recipes_votes_key ON recipes (votes);
 
+CREATE TABLE translations
+(
+    recipe_id   UUID REFERENCES recipes (recipe_id) ON DELETE CASCADE NOT NULL,
+    language    VARCHAR(2)                                            NOT NULL DEFAULT 'en',
+    author_id   UUID                                                  NOT NULL,
+    name        VARCHAR(150) CHECK ( name <> '' )                     NOT NULL,
+    description VARCHAR(1500)                                                  DEFAULT NULL,
+    ingredients JSONB                                                 NOT NULL,
+    cooking     JSONB                                                 NOT NULL,
+    hidden      BOOLEAN                                               NOT NULL DEFAULT false,
+    UNIQUE (recipe_id, author_id)
+);
+
 CREATE TABLE recipe_pictures_uploads
 (
-    recipe_id uuid REFERENCES recipes (recipe_id) ON DELETE CASCADE NOT NULL UNIQUE,
+    recipe_id UUID REFERENCES recipes (recipe_id) ON DELETE CASCADE NOT NULL UNIQUE,
     pictures  JSONB                                                 NOT NULL
 );
 
 CREATE TABLE recipes_users
 (
-    recipe_id  uuid REFERENCES recipes (recipe_id) ON DELETE CASCADE NOT NULL,
-    user_id    uuid                                                  NOT NULL,
+    recipe_id  UUID REFERENCES recipes (recipe_id) ON DELETE CASCADE NOT NULL,
+    user_id    UUID                                                  NOT NULL,
     favourite  BOOLEAN                                               NOT NULL DEFAULT FALSE,
     categories JSONB                                                 NOT NULL DEFAULT '[]'::jsonb,
     UNIQUE (user_id, recipe_id)
@@ -60,21 +74,21 @@ CREATE TABLE recipes_users
 
 CREATE TABLE scores
 (
-    recipe_id uuid REFERENCES recipes (recipe_id) ON DELETE CASCADE NOT NULL,
-    user_id   uuid                                                  NOT NULL,
+    recipe_id UUID REFERENCES recipes (recipe_id) ON DELETE CASCADE NOT NULL,
+    user_id   UUID                                                  NOT NULL,
     score     SMALLINT                                              NOT NULL,
     UNIQUE (user_id, recipe_id)
 );
 
 CREATE TABLE inbox
 (
-    message_id uuid PRIMARY KEY         NOT NULL UNIQUE,
+    message_id UUID PRIMARY KEY         NOT NULL UNIQUE,
     timestamp  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now():: timestamp
 );
 
 CREATE TABLE outbox
 (
-    message_id uuid PRIMARY KEY NOT NULL UNIQUE DEFAULT gen_random_uuid(),
+    message_id UUID PRIMARY KEY NOT NULL UNIQUE DEFAULT gen_random_uuid(),
     exchange   VARCHAR(64)                      DEFAULT '',
     type       VARCHAR(64)      NOT NULL,
     body       JSONB            NOT NULL        DEFAULT '{}'::jsonb

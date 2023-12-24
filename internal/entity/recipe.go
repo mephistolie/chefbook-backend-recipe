@@ -16,8 +16,9 @@ type BaseRecipe struct {
 	Visibility  string
 	IsEncrypted bool
 
-	Language    string
-	Description *string
+	Language     string
+	Translations map[string][]RecipeTranslationInfo
+	Description  *string
 
 	CreationTimestamp time.Time
 	UpdateTimestamp   time.Time
@@ -50,7 +51,8 @@ type Recipe struct {
 }
 
 type DetailedRecipe struct {
-	Recipe     Recipe
-	Tags       map[string]Tag
-	Categories map[string]Category
+	Recipe       Recipe
+	Translations map[string][]RecipeTranslationInfo
+	Tags         map[string]Tag
+	Categories   map[string]Category
 }

@@ -33,6 +33,8 @@ const (
 	RecipeService_RemoveFromRecipeBook_FullMethodName              = "/v1.RecipeService/RemoveFromRecipeBook"
 	RecipeService_SetRecipeFavouriteStatus_FullMethodName          = "/v1.RecipeService/SetRecipeFavouriteStatus"
 	RecipeService_SetRecipeCategories_FullMethodName               = "/v1.RecipeService/SetRecipeCategories"
+	RecipeService_TranslateRecipe_FullMethodName                   = "/v1.RecipeService/TranslateRecipe"
+	RecipeService_DeleteRecipeTranslation_FullMethodName           = "/v1.RecipeService/DeleteRecipeTranslation"
 	RecipeService_GetRecipePolicy_FullMethodName                   = "/v1.RecipeService/GetRecipePolicy"
 	RecipeService_GetRecipeNames_FullMethodName                    = "/v1.RecipeService/GetRecipeNames"
 )
@@ -55,6 +57,8 @@ type RecipeServiceClient interface {
 	RemoveFromRecipeBook(ctx context.Context, in *RemoveFromRecipeBookRequest, opts ...grpc.CallOption) (*RemoveFromRecipeBookResponse, error)
 	SetRecipeFavouriteStatus(ctx context.Context, in *SetRecipeFavouriteStatusRequest, opts ...grpc.CallOption) (*SetRecipeFavouriteStatusResponse, error)
 	SetRecipeCategories(ctx context.Context, in *SetRecipeCategoriesRequest, opts ...grpc.CallOption) (*SetRecipeCategoriesResponse, error)
+	TranslateRecipe(ctx context.Context, in *TranslateRecipeRequest, opts ...grpc.CallOption) (*TranslateRecipeResponse, error)
+	DeleteRecipeTranslation(ctx context.Context, in *DeleteRecipeTranslationRequest, opts ...grpc.CallOption) (*DeleteRecipeTranslationResponse, error)
 	GetRecipePolicy(ctx context.Context, in *GetRecipePolicyRequest, opts ...grpc.CallOption) (*GetRecipePolicyResponse, error)
 	GetRecipeNames(ctx context.Context, in *GetRecipeNamesRequest, opts ...grpc.CallOption) (*GetRecipeNamesResponse, error)
 }
@@ -193,6 +197,24 @@ func (c *recipeServiceClient) SetRecipeCategories(ctx context.Context, in *SetRe
 	return out, nil
 }
 
+func (c *recipeServiceClient) TranslateRecipe(ctx context.Context, in *TranslateRecipeRequest, opts ...grpc.CallOption) (*TranslateRecipeResponse, error) {
+	out := new(TranslateRecipeResponse)
+	err := c.cc.Invoke(ctx, RecipeService_TranslateRecipe_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *recipeServiceClient) DeleteRecipeTranslation(ctx context.Context, in *DeleteRecipeTranslationRequest, opts ...grpc.CallOption) (*DeleteRecipeTranslationResponse, error) {
+	out := new(DeleteRecipeTranslationResponse)
+	err := c.cc.Invoke(ctx, RecipeService_DeleteRecipeTranslation_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *recipeServiceClient) GetRecipePolicy(ctx context.Context, in *GetRecipePolicyRequest, opts ...grpc.CallOption) (*GetRecipePolicyResponse, error) {
 	out := new(GetRecipePolicyResponse)
 	err := c.cc.Invoke(ctx, RecipeService_GetRecipePolicy_FullMethodName, in, out, opts...)
@@ -229,6 +251,8 @@ type RecipeServiceServer interface {
 	RemoveFromRecipeBook(context.Context, *RemoveFromRecipeBookRequest) (*RemoveFromRecipeBookResponse, error)
 	SetRecipeFavouriteStatus(context.Context, *SetRecipeFavouriteStatusRequest) (*SetRecipeFavouriteStatusResponse, error)
 	SetRecipeCategories(context.Context, *SetRecipeCategoriesRequest) (*SetRecipeCategoriesResponse, error)
+	TranslateRecipe(context.Context, *TranslateRecipeRequest) (*TranslateRecipeResponse, error)
+	DeleteRecipeTranslation(context.Context, *DeleteRecipeTranslationRequest) (*DeleteRecipeTranslationResponse, error)
 	GetRecipePolicy(context.Context, *GetRecipePolicyRequest) (*GetRecipePolicyResponse, error)
 	GetRecipeNames(context.Context, *GetRecipeNamesRequest) (*GetRecipeNamesResponse, error)
 	mustEmbedUnimplementedRecipeServiceServer()
@@ -279,6 +303,12 @@ func (UnimplementedRecipeServiceServer) SetRecipeFavouriteStatus(context.Context
 }
 func (UnimplementedRecipeServiceServer) SetRecipeCategories(context.Context, *SetRecipeCategoriesRequest) (*SetRecipeCategoriesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetRecipeCategories not implemented")
+}
+func (UnimplementedRecipeServiceServer) TranslateRecipe(context.Context, *TranslateRecipeRequest) (*TranslateRecipeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TranslateRecipe not implemented")
+}
+func (UnimplementedRecipeServiceServer) DeleteRecipeTranslation(context.Context, *DeleteRecipeTranslationRequest) (*DeleteRecipeTranslationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteRecipeTranslation not implemented")
 }
 func (UnimplementedRecipeServiceServer) GetRecipePolicy(context.Context, *GetRecipePolicyRequest) (*GetRecipePolicyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRecipePolicy not implemented")
@@ -551,6 +581,42 @@ func _RecipeService_SetRecipeCategories_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RecipeService_TranslateRecipe_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TranslateRecipeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RecipeServiceServer).TranslateRecipe(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RecipeService_TranslateRecipe_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RecipeServiceServer).TranslateRecipe(ctx, req.(*TranslateRecipeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RecipeService_DeleteRecipeTranslation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteRecipeTranslationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RecipeServiceServer).DeleteRecipeTranslation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RecipeService_DeleteRecipeTranslation_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RecipeServiceServer).DeleteRecipeTranslation(ctx, req.(*DeleteRecipeTranslationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _RecipeService_GetRecipePolicy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetRecipePolicyRequest)
 	if err := dec(in); err != nil {
@@ -649,6 +715,14 @@ var RecipeService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetRecipeCategories",
 			Handler:    _RecipeService_SetRecipeCategories_Handler,
+		},
+		{
+			MethodName: "TranslateRecipe",
+			Handler:    _RecipeService_TranslateRecipe_Handler,
+		},
+		{
+			MethodName: "DeleteRecipeTranslation",
+			Handler:    _RecipeService_DeleteRecipeTranslation_Handler,
 		},
 		{
 			MethodName: "GetRecipePolicy",
