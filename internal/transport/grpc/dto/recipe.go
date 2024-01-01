@@ -41,8 +41,9 @@ func newRecipe(recipe entity.Recipe) *api.Recipe {
 		Visibility:  recipe.Visibility,
 		IsEncrypted: recipe.IsEncrypted,
 
-		Language:    recipe.Language,
-		Description: recipe.Description,
+		Language:     recipe.Language,
+		Translations: NewRecipeTranslations(recipe.Translations),
+		Description:  recipe.Description,
 
 		CreationTimestamp: timestamppb.New(recipe.CreationTimestamp),
 		UpdateTimestamp:   timestamppb.New(recipe.UpdateTimestamp),

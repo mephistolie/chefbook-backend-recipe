@@ -52,7 +52,7 @@ message Recipe {
 
 
 message RecipeTranslations {
-  repeated RecipeTranslationInfo translation = 1;
+  repeated RecipeTranslationInfo translations = 1;
 }
 
 message RecipeTranslationInfo {
