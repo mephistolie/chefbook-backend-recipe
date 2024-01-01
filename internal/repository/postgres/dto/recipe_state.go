@@ -11,6 +11,8 @@ type RecipeState struct {
 
 	OwnerId uuid.UUID `db:"owner_id"`
 
+	Translations []string `db:"translations"`
+
 	Rating float32 `db:"rating"`
 	Score  int32   `db:"score"`
 	Votes  int32   `db:"votes"`
@@ -31,6 +33,8 @@ func (r *RecipeState) Entity() entity.BaseRecipeState {
 		Version: r.Version,
 
 		OwnerId: r.OwnerId,
+
+		Translations: r.Translations,
 
 		Rating: r.Rating,
 		Score:  score,

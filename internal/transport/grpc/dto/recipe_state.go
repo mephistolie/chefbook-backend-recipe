@@ -28,14 +28,15 @@ func newRecipeState(recipe entity.RecipeState) *api.RecipeState {
 	}
 
 	return &api.RecipeState{
-		RecipeId:    recipe.Id.String(),
-		OwnerName:   recipe.OwnerName,
-		OwnerAvatar: recipe.OwnerAvatar,
-		Version:     recipe.Version,
-		Rating:      recipe.Rating,
-		Votes:       recipe.Votes,
-		Score:       recipe.Score,
-		Categories:  categories,
-		IsFavourite: recipe.IsFavourite,
+		RecipeId:     recipe.Id.String(),
+		OwnerName:    recipe.OwnerName,
+		OwnerAvatar:  recipe.OwnerAvatar,
+		Version:      recipe.Version,
+		Translations: recipe.Translations,
+		Rating:       recipe.Rating,
+		Votes:        recipe.Votes,
+		Score:        recipe.Score,
+		Categories:   categories,
+		IsFavourite:  recipe.IsFavourite,
 	}
 }

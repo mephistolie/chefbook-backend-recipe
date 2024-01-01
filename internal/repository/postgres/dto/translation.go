@@ -13,6 +13,16 @@ type RecipeTranslationInfo struct {
 	AuthorId uuid.UUID `db:author_id`
 }
 
+func TranslationsEntity(dto []RecipeTranslationInfo) map[string][]entity.RecipeTranslationInfo {
+	translations := map[string][]entity.RecipeTranslationInfo{}
+	for _, translation := range dto {
+		languageTranslations, _ := translations[translation.Language]
+		languageTranslations = append(languageTranslations, entity.RecipeTranslationInfo{AuthorId: translation.AuthorId})
+		translations[translation.Language] = languageTranslations
+	}
+	return translations
+}
+
 type IngredientTranslation struct {
 	Text string  `json:"text"`
 	Unit *string `json:"unit"`

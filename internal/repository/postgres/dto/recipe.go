@@ -15,9 +15,9 @@ type Recipe struct {
 	Visibility  string `db:"visibility"`
 	IsEncrypted bool   `db:"encrypted"`
 
-	Language     string                  `db:"language"`
-	Translations []RecipeTranslationInfo `db:"translations"`
-	Description  *string                 `db:"description"`
+	Language     string                                    `db:"language"`
+	Translations map[string][]entity.RecipeTranslationInfo `db:"translations"`
+	Description  *string                                   `db:"description"`
 
 	Rating float32 `db:"rating"`
 	Score  int32   `db:"score"`
@@ -72,7 +72,7 @@ func (r *Recipe) Entity(userId uuid.UUID) entity.BaseRecipe {
 		IsEncrypted: r.IsEncrypted,
 
 		Language:     r.Language,
-		Translations: r.TranslationsEntity(),
+		Translations: r.Translations,
 		Description:  r.Description,
 
 		CreationTimestamp: r.CreationTimestamp,
@@ -97,14 +97,4 @@ func (r *Recipe) Entity(userId uuid.UUID) entity.BaseRecipe {
 		Cooking:     r.Cooking.Entity(),
 		Pictures:    r.Pictures.Entity(),
 	}
-}
-
-func (r *Recipe) TranslationsEntity() map[string][]entity.RecipeTranslationInfo {
-	translations := map[string][]entity.RecipeTranslationInfo{}
-	for _, translation := range r.Translations {
-		languageTranslations, _ := translations[translation.Language]
-		languageTranslations = append(languageTranslations, entity.RecipeTranslationInfo{AuthorId: translation.AuthorId})
-		translations[translation.Language] = languageTranslations
-	}
-	return translations
 }

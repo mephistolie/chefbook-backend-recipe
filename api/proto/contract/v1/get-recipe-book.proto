@@ -13,12 +13,14 @@ message RecipeState {
   optional string ownerName = 3;
   optional string ownerAvatar = 4;
 
-  float rating = 5;
-  optional int32 score = 6;
-  int32 votes = 7;
+  repeated string translations = 5;
 
-  repeated string categories = 8;
-  bool isFavourite = 9;
+  float rating = 6;
+  optional int32 score = 7;
+  int32 votes = 8;
+
+  repeated string categories = 9;
+  bool isFavourite = 10;
 }
 
 message GetRecipeBookRequest {

@@ -3,7 +3,7 @@ package postgres
 import (
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/lib/pq"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/mephistolie/chefbook-backend-common/log"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 	"github.com/mephistolie/chefbook-backend-recipe/api/model"
@@ -28,14 +28,15 @@ func (r *Repository) GetRecipes(params entity.RecipesQuery, userId uuid.UUID) []
 	}
 
 	for rows.Next() {
-		recipe := dto.RecipeInfo{}
+		var recipe dto.RecipeInfo
+		m := pgtype.NewMap()
 		if err = rows.Scan(
 			&recipe.Id, &recipe.Name,
 			&recipe.OwnerId,
 			&recipe.Visibility, &recipe.IsEncrypted,
-			&recipe.Language, pq.Array(&recipe.Translations),
+			&recipe.Language, m.SQLScanner(&recipe.Translations),
 			&recipe.Rating, &recipe.Votes, &recipe.Score,
-			pq.Array(&recipe.Tags), &recipe.Categories, &recipe.IsFavourite, &recipe.IsSaved,
+			m.SQLScanner(&recipe.Tags), &recipe.Categories, &recipe.IsFavourite, &recipe.IsSaved,
 			&recipe.Pictures,
 			&recipe.Servings, &recipe.Time,
 			&recipe.Calories,
@@ -281,13 +282,14 @@ func (r *Repository) GetRandomRecipe(userId uuid.UUID, languages *[]string) (ent
 	query += " ORDER BY RANDOM() LIMIT 1"
 
 	row := r.db.QueryRow(query, args...)
+	m := pgtype.NewMap()
 	if err := row.Scan(
 		&recipe.Id, &recipe.Name,
 		&recipe.OwnerId,
 		&recipe.Visibility, &recipe.IsEncrypted,
 		&recipe.Language, &recipe.Description,
 		&recipe.Rating, &recipe.Votes, &recipe.Score,
-		&recipe.Tags,
+		m.SQLScanner(&recipe.Tags),
 		&recipe.Ingredients, &recipe.Cooking, &recipe.Pictures,
 		&recipe.Servings, &recipe.Time,
 		&recipe.Calories, &recipe.Protein, &recipe.Fats, &recipe.Carbohydrates,
@@ -295,6 +297,10 @@ func (r *Repository) GetRandomRecipe(userId uuid.UUID, languages *[]string) (ent
 	); err != nil {
 		log.Debug("unable to get random recipe for user %s: %s", userId, err)
 		return entity.BaseRecipe{}, fail.GrpcNotFound
+	}
+
+	if translations, err := r.GetRecipeTranslations(recipe.Id); err == nil {
+		recipe.Translations = translations
 	}
 
 	return recipe.Entity(userId), nil

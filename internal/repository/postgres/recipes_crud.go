@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/lib/pq"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/mephistolie/chefbook-backend-common/log"
 	"github.com/mephistolie/chefbook-backend-common/mq/model"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
@@ -62,8 +62,8 @@ func (r *Repository) CreateRecipe(input entity.RecipeInput) (uuid.UUID, int32, e
 		id, input.Name,
 		input.UserId,
 		input.Visibility, input.IsEncrypted,
-		input.Language, pq.Array([]string{input.Language}), input.Description,
-		pq.Array(input.Tags),
+		input.Language, []string{input.Language}, input.Description,
+		append([]string{}, input.Tags...),
 		dto.NewIngredients(input.Ingredients), dto.NewCooking(input.Cooking),
 		input.Servings, input.Time,
 		input.Calories, macronutrients.Protein, macronutrients.Fats, macronutrients.Carbohydrates,
@@ -109,7 +109,7 @@ func (r *Repository) GetRecipe(recipeId, userId uuid.UUID) (entity.BaseRecipe, e
 			%[1]v.recipe_id, %[1]v.name,
 			%[1]v.owner_id,
 			%[1]v.visibility, %[1]v.encrypted,
-			%[1]v.language, %[1]v.translations, %[1]v.description,
+			%[1]v.language, %[1]v.description,
 			%[1]v.rating, %[1]v.votes, coalesce(%[3]v.score, 0),
 			%[1]v.tags, coalesce(%[2]v.categories, '[]'::jsonb), coalesce(%[2]v.favourite, false),
 			(
@@ -134,20 +134,25 @@ func (r *Repository) GetRecipe(recipeId, userId uuid.UUID) (entity.BaseRecipe, e
 	`, recipesTable, usersTable, scoresTable)
 
 	row := r.db.QueryRow(query, recipeId, userId)
+	m := pgtype.NewMap()
 	if err := row.Scan(
 		&recipe.Id, &recipe.Name,
 		&recipe.OwnerId,
 		&recipe.Visibility, &recipe.IsEncrypted,
-		&recipe.Language, &recipe.Translations, &recipe.Description,
+		&recipe.Language, &recipe.Description,
 		&recipe.Rating, &recipe.Votes, &recipe.Score,
-		&recipe.Tags, &recipe.Categories, &recipe.IsFavourite, &recipe.IsSaved,
+		m.SQLScanner(&recipe.Tags), &recipe.Categories, &recipe.IsFavourite, &recipe.IsSaved,
 		&recipe.Ingredients, &recipe.Cooking, &recipe.Pictures,
 		&recipe.Servings, &recipe.Time,
 		&recipe.Calories, &recipe.Protein, &recipe.Fats, &recipe.Carbohydrates,
 		&recipe.CreationTimestamp, &recipe.UpdateTimestamp, &recipe.Version,
 	); err != nil {
-		log.Warnf("unable to get recipe %s for user %s; %s", recipeId, userId, err)
+		log.Warnf("unable to get recipe %s for user %s: %s", recipeId, userId, err)
 		return entity.BaseRecipe{}, fail.GrpcNotFound
+	}
+
+	if translations, err := r.GetRecipeTranslations(recipeId); err == nil {
+		recipe.Translations = translations
 	}
 
 	return recipe.Entity(userId), nil
@@ -161,7 +166,7 @@ func (r *Repository) UpdateRecipe(input entity.RecipeInput) (int32, error) {
 		SET 
 			name=$1,
 			visibility=$2, encrypted=$3,
-			language=$4, description=$5,
+			language=$4, translations=array_replace(translations, language, $4), description=$5,
 			tags=$6,
 			ingredients=$7, cooking=$8,
 			servings=$9, cooking_time=$10,
@@ -179,7 +184,7 @@ func (r *Repository) UpdateRecipe(input entity.RecipeInput) (int32, error) {
 		input.Name,
 		input.Visibility, input.IsEncrypted,
 		input.Language, input.Description,
-		pq.Array(input.Tags),
+		append([]string{}, input.Tags...),
 		dto.NewIngredients(input.Ingredients), dto.NewCooking(input.Cooking),
 		input.Servings, input.Time,
 		input.Calories, macronutrients.Protein, macronutrients.Fats, macronutrients.Carbohydrates,

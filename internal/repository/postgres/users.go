@@ -3,6 +3,7 @@ package postgres
 import (
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/mephistolie/chefbook-backend-common/log"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 	"github.com/mephistolie/chefbook-backend-recipe/api/model"
@@ -17,6 +18,7 @@ func (r *Repository) GetRecipeBook(userId uuid.UUID) ([]entity.BaseRecipeState, 
 		SELECT
 			%[1]v.recipe_id,
 			%[1]v.owner_id,
+			%[1]v.translations,
 			%[1]v.rating, %[1]v.votes, coalesce(%[3]v.score, 0),
 			%[1]v.tags, coalesce(%[2]v.categories, '[]'::jsonb), coalesce(%[2]v.favourite, false),
 			%[1]v.version
@@ -38,11 +40,13 @@ func (r *Repository) GetRecipeBook(userId uuid.UUID) ([]entity.BaseRecipeState, 
 
 	for rows.Next() {
 		recipe := dto.RecipeState{}
+		m := pgtype.NewMap()
 		if err = rows.Scan(
 			&recipe.Id,
 			&recipe.OwnerId,
+			m.SQLScanner(&recipe.Translations),
 			&recipe.Rating, &recipe.Votes, &recipe.Score,
-			&recipe.Tags, &recipe.Categories, &recipe.IsFavourite,
+			m.SQLScanner(&recipe.Tags), &recipe.Categories, &recipe.IsFavourite,
 			&recipe.Version,
 		); err != nil {
 			log.Warnf("unable to parse recipe info: ", err)

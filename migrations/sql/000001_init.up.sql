@@ -12,13 +12,13 @@ CREATE TABLE recipes
     CHECK ( encrypted = false OR visibility <> 'public' ),
 
     language           VARCHAR(2)                                         NOT NULL        DEFAULT 'en',
-    translations       TEXT[] NOT NULL DEFAULT '{}',
+    translations       TEXT[] NOT NULL DEFAULT '{}'::text[],
     description        VARCHAR(1500)                                                      DEFAULT NULL,
 
     rating             DECIMAL(7, 6) CHECK ( rating >= 0 AND rating <= 5) NOT NULL        DEFAULT 0.0,
     votes              INT CHECK ( votes >= 0 )                           NOT NULL        DEFAULT 0,
 
-    tags               TEXT[] NOT NULL DEFAULT '{}',
+    tags               TEXT[] NOT NULL DEFAULT '{}'::text[],
 
     ingredients        JSONB                                              NOT NULL,
     cooking            JSONB                                              NOT NULL,

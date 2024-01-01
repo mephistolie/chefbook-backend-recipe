@@ -10,6 +10,8 @@ type BaseRecipeState struct {
 
 	OwnerId uuid.UUID
 
+	Translations []string
+
 	Rating float32
 	Score  *int32
 	Votes  int32

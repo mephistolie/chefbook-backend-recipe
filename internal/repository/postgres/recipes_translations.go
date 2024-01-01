@@ -10,6 +10,29 @@ import (
 	"k8s.io/utils/strings/slices"
 )
 
+func (r *Repository) GetRecipeTranslations(recipeId uuid.UUID) (map[string][]entity.RecipeTranslationInfo, error) {
+	query := fmt.Sprintf(`
+		SELECT language, author_id
+		FROM %s
+		WHERE recipe_id=$1 AND hidden=false
+	`, translationsTable)
+
+	rows, err := r.db.Query(query, recipeId)
+	if err != nil {
+		log.Warnf("unable to get recipe %s translations: %s", recipeId, err)
+		return nil, fail.GrpcNotFound
+	}
+	var translations []dto.RecipeTranslationInfo
+	for rows.Next() {
+		translation := dto.RecipeTranslationInfo{}
+		if err = rows.Scan(&translation.Language, &translation.AuthorId); err == nil {
+			translations = append(translations, translation)
+		}
+	}
+
+	return dto.TranslationsEntity(translations), nil
+}
+
 func (r *Repository) GetRecipeTranslation(recipeId uuid.UUID, language string, authorId *uuid.UUID) *entity.RecipeTranslation {
 	var translations []dto.RecipeTranslation
 
@@ -27,7 +50,7 @@ func (r *Repository) GetRecipeTranslation(recipeId uuid.UUID, language string, a
 
 	rows, err := r.db.Query(query, args...)
 	if err != nil {
-		log.Warnf("unable to get recipe %s translations to %s; %s", recipeId, language, err)
+		log.Warnf("unable to get recipe %s translations to %s: %s", recipeId, language, err)
 		return nil
 	}
 	for rows.Next() {
