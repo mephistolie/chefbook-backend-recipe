@@ -305,8 +305,8 @@ func (r *Repository) GetRandomRecipe(userId uuid.UUID, languages *[]string) (ent
 		return entity.BaseRecipe{}, fail.GrpcNotFound
 	}
 
-	translations, _ := r.GetRecipeTranslations(recipe.Id)
-	delete(translations, recipe.Language)
+	recipe.Translations, _ = r.GetRecipeTranslations(recipe.Id)
+	delete(recipe.Translations, recipe.Language)
 
 	return recipe.Entity(userId), nil
 }

@@ -163,7 +163,7 @@ func (r *Repository) DeleteRecipeTranslation(recipeId uuid.UUID, userId uuid.UUI
 	if translationsCount == 0 {
 		updateRecipeTranslationsQuery := fmt.Sprintf(`
 			UPDATE %s
-			SET translations=array_remove(translations, '$2')
+			SET translations=array_remove(translations, $2)
 			WHERE recipe_id=$1
 		`, recipesTable)
 

@@ -151,8 +151,8 @@ func (r *Repository) GetRecipe(recipeId, userId uuid.UUID) (entity.BaseRecipe, e
 		return entity.BaseRecipe{}, fail.GrpcNotFound
 	}
 
-	translations, _ := r.GetRecipeTranslations(recipeId)
-	delete(translations, recipe.Language)
+	recipe.Translations, _ = r.GetRecipeTranslations(recipeId)
+	delete(recipe.Translations, recipe.Language)
 
 	return recipe.Entity(userId), nil
 }
