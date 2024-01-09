@@ -26,7 +26,7 @@ func (s *Service) validateTranslation(recipeId uuid.UUID, translation entity.Rec
 	}
 
 	if recipe.Description == nil && translation.Description != nil {
-		return recipeFail.GrpcTranslationMismatch
+		translation.Description = nil
 	}
 	if len(recipe.Ingredients) != len(translation.Ingredients) || len(recipe.Cooking) != len(translation.Cooking) {
 		return recipeFail.GrpcTranslationMismatch

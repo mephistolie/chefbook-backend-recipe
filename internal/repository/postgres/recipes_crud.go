@@ -34,7 +34,7 @@ func (r *Repository) CreateRecipe(input entity.RecipeInput) (uuid.UUID, int32, e
 				recipe_id, name,
 				owner_id,
 				visibility, encrypted,
-				language, translations, description,
+				language, description,
 				tags,
 				ingredients, cooking,
 				servings, cooking_time,
@@ -45,11 +45,11 @@ func (r *Repository) CreateRecipe(input entity.RecipeInput) (uuid.UUID, int32, e
 				$1, $2,
 				$3,
 				$4, $5,
-				$6, $7, $8,
-				$9,
-				$10, $11,
-				$12, $13,
-				$14, $15, $16, $17
+				$6, $7
+				$8,
+				$9, $10,
+				$11, $12,
+				$13, $14, $15, $16
 			)
 	`, recipesTable)
 
@@ -62,7 +62,7 @@ func (r *Repository) CreateRecipe(input entity.RecipeInput) (uuid.UUID, int32, e
 		id, input.Name,
 		input.UserId,
 		input.Visibility, input.IsEncrypted,
-		input.Language, []string{input.Language}, input.Description,
+		input.Language, input.Description,
 		append([]string{}, input.Tags...),
 		dto.NewIngredients(input.Ingredients), dto.NewCooking(input.Cooking),
 		input.Servings, input.Time,
@@ -151,9 +151,8 @@ func (r *Repository) GetRecipe(recipeId, userId uuid.UUID) (entity.BaseRecipe, e
 		return entity.BaseRecipe{}, fail.GrpcNotFound
 	}
 
-	if translations, err := r.GetRecipeTranslations(recipeId); err == nil {
-		recipe.Translations = translations
-	}
+	translations, _ := r.GetRecipeTranslations(recipeId)
+	delete(translations, recipe.Language)
 
 	return recipe.Entity(userId), nil
 }
@@ -166,7 +165,7 @@ func (r *Repository) UpdateRecipe(input entity.RecipeInput) (int32, error) {
 		SET 
 			name=$1,
 			visibility=$2, encrypted=$3,
-			language=$4, translations=array_replace(translations, language, $4), description=$5,
+			language=$4, description=$5,
 			tags=$6,
 			ingredients=$7, cooking=$8,
 			servings=$9, cooking_time=$10,

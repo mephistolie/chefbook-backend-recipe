@@ -9,8 +9,8 @@ import (
 )
 
 type RecipeTranslationInfo struct {
-	Language string    `db:language`
-	AuthorId uuid.UUID `db:author_id`
+	Language string    `db:"language"`
+	AuthorId uuid.UUID `db:"author_id"`
 }
 
 func TranslationsEntity(dto []RecipeTranslationInfo) map[string][]entity.RecipeTranslationInfo {

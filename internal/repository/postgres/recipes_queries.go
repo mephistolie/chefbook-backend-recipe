@@ -114,15 +114,21 @@ func (r *Repository) getRecipesWhereStatementByParams(params entity.RecipesQuery
 		whereStatement += fmt.Sprintf(" %[1]v.visibility='%[2]v'", recipesTable, model.VisibilityPublic)
 	}
 
+	if len(params.RecipeIds) > 0 {
+		whereStatement += fmt.Sprintf(" AND %s.recipe_id=ANY($%d)", recipesTable, argNumber)
+		args = append(args, params.RecipeIds)
+		argNumber += 1
+	}
+
 	if !params.Owned && !params.Saved && params.AuthorId != nil {
 		whereStatement += fmt.Sprintf(" AND %s.owner_id=$%d", recipesTable, argNumber)
 		args = append(args, *params.AuthorId)
 		argNumber += 1
 	}
 
-	if params.Languages != nil && len(*params.Languages) > 0 {
-		whereStatement += fmt.Sprintf(" AND %s.translations && $%d", recipesTable, argNumber)
-		args = append(args, *params.Languages)
+	if len(params.Languages) > 0 {
+		whereStatement += fmt.Sprintf(" AND (%[1]v.language=$%d OR %[1]v.translations && $%d)", recipesTable, argNumber)
+		args = append(args, params.Languages)
 		argNumber += 1
 	}
 
@@ -299,9 +305,8 @@ func (r *Repository) GetRandomRecipe(userId uuid.UUID, languages *[]string) (ent
 		return entity.BaseRecipe{}, fail.GrpcNotFound
 	}
 
-	if translations, err := r.GetRecipeTranslations(recipe.Id); err == nil {
-		recipe.Translations = translations
-	}
+	translations, _ := r.GetRecipeTranslations(recipe.Id)
+	delete(translations, recipe.Language)
 
 	return recipe.Entity(userId), nil
 }

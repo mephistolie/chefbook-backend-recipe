@@ -3,6 +3,7 @@ package postgres
 import (
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/mephistolie/chefbook-backend-common/log"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
@@ -40,7 +41,7 @@ func (r *Repository) GetRecipeTranslation(recipeId uuid.UUID, language string, a
 		SELECT author_id, name, description, ingredients, cooking
 		FROM %s
 		WHERE recipe_id=$1 AND language=$2 AND hidden=false
-	`, recipesTable)
+	`, translationsTable)
 
 	args := []interface{}{recipeId, language}
 	if authorId != nil {
@@ -50,12 +51,12 @@ func (r *Repository) GetRecipeTranslation(recipeId uuid.UUID, language string, a
 
 	rows, err := r.db.Query(query, args...)
 	if err != nil {
-		log.Warnf("unable to get recipe %s translations to %s: %s", recipeId, language, err)
+		log.Warnf("unable to get recipe %s translation to %s: %s", recipeId, language, err)
 		return nil
 	}
 	for rows.Next() {
 		translation := dto.RecipeTranslation{Language: language}
-		if err = rows.Scan(&translation.AuthorId, &translation.Name, &translation.Cooking, &translation.Ingredients,
+		if err = rows.Scan(&translation.AuthorId, &translation.Name, &translation.Description, &translation.Ingredients,
 			&translation.Cooking); err != nil {
 			log.Errorf("unable to parse recipe %s translation to %s; %s", recipeId, language, err)
 			continue
@@ -90,7 +91,7 @@ func (r *Repository) TranslateRecipe(recipeId uuid.UUID, translation entity.Reci
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		ON CONFLICT (recipe_id, author_id) DO UPDATE
 		SET author_id=$3, name=$4, description=$5, ingredients=$6, cooking=$7;
-	`, recipesTable)
+	`, translationsTable)
 
 	if _, err = tx.Exec(addTranslationQuery, recipeId, t.Language, translation.AuthorId, t.Name, t.Description, t.Ingredients, t.Cooking); err != nil {
 		log.Errorf("unable to add recipe %s translation to %s: %s", recipeId, translation.Language, err)
@@ -98,7 +99,7 @@ func (r *Repository) TranslateRecipe(recipeId uuid.UUID, translation entity.Reci
 	}
 
 	getCurrentRecipeTranslationsQuery := fmt.Sprintf(`
-		SELECT languages
+		SELECT translations
 		FROM %s
 		WHERE recipe_id=$1
 	`, recipesTable)
@@ -106,7 +107,8 @@ func (r *Repository) TranslateRecipe(recipeId uuid.UUID, translation entity.Reci
 	var languages []string
 
 	row := tx.QueryRow(getCurrentRecipeTranslationsQuery, recipeId)
-	if err = row.Scan(&languages); err != nil {
+	m := pgtype.NewMap()
+	if err = row.Scan(m.SQLScanner(&languages)); err != nil {
 		log.Warnf("unable to get recipe %s languages: %s", recipeId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
@@ -115,7 +117,7 @@ func (r *Repository) TranslateRecipe(recipeId uuid.UUID, translation entity.Reci
 		languages = append(languages, translation.Language)
 		updateRecipeTranslationsQuery := fmt.Sprintf(`
 			UPDATE %s
-			SET languages=$2
+			SET translations=$2
 			WHERE recipe_id=$1
 		`, recipesTable)
 
@@ -125,7 +127,7 @@ func (r *Repository) TranslateRecipe(recipeId uuid.UUID, translation entity.Reci
 		}
 	}
 
-	return nil
+	return commitTransaction(tx)
 }
 
 func (r *Repository) DeleteRecipeTranslation(recipeId uuid.UUID, userId uuid.UUID, language string) error {
@@ -137,7 +139,7 @@ func (r *Repository) DeleteRecipeTranslation(recipeId uuid.UUID, userId uuid.UUI
 	deleteTranslationQuery := fmt.Sprintf(`
 		DELETE FROM %s
 		WHERE recipe_id=$1 AND author_id=$2 and language=$3
-	`, recipesTable)
+	`, translationsTable)
 
 	if _, err = tx.Exec(deleteTranslationQuery, recipeId, userId, language); err != nil {
 		log.Errorf("unable to delete recipe %s translation to %s: %s", recipeId, language, err)
@@ -161,7 +163,7 @@ func (r *Repository) DeleteRecipeTranslation(recipeId uuid.UUID, userId uuid.UUI
 	if translationsCount == 0 {
 		updateRecipeTranslationsQuery := fmt.Sprintf(`
 			UPDATE %s
-			SET languages=array_remove(languages, '$2')
+			SET translations=array_remove(translations, '$2')
 			WHERE recipe_id=$1
 		`, recipesTable)
 
@@ -171,5 +173,5 @@ func (r *Repository) DeleteRecipeTranslation(recipeId uuid.UUID, userId uuid.UUI
 		}
 	}
 
-	return nil
+	return commitTransaction(tx)
 }

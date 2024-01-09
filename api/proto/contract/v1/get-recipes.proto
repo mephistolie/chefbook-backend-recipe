@@ -42,39 +42,40 @@ message RecipeInfo {
 }
 
 message GetRecipesRequest {
-  string userId = 1;
+  repeated string recipeIds = 1;
+  string userId = 2;
 
-  optional int32 pageSize = 2;
+  optional int32 pageSize = 3;
 
-  optional string authorId = 3;
+  optional string authorId = 4;
 
-  bool owned = 4;
-  bool saved = 5;
+  bool owned = 5;
+  bool saved = 6;
 
-  optional string search = 6;
+  optional string search = 7;
 
-  optional string sorting = 7;
-  optional string lastRecipeId = 8;
-  google.protobuf.Timestamp lastCreationTimestamp = 9;
-  google.protobuf.Timestamp lastUpdateTimestamp = 10;
-  optional float lastRating = 11;
-  optional int32 lastVotes = 12;
-  optional int32 lastTime = 13;
-  optional int32 lastCalories = 14;
+  optional string sorting = 8;
+  optional string lastRecipeId = 9;
+  google.protobuf.Timestamp lastCreationTimestamp = 10;
+  google.protobuf.Timestamp lastUpdateTimestamp = 11;
+  optional float lastRating = 12;
+  optional int32 lastVotes = 13;
+  optional int32 lastTime = 14;
+  optional int32 lastCalories = 15;
 
-  optional int32 minRating = 15;
-  optional int32 maxRating = 16;
+  optional int32 minRating = 16;
+  optional int32 maxRating = 17;
 
-  optional int32 minTime = 17;
-  optional int32 maxTime = 18;
-  optional int32 minServings = 19;
-  optional int32 maxServings = 20;
-  optional int32 minCalories = 21;
-  optional int32 maxCalories = 22;
+  optional int32 minTime = 18;
+  optional int32 maxTime = 19;
+  optional int32 minServings = 20;
+  optional int32 maxServings = 21;
+  optional int32 minCalories = 22;
+  optional int32 maxCalories = 23;
 
-  repeated string recipeLanguages = 23;
+  repeated string recipeLanguages = 24;
 
-  optional string userLanguage = 24;
+  optional string userLanguage = 25;
 }
 
 message GetRecipesResponse {

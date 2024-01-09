@@ -22,6 +22,12 @@ func NewRecipesQuery(req *api.GetRecipesRequest) entity.RecipesQuery {
 			pageSize = maxPageSize
 		}
 	}
+	var recipeIds []uuid.UUID
+	for _, rawRecipeId := range req.RecipeIds {
+		if recipeId, err := uuid.Parse(rawRecipeId); err == nil {
+			recipeIds = append(recipeIds, recipeId)
+		}
+	}
 	var authorIdPtr *uuid.UUID
 	if req.AuthorId != nil {
 		if authorId, err := uuid.Parse(*req.AuthorId); err == nil {
@@ -47,10 +53,6 @@ func NewRecipesQuery(req *api.GetRecipesRequest) entity.RecipesQuery {
 	if req.LastUpdateTimestamp != nil {
 		timestamp := req.LastUpdateTimestamp.AsTime()
 		lastUpdateTimestamp = &timestamp
-	}
-	var languages *[]string
-	if len(req.RecipeLanguages) > 0 {
-		languages = &req.RecipeLanguages
 	}
 	if req.MinRating != nil && req.MaxRating != nil && *req.MinRating > *req.MaxRating {
 		*req.MinRating = *req.MaxRating
@@ -87,7 +89,7 @@ func NewRecipesQuery(req *api.GetRecipesRequest) entity.RecipesQuery {
 		MaxServings:           req.MaxServings,
 		MinCalories:           req.MinCalories,
 		MaxCalories:           req.MaxCalories,
-		Languages:             languages,
+		Languages:             req.RecipeLanguages,
 	}
 }
 

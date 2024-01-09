@@ -8,7 +8,8 @@ import (
 type RecipesQuery struct {
 	PageSize int32
 
-	AuthorId *uuid.UUID
+	RecipeIds []uuid.UUID
+	AuthorId  *uuid.UUID
 
 	Owned bool
 	Saved bool
@@ -34,5 +35,5 @@ type RecipesQuery struct {
 	MinCalories *int32
 	MaxCalories *int32
 
-	Languages *[]string
+	Languages []string
 }
