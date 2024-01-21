@@ -17,9 +17,10 @@ type Config struct {
 
 	Subscription Subscription
 
-	ProfileService  ProfileService
-	TagService      TagService
-	CategoryService CategoryService
+	ProfileService    Service
+	TagService        Service
+	CategoryService   Service
+	EncryptionService Service
 
 	Firebase Firebase
 	Database Database
@@ -37,15 +38,7 @@ type Subscription struct {
 	PictureMaxSizePremium *int64
 }
 
-type ProfileService struct {
-	Addr *string
-}
-
-type TagService struct {
-	Addr *string
-}
-
-type CategoryService struct {
+type Service struct {
 	Addr *string
 }
 

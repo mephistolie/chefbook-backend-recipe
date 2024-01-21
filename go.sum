@@ -874,8 +874,8 @@ github.com/mephistolie/chefbook-backend-common/subscription v0.8.0 h1:jN3csvWr+j
 github.com/mephistolie/chefbook-backend-common/subscription v0.8.0/go.mod h1:5/u9h9p9rHoAiQTk3SlYDhQF8tFGqkRoLWfJUiBI4os=
 github.com/mephistolie/chefbook-backend-common/utils v0.10.1 h1:1qD344n6yHPAluM0QzPbcHygWKHSixHQb7Ihvr1UGd8=
 github.com/mephistolie/chefbook-backend-common/utils v0.10.1/go.mod h1:N8jgv/mqtqj7Xb7k2sTAL4CDK/9uij85nKq0zxIdBK8=
-github.com/mephistolie/chefbook-backend-encryption/api v1.0.0 h1:qJEQ6zE8Yhk2hprHHHOsV1N8BYAn2W4UPCSlZnHU+KM=
-github.com/mephistolie/chefbook-backend-encryption/api v1.0.0/go.mod h1:hErll5HTLmPNOwlcWVgwviTbftFvvnone8VaZ2AGPqk=
+github.com/mephistolie/chefbook-backend-encryption/api v1.1.0 h1:bZhSGbKFTfjK0QcI/jAv/pbT+qHYKZcZgJ9q/jCG5pE=
+github.com/mephistolie/chefbook-backend-encryption/api v1.1.0/go.mod h1:hErll5HTLmPNOwlcWVgwviTbftFvvnone8VaZ2AGPqk=
 github.com/mephistolie/chefbook-backend-profile/api v1.2.3 h1:8T0J3lQbVt98gII7omRRxJkRR/KD4OgXWZkc+SVtjOg=
 github.com/mephistolie/chefbook-backend-profile/api v1.2.3/go.mod h1:P4oEm3oJNBzlpxnvni4aHnGK0eE79PluLl3mYJ5kX84=
 github.com/mephistolie/chefbook-backend-recipe/api v1.1.6 h1:ozv0VAWzWHi2jw0REEru2/BtifnUmTGpIArO9NZA5Xw=

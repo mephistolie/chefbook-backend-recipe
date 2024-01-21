@@ -3,9 +3,10 @@ package grpc
 import "github.com/mephistolie/chefbook-backend-recipe/internal/config"
 
 type Repository struct {
-	Profile  *Profile
-	Category *Category
-	Tag      *Tag
+	Profile    *Profile
+	Category   *Category
+	Tag        *Tag
+	Encryption *Encryption
 }
 
 func NewRepository(cfg *config.Config) (*Repository, error) {
@@ -21,11 +22,16 @@ func NewRepository(cfg *config.Config) (*Repository, error) {
 	if err != nil {
 		return nil, err
 	}
+	encryptionService, err := NewEncryption(*cfg.EncryptionService.Addr)
+	if err != nil {
+		return nil, err
+	}
 
 	return &Repository{
-		Profile:  profileService,
-		Category: categoryService,
-		Tag:      tagService,
+		Profile:    profileService,
+		Category:   categoryService,
+		Tag:        tagService,
+		Encryption: encryptionService,
 	}, nil
 }
 

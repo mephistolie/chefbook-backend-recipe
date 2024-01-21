@@ -53,8 +53,10 @@ func (r *Repository) GetRecipePictureLink(recipeId, pictureId uuid.UUID) string 
 }
 
 func (r *Repository) GetRecipePictureIdByLink(recipeId uuid.UUID, link string) *uuid.UUID {
+	log.Debugf("Parsing picture link %s", link)
 	pictureUrl, err := url.Parse(link)
 	if err != nil || pictureUrl.Host != r.bucket {
+		log.Debugf("Invalid host while parsing picture link %s", link)
 		return nil
 	}
 	fragments := strings.Split(pictureUrl.Path, "/")
@@ -62,10 +64,12 @@ func (r *Repository) GetRecipePictureIdByLink(recipeId uuid.UUID, link string) *
 		fragments[0] != recipesDir ||
 		fragments[1] != recipeId.String() ||
 		fragments[2] != picturesDir {
+		log.Debugf("Invalid fragments while parsing picture link %s", link)
 		return nil
 	}
 	pictureId, err := uuid.Parse(fragments[3])
 	if err != nil {
+		log.Debugf("Invalid picture ID while parsing picture link %s", link)
 		return nil
 	}
 	return &pictureId

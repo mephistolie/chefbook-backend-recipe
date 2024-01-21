@@ -28,7 +28,8 @@ type RecipeState struct {
 }
 
 type DetailedRecipesState struct {
-	Recipes    []RecipeState
-	Tags       map[string]Tag
-	Categories []Category
+	Recipes           []RecipeState
+	Tags              map[string]Tag
+	Categories        []Category
+	HasEncryptedVault bool
 }

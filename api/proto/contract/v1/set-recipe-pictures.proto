@@ -8,12 +8,12 @@ import "v1/pictures.proto";
 message SetRecipePicturesRequest {
   string recipeId = 1;
   string userId = 2;
-  optional string preview = 3;
-  map<string, StepPictures> cookingPicturesMap = 4;
-  string subscription = 5;
-  optional int32 version = 6;
+  RecipePictures pictures = 3;
+  string subscription = 4;
+  optional int32 version = 5;
 }
 
 message SetRecipePicturesResponse {
   int32 version = 1;
+  RecipePictures pictures = 2;
 }

@@ -49,6 +49,10 @@ services:
     name: chefbook-backend-category-service
     namespace: ""
     port: 8080
+  encryption:
+    name: chefbook-backend-encryption-service
+    namespace: ""
+    port: 8080
 
 secrets:
   firebase:

@@ -1,10 +1,13 @@
 package recipe
 
 import (
+	"context"
 	"github.com/google/uuid"
+	encryptionApi "github.com/mephistolie/chefbook-backend-encryption/api/proto/implementation/v1"
 	profileApi "github.com/mephistolie/chefbook-backend-profile/api/proto/implementation/v1"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
 	"sync"
+	"time"
 )
 
 func (s *Service) GetRecipes(params entity.RecipesQuery, userId uuid.UUID, language string) entity.DetailedRecipesInfo {
@@ -57,11 +60,22 @@ func (s *Service) getRecipeInfos(
 
 func (s *Service) GetRecipesBook(userId uuid.UUID, language string) (entity.DetailedRecipesState, error) {
 	wg := sync.WaitGroup{}
-	wg.Add(2)
+	wg.Add(3)
 
 	var categories []entity.Category
 	go func() {
 		categories = s.getUserCategories(userId)
+		wg.Done()
+	}()
+
+	var hasEncryptedVault bool
+	go func() {
+		ctx, cancelCtx := context.WithTimeout(context.Background(), 3*time.Second)
+		res, err := s.grpc.Encryption.HasEncryptedVault(ctx, &encryptionApi.HasEncryptedVaultRequest{UserId: userId.String()})
+		cancelCtx()
+		if err == nil {
+			hasEncryptedVault = res.HasEncryptedVault
+		}
 		wg.Done()
 	}()
 
@@ -86,7 +100,7 @@ func (s *Service) GetRecipesBook(userId uuid.UUID, language string) (entity.Deta
 
 	wg.Wait()
 
-	return s.getRecipeStates(recipes, authorsMap, tags, categories), nil
+	return s.getRecipeStates(recipes, authorsMap, tags, categories, hasEncryptedVault), nil
 }
 
 func (s *Service) getRecipeStates(
@@ -94,6 +108,7 @@ func (s *Service) getRecipeStates(
 	authors map[string]*profileApi.ProfileMinInfo,
 	tags map[string]entity.Tag,
 	categories []entity.Category,
+	hasEncryptedVault bool,
 ) entity.DetailedRecipesState {
 	var states []entity.RecipeState
 	for _, baseRecipe := range recipes {
@@ -108,9 +123,10 @@ func (s *Service) getRecipeStates(
 	}
 
 	return entity.DetailedRecipesState{
-		Recipes:    states,
-		Tags:       tags,
-		Categories: categories,
+		Recipes:           states,
+		Tags:              tags,
+		Categories:        categories,
+		HasEncryptedVault: hasEncryptedVault,
 	}
 }
 

@@ -19,7 +19,7 @@ const (
 	usersTable                 = "recipes_users"
 	scoresTable                = "scores"
 	inboxTable                 = "inbox"
-	outboxTable                = "inbox"
+	outboxTable                = "outbox"
 
 	errUniqueViolation = "23505"
 )

@@ -71,6 +71,11 @@ spec:
             - name: CATEGORY_ADDR
               value: "{{ .Values.services.category.name }}.{{ .Values.services.category.namespace | default .Release.Namespace }}.svc.cluster.local:{{ .Values.services.category.port }}"
 
+            # Encryption Microservice
+
+            - name: ENCRYPTION_ADDR
+              value: "{{ .Values.services.encryption.name }}.{{ .Values.services.encryption.namespace | default .Release.Namespace }}.svc.cluster.local:{{ .Values.services.encryption.port }}"
+
             # Firebase
 
             - name: FIREBASE_CREDENTIALS

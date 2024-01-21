@@ -65,6 +65,6 @@ func newRecipe(recipe entity.Recipe) *api.Recipe {
 
 		Ingredients: newIngredientsResponse(recipe.Ingredients),
 		Cooking:     newCookingResponse(recipe.Cooking),
-		Pictures:    newRecipesResponse(recipe.Pictures),
+		Pictures:    NewPicturesResponse(recipe.Pictures),
 	}
 }

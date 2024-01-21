@@ -24,14 +24,17 @@ func main() {
 			PictureMaxSizePremium: fs.Int64("picture-max-size-premium", 1024*1536, "max picture size for premium subscription"),
 		},
 
-		ProfileService: config.ProfileService{
+		ProfileService: config.Service{
 			Addr: fs.String("profile-addr", "", "profile service address"),
 		},
-		TagService: config.TagService{
+		TagService: config.Service{
 			Addr: fs.String("tag-addr", "", "category service address"),
 		},
-		CategoryService: config.CategoryService{
+		CategoryService: config.Service{
 			Addr: fs.String("category-addr", "", "category service address"),
+		},
+		EncryptionService: config.Service{
+			Addr: fs.String("encryption-addr", "", "encryption service address"),
 		},
 
 		Firebase: config.Firebase{

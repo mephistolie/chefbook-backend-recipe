@@ -6,12 +6,12 @@ import (
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
 )
 
-func NewRecipePictures(req *api.SetRecipePicturesRequest) entity.RecipePictures {
+func NewPicturesRequest(req *api.RecipePictures) entity.RecipePictures {
 	pictures := entity.RecipePictures{Preview: req.Preview}
 
-	if len(req.CookingPicturesMap) > 0 {
+	if len(req.Cooking) > 0 {
 		cookingPicturesMap := make(map[uuid.UUID][]string)
-		for rawStepId, stepPictures := range req.CookingPicturesMap {
+		for rawStepId, stepPictures := range req.Cooking {
 			if stepId, err := uuid.Parse(rawStepId); err == nil {
 				cookingPicturesMap[stepId] = stepPictures.Pictures
 			}
@@ -22,7 +22,7 @@ func NewRecipePictures(req *api.SetRecipePicturesRequest) entity.RecipePictures 
 	return pictures
 }
 
-func newRecipesResponse(res entity.RecipePictures) *api.RecipePictures {
+func NewPicturesResponse(res entity.RecipePictures) *api.RecipePictures {
 	var cooking map[string]*api.StepPictures
 	for stepId, pictures := range res.Cooking {
 		cooking[stepId.String()] = &api.StepPictures{Pictures: pictures}

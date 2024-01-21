@@ -3,7 +3,6 @@ package postgres
 import (
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-common/log"
@@ -40,7 +39,8 @@ func (r *Repository) GetUserRecipeScore(recipeId, userId uuid.UUID) int {
 		WHERE recipe_id=$1 AND user_id=$2
 	`, scoresTable)
 
-	if err := r.db.Get(&score, query, recipeId, userId); err != nil {
+	row := r.db.QueryRow(query, recipeId, userId)
+	if err := row.Scan(&score); err != nil {
 		return 0
 	}
 
@@ -60,7 +60,6 @@ func (r *Repository) RateRecipe(recipeId, userId uuid.UUID, score int) (*model.M
 		return nil, err
 	}
 
-	err = errors.New("stub")
 	if previousScore == 0 {
 		err = r.addUserScore(tx, recipeId, userId, scoreDiff)
 	} else if score == 0 {
@@ -88,7 +87,7 @@ func (r *Repository) addUserScore(tx *sql.Tx, recipeId, userId uuid.UUID, score 
 
 	if _, err := tx.Query(addScoreQuery, recipeId, userId, score); err != nil {
 		log.Errorf("unable to add user %s score for recipe %s: %s", userId, recipeId, err)
-		return errorWithTransactionRollback(tx, fail.GrpcNotFound)
+		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
 	updateRatingQuery := fmt.Sprintf(`
@@ -101,7 +100,7 @@ func (r *Repository) addUserScore(tx *sql.Tx, recipeId, userId uuid.UUID, score 
 
 	if _, err := tx.Query(updateRatingQuery, score, recipeId); err != nil {
 		log.Errorf("unable to update rating for recipe %s: %s", recipeId, err)
-		return errorWithTransactionRollback(tx, fail.GrpcNotFound)
+		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
 	return nil
@@ -116,7 +115,7 @@ func (r *Repository) changeUserScore(tx *sql.Tx, recipeId, userId uuid.UUID, sco
 
 	if _, err := tx.Query(changeScoreQuery, scoreDiff, recipeId, userId); err != nil {
 		log.Errorf("unable to change user %s score for recipe %s: %s", userId, recipeId, err)
-		return errorWithTransactionRollback(tx, fail.GrpcNotFound)
+		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
 	updateRatingQuery := fmt.Sprintf(`
@@ -127,7 +126,7 @@ func (r *Repository) changeUserScore(tx *sql.Tx, recipeId, userId uuid.UUID, sco
 
 	if _, err := tx.Query(updateRatingQuery, scoreDiff, recipeId); err != nil {
 		log.Errorf("unable to update rating for recipe %s: %s", recipeId, err)
-		return errorWithTransactionRollback(tx, fail.GrpcNotFound)
+		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
 	return nil
@@ -141,7 +140,7 @@ func (r *Repository) deleteUserScore(tx *sql.Tx, recipeId, userId uuid.UUID, sco
 
 	if _, err := tx.Query(changeScoreQuery, recipeId, userId); err != nil {
 		log.Errorf("unable to delete user %s score for recipe %s: %s", userId, recipeId, err)
-		return errorWithTransactionRollback(tx, fail.GrpcNotFound)
+		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
 	updateRatingQuery := fmt.Sprintf(`
@@ -154,7 +153,7 @@ func (r *Repository) deleteUserScore(tx *sql.Tx, recipeId, userId uuid.UUID, sco
 
 	if _, err := tx.Query(updateRatingQuery, scoreDiff, recipeId); err != nil {
 		log.Errorf("unable to update rating for recipe %s: %s", recipeId, err)
-		return errorWithTransactionRollback(tx, fail.GrpcNotFound)
+		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
 	return nil

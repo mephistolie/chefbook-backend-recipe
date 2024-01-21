@@ -58,17 +58,20 @@ func (s *RecipeServer) SetRecipePictures(_ context.Context, req *api.SetRecipePi
 		return nil, fail.GrpcInvalidBody
 	}
 
-	pictures := dto.NewRecipePictures(req)
+	pictures := dto.NewPicturesRequest(req.Pictures)
 	if !s.checkForPictureDuplicates(pictures) {
 		return nil, recipeFail.GrpcDuplicatePictures
 	}
 
-	version, err := s.service.SetRecipePictures(recipeId, userId, pictures, req.Version, req.Subscription)
+	version, validatedPictures, err := s.service.SetRecipePictures(recipeId, userId, pictures, req.Version, req.Subscription)
 	if err != nil {
 		return nil, err
 	}
 
-	return &api.SetRecipePicturesResponse{Version: version}, nil
+	return &api.SetRecipePicturesResponse{
+		Version:  version,
+		Pictures: dto.NewPicturesResponse(validatedPictures),
+	}, nil
 }
 
 func (s *RecipeServer) checkForPictureDuplicates(pictures entity.RecipePictures) bool {

@@ -34,32 +34,32 @@ func (s *Service) SetRecipePictures(
 	pictures entity.RecipePictures,
 	version *int32,
 	subscriptionPlan string,
-) (int32, error) {
+) (int32, entity.RecipePictures, error) {
 	if policy, err := s.repo.GetRecipePolicy(recipeId); err != nil || policy.OwnerId != userId {
-		return 0, fail.GrpcAccessDenied
+		return 0, entity.RecipePictures{}, fail.GrpcAccessDenied
 	}
 
 	validatedPictures, pictureIds := s.validatePictureLinks(recipeId, pictures)
 
 	maxPicturesCount := s.subscriptionLimiter.GetMaxPicturesCount(subscriptionPlan)
 	if len(pictureIds) > maxPicturesCount {
-		return 0, recipeFail.GrpcRecipePicturesCountLimit
+		return 0, entity.RecipePictures{}, recipeFail.GrpcRecipePicturesCountLimit
 	}
 
 	if !s.s3.CheckRecipePicturesExist(recipeId, pictureIds) {
-		return 0, recipeFail.GrpcRecipePictureNotFound
+		return 0, entity.RecipePictures{}, recipeFail.GrpcRecipePictureNotFound
 	}
 
 	newVersion, err := s.repo.SetRecipePictures(recipeId, validatedPictures, pictureIds, version)
 	if err != nil {
-		return 0, err
+		return 0, entity.RecipePictures{}, err
 	}
 
 	go func() {
 		s.s3.DeleteUnusedRecipePictures(recipeId, pictureIds)
 	}()
 
-	return newVersion, nil
+	return newVersion, validatedPictures, nil
 }
 
 func (s *Service) validatePictureLinks(recipeId uuid.UUID, pictures entity.RecipePictures) (entity.RecipePictures, []uuid.UUID) {
@@ -79,7 +79,7 @@ func (s *Service) validatePictureLinks(recipeId uuid.UUID, pictures entity.Recip
 				pictureIds = append(pictureIds, *pictureId)
 			} else {
 				var filteredPictures []string
-				for _, filteredPicture := range stepPictures {
+				for _, filteredPicture := range validatedStepPictures {
 					if filteredPicture != stepPicture {
 						filteredPictures = append(filteredPictures, filteredPicture)
 					}
