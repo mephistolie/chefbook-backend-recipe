@@ -47,7 +47,7 @@ func newCooking(cooking []*api.CookingItem, isEncrypted bool) ([]entity.CookingI
 
 		response[i] = item
 
-		if item.Type == entity.TypeStep {
+		if item.Type == entity.TypeStep || item.Type == entity.TypeIngredientEncryptedData {
 			hasSteps = true
 		}
 	}

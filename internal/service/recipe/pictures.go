@@ -9,7 +9,7 @@ import (
 
 func (s *Service) GenerateRecipePicturesUploadLinks(recipeId, userId uuid.UUID, picturesCount int, subscriptionPlan string) ([]entity.PictureUpload, error) {
 	policy, err := s.repo.GetRecipePolicy(recipeId)
-	if err != nil || policy.OwnerId != userId || policy.IsEncrypted && s.subscriptionLimiter.IsEncryptionAllowed(subscriptionPlan) {
+	if err != nil || policy.OwnerId != userId || policy.IsEncrypted && !s.subscriptionLimiter.IsEncryptionAllowed(subscriptionPlan) {
 		return nil, fail.GrpcAccessDenied
 	}
 

@@ -47,7 +47,7 @@ func newIngredients(ingredients []*api.IngredientItem, isEncrypted bool) ([]enti
 
 		response[i] = ingredient
 
-		if ingredient.Type == entity.TypeIngredient {
+		if ingredient.Type == entity.TypeIngredient || ingredient.Type == entity.TypeIngredientEncryptedData {
 			hasIngredients = true
 		}
 	}

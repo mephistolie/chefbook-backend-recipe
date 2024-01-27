@@ -7,9 +7,10 @@ import (
 
 func NewGetRecipeBookResponse(data entity.DetailedRecipesState) *api.GetRecipeBookResponse {
 	return &api.GetRecipeBookResponse{
-		Recipes:    newRecipeStates(data.Recipes),
-		Tags:       newTags(data.Tags),
-		Categories: newCategories(data.Categories),
+		Recipes:           newRecipeStates(data.Recipes),
+		Tags:              newTags(data.Tags),
+		Categories:        newCategories(data.Categories),
+		HasEncryptedVault: data.HasEncryptedVault,
 	}
 }
 

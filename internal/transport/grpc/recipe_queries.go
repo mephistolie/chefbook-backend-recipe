@@ -43,12 +43,12 @@ func (s *RecipeServer) GetRecipeBook(_ context.Context, req *api.GetRecipeBookRe
 		return nil, fail.GrpcInvalidBody
 	}
 
-	recipe, err := s.service.GetRecipesBook(userId, entity.ValidatedLanguage(req.UserLanguage))
+	recipeBook, err := s.service.GetRecipesBook(userId, entity.ValidatedLanguage(req.UserLanguage))
 	if err != nil {
 		return nil, err
 	}
 
-	return dto.NewGetRecipeBookResponse(recipe), nil
+	return dto.NewGetRecipeBookResponse(recipeBook), nil
 }
 
 func (s *RecipeServer) GetRecipeNames(_ context.Context, req *api.GetRecipeNamesRequest) (*api.GetRecipeNamesResponse, error) {

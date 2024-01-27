@@ -60,11 +60,14 @@ func (r *Repository) GetRecipePictureIdByLink(recipeId uuid.UUID, link string) *
 		return nil
 	}
 	fragments := strings.Split(pictureUrl.Path, "/")
+	if len(fragments) > 1 && fragments[0] == "" {
+		fragments = fragments[1:]
+	}
 	if len(fragments) != 4 ||
 		fragments[0] != recipesDir ||
 		fragments[1] != recipeId.String() ||
 		fragments[2] != picturesDir {
-		log.Debugf("Invalid fragments while parsing picture link %s", link)
+		log.Debugf("Invalid fragments while parsing picture link %s", fragments)
 		return nil
 	}
 	pictureId, err := uuid.Parse(fragments[3])

@@ -10,7 +10,7 @@ func NewPicturesRequest(req *api.RecipePictures) entity.RecipePictures {
 	pictures := entity.RecipePictures{Preview: req.Preview}
 
 	if len(req.Cooking) > 0 {
-		cookingPicturesMap := make(map[uuid.UUID][]string)
+		cookingPicturesMap := map[uuid.UUID][]string{}
 		for rawStepId, stepPictures := range req.Cooking {
 			if stepId, err := uuid.Parse(rawStepId); err == nil {
 				cookingPicturesMap[stepId] = stepPictures.Pictures
@@ -23,7 +23,7 @@ func NewPicturesRequest(req *api.RecipePictures) entity.RecipePictures {
 }
 
 func NewPicturesResponse(res entity.RecipePictures) *api.RecipePictures {
-	var cooking map[string]*api.StepPictures
+	cooking := map[string]*api.StepPictures{}
 	for stepId, pictures := range res.Cooking {
 		cooking[stepId.String()] = &api.StepPictures{Pictures: pictures}
 	}
