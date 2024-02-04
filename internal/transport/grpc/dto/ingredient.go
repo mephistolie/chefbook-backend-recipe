@@ -6,6 +6,7 @@ import (
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
 	recipeFail "github.com/mephistolie/chefbook-backend-recipe/internal/entity/fail"
 	"k8s.io/utils/strings/slices"
+	"math"
 )
 
 const (
@@ -86,6 +87,7 @@ func newIngredient(ingredient *api.IngredientItem, isEncrypted bool) (entity.Ing
 		} else if *ingredient.Amount > maxIngredientAmount {
 			*ingredient.Amount = maxIngredientAmount
 		}
+		*ingredient.Amount = float32(math.Round(float64(*ingredient.Amount)*1000) / 1000)
 	}
 	if ingredient.Unit != nil && len(*ingredient.Unit) > maxIngredientUnitLength {
 		unit := (*ingredient.Unit)[0:maxIngredientUnitLength]

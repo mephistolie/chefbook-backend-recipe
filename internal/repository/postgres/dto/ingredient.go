@@ -63,7 +63,7 @@ type IngredientItem struct {
 	Id       uuid.UUID  `json:"id"`
 	Text     *string    `json:"text,omitempty"`
 	Type     string     `json:"type"`
-	Amount   *int32     `json:"amount,omitempty"`
+	Amount   *float32   `json:"amount,omitempty"`
 	Unit     *string    `json:"unit,omitempty"`
 	RecipeId *uuid.UUID `json:"recipeId,omitempty"`
 }

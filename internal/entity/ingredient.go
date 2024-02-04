@@ -20,7 +20,7 @@ type IngredientItem struct {
 	Id       uuid.UUID
 	Text     *string
 	Type     string
-	Amount   *int32
+	Amount   *float32
 	Unit     *string
 	RecipeId *uuid.UUID
 }

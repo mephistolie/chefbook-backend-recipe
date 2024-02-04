@@ -7,7 +7,7 @@ message IngredientItem {
   string id = 1;
   optional string text = 2;
   string type = 3;
-  optional int32 amount = 4;
+  optional float amount = 4;
   optional string unit = 5;
   optional string recipeId = 6;
 }
