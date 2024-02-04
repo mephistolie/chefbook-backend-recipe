@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	maxNameLength        = 150
-	maxDescriptionLength = 1500
+	maxNameLength        = 75
+	maxDescriptionLength = 1000
 
 	maxRecipeTagsCount = 10
 
@@ -50,14 +50,14 @@ func NewRecipeInput(
 	if recipeIdPtr == nil && isUpdateInput {
 		return entity.RecipeInput{}, fail.GrpcInvalidBody
 	}
-	if len(req.Name) > maxNameLength {
-		req.Name = req.Name[0:maxNameLength]
+	if len([]rune(req.Name)) > maxNameLength {
+		req.Name = string([]rune(req.Name)[0:maxNameLength])
 	}
 	if !slices.Contains(model.AvailableVisibilities, req.Visibility) {
 		req.Visibility = model.VisibilityPrivate
 	}
-	if req.Description != nil && len(*req.Description) > maxDescriptionLength {
-		description := (*req.Description)[0:maxDescriptionLength]
+	if req.Description != nil && len([]rune(*req.Description)) > maxDescriptionLength {
+		description := string([]rune(*req.Description)[0:maxDescriptionLength])
 		req.Description = &description
 	}
 	req.Tags = sliceUtils.RemoveDuplicates(req.Tags)

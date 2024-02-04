@@ -11,9 +11,9 @@ import (
 
 const (
 	maxIngredientsCount      = 50
-	maxIngredientTextLength  = 150
+	maxIngredientTextLength  = 75
 	maxIngredientAmount      = 10000
-	maxIngredientUnitLength  = 10
+	maxIngredientUnitLength  = 15
 	encryptedIngredientsSize = 1
 )
 
@@ -77,8 +77,8 @@ func newIngredient(ingredient *api.IngredientItem, isEncrypted bool) (entity.Ing
 		return entity.IngredientItem{}, recipeFail.GrpcInvalidIngredientId
 	}
 
-	if ingredient.Text != nil && len(*ingredient.Text) > maxIngredientTextLength && !isEncrypted {
-		text := (*ingredient.Text)[0:maxIngredientTextLength]
+	if ingredient.Text != nil && len([]rune(*ingredient.Text)) > maxIngredientTextLength && !isEncrypted {
+		text := string([]rune(*ingredient.Text)[0:maxIngredientTextLength])
 		ingredient.Text = &text
 	}
 	if ingredient.Amount != nil {
@@ -89,8 +89,8 @@ func newIngredient(ingredient *api.IngredientItem, isEncrypted bool) (entity.Ing
 		}
 		*ingredient.Amount = float32(math.Round(float64(*ingredient.Amount)*1000) / 1000)
 	}
-	if ingredient.Unit != nil && len(*ingredient.Unit) > maxIngredientUnitLength {
-		unit := (*ingredient.Unit)[0:maxIngredientUnitLength]
+	if ingredient.Unit != nil && len([]rune(*ingredient.Unit)) > maxIngredientUnitLength {
+		unit := string([]rune(*ingredient.Unit)[0:maxIngredientUnitLength])
 		ingredient.Unit = &unit
 	}
 	var recipeId *uuid.UUID

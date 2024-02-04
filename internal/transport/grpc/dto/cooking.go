@@ -11,7 +11,8 @@ import (
 
 const (
 	maxCookingStepsCount     = 40
-	maxCookingItemTextLength = 2500
+	maxCookingSectionLength  = 75
+	maxCookingStepTextLength = 2500
 	maxCookingStepTime       = 86400 // 1 day
 	encryptedCookingSize     = 1
 )
@@ -75,8 +76,13 @@ func newCookingItem(item *api.CookingItem, isEncrypted bool) (entity.CookingItem
 	if err != nil {
 		return entity.CookingItem{}, recipeFail.GrpcInvalidCookingItemId
 	}
-	if item.Text != nil && len(*item.Text) > maxCookingItemTextLength && !isEncrypted {
-		text := (*item.Text)[0:maxCookingItemTextLength]
+
+	maxTextLength := maxCookingSectionLength
+	if item.Type == entity.TypeStep {
+		maxTextLength = maxCookingStepTextLength
+	}
+	if item.Text != nil && len([]rune(*item.Text)) > maxTextLength && !isEncrypted {
+		text := string([]rune(*item.Text)[0:maxTextLength])
 		item.Text = &text
 	}
 	var recipeId *uuid.UUID

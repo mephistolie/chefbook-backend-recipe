@@ -31,11 +31,11 @@ func NewRecipeTranslation(req *api.TranslateRecipeRequest) (entity.RecipeTransla
 	if len(req.Language) != 2 || len(req.Name) == 0 || len(req.Ingredients) == 0 || len(req.Cooking) == 0 {
 		return entity.RecipeTranslation{}, fail.GrpcInvalidBody
 	}
-	if len(req.Name) > maxNameLength {
-		req.Name = req.Name[0:maxNameLength]
+	if len([]rune(req.Name)) > maxNameLength {
+		req.Name = string([]rune(req.Name)[0:maxNameLength])
 	}
-	if req.Description != nil && len(*req.Description) > maxDescriptionLength {
-		description := (*req.Description)[0:maxDescriptionLength]
+	if req.Description != nil && len([]rune(*req.Description)) > maxDescriptionLength {
+		description := string([]rune(*req.Description)[0:maxDescriptionLength])
 		req.Description = &description
 	}
 
