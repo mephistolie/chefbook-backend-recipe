@@ -43,8 +43,6 @@ type RecipeInfo struct {
 
 	OwnerName   *string
 	OwnerAvatar *string
-
-	Preview *string
 }
 
 type DetailedRecipesInfo struct {
