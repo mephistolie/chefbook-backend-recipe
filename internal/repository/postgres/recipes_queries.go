@@ -127,7 +127,7 @@ func (r *Repository) getRecipesWhereStatementByParams(params entity.RecipesQuery
 	}
 
 	if len(params.Languages) > 0 {
-		whereStatement += fmt.Sprintf(" AND (%[1]v.language=$%d OR %[1]v.translations && $%d)", recipesTable, argNumber)
+		whereStatement += fmt.Sprintf(" AND (%[1]v.language=ANY($%d) OR %[1]v.translations && $%d)", recipesTable, argNumber)
 		args = append(args, params.Languages)
 		argNumber += 1
 	}
@@ -281,7 +281,7 @@ func (r *Repository) GetRandomRecipe(userId uuid.UUID, languages *[]string) (ent
 	args = append(args, userId)
 
 	if languages != nil {
-		query += fmt.Sprintf(" AND %s.language=ANY($2)", recipesTable)
+		query += fmt.Sprintf(" AND (%[1]v.language=ANY($2) OR %[1]v.translations && $2)", recipesTable)
 		args = append(args, *languages)
 	}
 
