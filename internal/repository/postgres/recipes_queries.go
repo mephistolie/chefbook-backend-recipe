@@ -77,9 +77,9 @@ func (r *Repository) getRecipesByParamsQuery(params entity.RecipesQuery, userId 
 		FROM
 			%[1]v
 		LEFT JOIN
-			%[2]v ON %[2]v.recipe_id=%[1]v.recipe_id
+			%[2]v ON %[2]v.recipe_id=%[1]v.recipe_id AND %[2]v.user_id=$1
 		LEFT JOIN
-			%[3]v ON %[3]v.recipe_id=%[1]v.recipe_id
+			%[3]v ON %[3]v.recipe_id=%[1]v.recipe_id AND %[3]v.user_id=$1
 	`, recipesTable, usersTable, scoresTable)
 	args = append(args, userId)
 
@@ -264,9 +264,9 @@ func (r *Repository) GetRandomRecipe(userId uuid.UUID, languages *[]string) (ent
 		FROM
 			%[1]v
 		LEFT JOIN
-			%[2]v ON %[2]v.recipe_id=%[1]v.recipe_id
+			%[2]v ON %[2]v.recipe_id=%[1]v.recipe_id AND %[2]v.user_id=$1
 		LEFT JOIN
-			%[3]v ON %[3]v.recipe_id=%[1]v.recipe_id
+			%[3]v ON %[3]v.recipe_id=%[1]v.recipe_id AND %[3]v.user_id=$1
 		WHERE
 			%[1]v.visibility='%[4]v' AND %[1]v.owner_id<>$1 AND
 			NOT EXISTS

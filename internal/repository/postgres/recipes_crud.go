@@ -127,9 +127,9 @@ func (r *Repository) GetRecipe(recipeId, userId uuid.UUID) (entity.BaseRecipe, e
 		FROM
 			%[1]v
 		LEFT JOIN
-			%[2]v ON %[2]v.recipe_id=%[1]v.recipe_id
+			%[2]v ON %[2]v.recipe_id=%[1]v.recipe_id AND %[2]v.user_id=$2
 		LEFT JOIN
-			%[3]v ON %[3]v.recipe_id=%[1]v.recipe_id
+			%[3]v ON %[3]v.recipe_id=%[1]v.recipe_id AND %[3]v.user_id=$2
 		WHERE %[1]v.recipe_id=$1
 	`, recipesTable, usersTable, scoresTable)
 

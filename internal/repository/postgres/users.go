@@ -25,9 +25,9 @@ func (r *Repository) GetRecipeBook(userId uuid.UUID) ([]entity.BaseRecipeState, 
 		FROM
 			%[1]v
 		LEFT JOIN
-			%[2]v ON %[2]v.recipe_id=%[1]v.recipe_id
+			%[2]v ON %[2]v.recipe_id=%[1]v.recipe_id AND %[2]v.user_id=$1
 		LEFT JOIN
-			%[3]v ON %[3]v.recipe_id=%[1]v.recipe_id
+			%[3]v ON %[3]v.recipe_id=%[1]v.recipe_id AND %[3]v.user_id=$1
 		WHERE
 			%[2]v.user_id=$1 AND (%[1]v.owner_id=$1 OR %[1]v.visibility<>'%[4]v')
 	`, recipesTable, usersTable, scoresTable, model.VisibilityPrivate)
