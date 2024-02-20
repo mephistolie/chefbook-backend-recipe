@@ -76,6 +76,8 @@ message GetRecipesRequest {
   repeated string recipeLanguages = 24;
 
   optional string userLanguage = 25;
+
+  repeated string tags = 26;
 }
 
 message GetRecipesResponse {

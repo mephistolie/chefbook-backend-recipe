@@ -14,6 +14,8 @@ type RecipesQuery struct {
 	Owned bool
 	Saved bool
 
+	Tags []string
+
 	Search *string
 
 	Sorting               string

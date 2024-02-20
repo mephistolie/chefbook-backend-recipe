@@ -126,6 +126,12 @@ func (r *Repository) getRecipesWhereStatementByParams(params entity.RecipesQuery
 		argNumber += 1
 	}
 
+	if len(params.Tags) > 0 {
+		whereStatement += fmt.Sprintf(" AND %[1]v.tags @> $%d)", recipesTable, argNumber)
+		args = append(args, params.Tags)
+		argNumber += 1
+	}
+
 	if len(params.Languages) > 0 {
 		whereStatement += fmt.Sprintf(" AND (%[1]v.language=ANY($%d) OR %[1]v.translations && $%d)", recipesTable, argNumber)
 		args = append(args, params.Languages)

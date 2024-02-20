@@ -72,6 +72,7 @@ func NewRecipesQuery(req *api.GetRecipesRequest) entity.RecipesQuery {
 		AuthorId:              authorIdPtr,
 		Owned:                 req.Owned,
 		Saved:                 req.Saved,
+		Tags:                  req.Tags,
 		Search:                req.Search,
 		Sorting:               sorting,
 		LastRecipeId:          lastRecipeIdPtr,
