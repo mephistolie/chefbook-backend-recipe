@@ -127,7 +127,7 @@ func (r *Repository) getRecipesWhereStatementByParams(params entity.RecipesQuery
 	}
 
 	if len(params.Tags) > 0 {
-		whereStatement += fmt.Sprintf(" AND %[1]v.tags @> $%d)", recipesTable, argNumber)
+		whereStatement += fmt.Sprintf(" AND %[1]v.tags @> $%d", recipesTable, argNumber)
 		args = append(args, params.Tags)
 		argNumber += 1
 	}
