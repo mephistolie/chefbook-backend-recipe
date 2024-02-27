@@ -21,6 +21,7 @@ message RecipeState {
 
   repeated string categories = 9;
   bool isFavourite = 10;
+  repeated string tags = 11;
 }
 
 message GetRecipeBookRequest {

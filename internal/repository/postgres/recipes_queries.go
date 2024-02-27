@@ -139,7 +139,7 @@ func (r *Repository) getRecipesWhereStatementByParams(params entity.RecipesQuery
 	}
 
 	if params.Search != nil {
-		whereStatement += fmt.Sprintf(" AND %s.name LIKE ", recipesTable) + "'%' || $" + strconv.Itoa(argNumber) + " || '%'"
+		whereStatement += fmt.Sprintf(" AND LOWER(%s.name COLLATE \"ru_RU.utf8\") LIKE ", recipesTable) + "'%' || LOWER($" + strconv.Itoa(argNumber) + " COLLATE \"ru_RU.utf8\") || '%'"
 		args = append(args, *params.Search)
 		argNumber += 1
 	}

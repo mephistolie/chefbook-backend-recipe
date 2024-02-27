@@ -13,12 +13,12 @@ func (s *Service) RateRecipe(recipeId, userId uuid.UUID, score int) error {
 	if err != nil {
 		return err
 	}
-	if policy.Visibility != model.VisibilityPublic {
+	if policy.OwnerId == userId || policy.Visibility != model.VisibilityPublic {
 		return fail.GrpcAccessDenied
 	}
 
 	msg, err := s.repo.RateRecipe(recipeId, userId, score)
-	if err == nil {
+	if err == nil && msg != nil {
 		go s.mqPublisher.PublishMessage(msg)
 	}
 	return err

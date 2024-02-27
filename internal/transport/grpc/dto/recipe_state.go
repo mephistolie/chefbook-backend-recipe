@@ -37,6 +37,7 @@ func newRecipeState(recipe entity.RecipeState) *api.RecipeState {
 		Rating:       recipe.Rating,
 		Votes:        recipe.Votes,
 		Score:        recipe.Score,
+		Tags:         recipe.Tags,
 		Categories:   categories,
 		IsFavourite:  recipe.IsFavourite,
 	}

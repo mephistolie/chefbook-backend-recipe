@@ -21,6 +21,9 @@ func (s *RecipeServer) RateRecipe(_ context.Context, req *api.RateRecipeRequest)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
 	}
+	if req.Score < 0 || req.Score > 5 {
+		return nil, fail.GrpcInvalidBody
+	}
 
 	if err = s.service.RateRecipe(recipeId, userId, int(req.Score)); err != nil {
 		return nil, err

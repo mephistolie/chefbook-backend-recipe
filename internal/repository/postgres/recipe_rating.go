@@ -3,6 +3,7 @@ package postgres
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-common/log"
@@ -30,8 +31,8 @@ func (r *Repository) GetRecipeRatingAndVotes(recipeId uuid.UUID) (float32, int, 
 	return rating, votes, nil
 }
 
-func (r *Repository) GetUserRecipeScore(recipeId, userId uuid.UUID) int {
-	var score int
+func (r *Repository) GetUserRecipeScore(recipeId, userId uuid.UUID, tx *sql.Tx) (int, error) {
+	var score = 0
 
 	query := fmt.Sprintf(`
 		SELECT score
@@ -39,28 +40,35 @@ func (r *Repository) GetUserRecipeScore(recipeId, userId uuid.UUID) int {
 		WHERE recipe_id=$1 AND user_id=$2
 	`, scoresTable)
 
-	row := r.db.QueryRow(query, recipeId, userId)
+	row := tx.QueryRow(query, recipeId, userId)
 	if err := row.Scan(&score); err != nil {
-		return 0
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, nil
+		} else {
+			return 0, errorWithTransactionRollback(tx, fail.GrpcUnknown)
+		}
 	}
 
-	return score
+	return score, nil
 }
 
 func (r *Repository) RateRecipe(recipeId, userId uuid.UUID, score int) (*model.MessageData, error) {
-	previousScore := r.GetUserRecipeScore(recipeId, userId)
+	tx, err := r.startTransaction()
+	if err != nil {
+		return nil, err
+	}
+
+	previousScore, err := r.GetUserRecipeScore(recipeId, userId, tx)
+	if err != nil {
+		return nil, err
+	}
 
 	scoreDiff := score - previousScore
 	if scoreDiff == 0 {
 		return nil, nil
 	}
 
-	tx, err := r.startTransaction()
-	if err != nil {
-		return nil, err
-	}
-
-	if previousScore == 0 {
+	if previousScore == 0 && score != 0 {
 		err = r.addUserScore(tx, recipeId, userId, scoreDiff)
 	} else if score == 0 {
 		err = r.deleteUserScore(tx, recipeId, userId, scoreDiff)
@@ -120,7 +128,7 @@ func (r *Repository) changeUserScore(tx *sql.Tx, recipeId, userId uuid.UUID, sco
 
 	updateRatingQuery := fmt.Sprintf(`
 		UPDATE %s
-		SET rating=(ceil(rating*votes)+$1)/votes
+		SET rating=(ceil(rating*votes)+$1)/greatest(votes, 1)
 		WHERE recipe_id=$2
 	`, recipesTable)
 

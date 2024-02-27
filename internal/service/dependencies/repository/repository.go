@@ -22,7 +22,6 @@ type Recipe interface {
 	SetRecipePictures(recipeId uuid.UUID, pictures entity.RecipePictures, pictureIds []uuid.UUID, version *int32) (int32, error)
 
 	GetRecipeRatingAndVotes(recipeId uuid.UUID) (float32, int, error)
-	GetUserRecipeScore(recipeId, userId uuid.UUID) int
 	RateRecipe(recipeId, userId uuid.UUID, score int) (*model.MessageData, error)
 
 	SaveToRecipeBook(recipeId, userId uuid.UUID) error
