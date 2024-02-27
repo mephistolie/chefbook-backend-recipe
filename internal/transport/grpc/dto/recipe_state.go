@@ -8,8 +8,9 @@ import (
 func NewGetRecipeBookResponse(data entity.DetailedRecipesState) *api.GetRecipeBookResponse {
 	return &api.GetRecipeBookResponse{
 		Recipes:           newRecipeStates(data.Recipes),
-		Tags:              newTags(data.Tags),
 		Categories:        newCategories(data.Categories),
+		Tags:              newTags(data.Tags),
+		TagGroups:         data.TagGroups,
 		HasEncryptedVault: data.HasEncryptedVault,
 	}
 }

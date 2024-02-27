@@ -15,7 +15,8 @@ func newTags(tags map[string]entity.Tag) map[string]*api.RecipeTag {
 
 func newTag(tag entity.Tag) *api.RecipeTag {
 	return &api.RecipeTag{
-		Name:  tag.Name,
-		Emoji: tag.Emoji,
+		Name:    tag.Name,
+		Emoji:   tag.Emoji,
+		GroupId: tag.GroupId,
 	}
 }

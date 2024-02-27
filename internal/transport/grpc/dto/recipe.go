@@ -9,8 +9,9 @@ import (
 func NewGetRecipeResponse(data entity.DetailedRecipe) *api.GetRecipeResponse {
 	return &api.GetRecipeResponse{
 		Recipe:     newRecipe(data.Recipe),
-		Tags:       newTags(data.Tags),
 		Categories: newCategoriesMap(data.Categories),
+		Tags:       newTags(data.Tags),
+		TagGroups:  data.TagGroups,
 	}
 }
 

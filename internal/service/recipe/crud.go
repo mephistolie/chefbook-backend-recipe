@@ -41,8 +41,9 @@ func (s *Service) fillBaseRecipe(baseRecipe entity.BaseRecipe, userId uuid.UUID,
 	recipe := entity.Recipe{BaseRecipe: baseRecipe}
 
 	tags := make(map[string]entity.Tag)
+	tagGroups := make(map[string]string)
 	categories := make(map[string]entity.Category)
-	wg := s.getCategoriesAndTagsAsync(baseRecipe.Tags, baseRecipe.Categories, userId, language, &tags, &categories)
+	wg := s.getCategoriesAndTagsAsync(baseRecipe.Tags, baseRecipe.Categories, userId, language, &tags, &tagGroups, &categories)
 
 	s.fillRecipeTranslation(&recipe, language, translatorId)
 	s.fillProfilesData(&recipe)
@@ -52,6 +53,7 @@ func (s *Service) fillBaseRecipe(baseRecipe entity.BaseRecipe, userId uuid.UUID,
 	return entity.DetailedRecipe{
 		Recipe:     recipe,
 		Tags:       tags,
+		TagGroups:  tagGroups,
 		Categories: categories,
 	}
 }

@@ -97,8 +97,9 @@ func NewRecipesQuery(req *api.GetRecipesRequest) entity.RecipesQuery {
 func NewGetRecipesResponse(data entity.DetailedRecipesInfo) *api.GetRecipesResponse {
 	return &api.GetRecipesResponse{
 		Recipes:    newRecipeInfos(data.Recipes),
-		Tags:       newTags(data.Tags),
 		Categories: newCategoriesMap(data.Categories),
+		Tags:       newTags(data.Tags),
+		TagGroups:  data.TagGroups,
 	}
 }
 

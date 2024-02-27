@@ -33,5 +33,6 @@ message GetRecipeBookResponse {
   repeated RecipeState recipes = 1;
   repeated RecipeCategory categories = 2;
   map<string, RecipeTag> tags = 3;
-  bool hasEncryptedVault = 4;
+  map<string, string> tagGroups = 4;
+  bool hasEncryptedVault = 5;
 }

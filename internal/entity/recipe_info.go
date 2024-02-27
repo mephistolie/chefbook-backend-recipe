@@ -47,6 +47,7 @@ type RecipeInfo struct {
 
 type DetailedRecipesInfo struct {
 	Recipes    []RecipeInfo
-	Tags       map[string]Tag
 	Categories map[string]Category
+	Tags       map[string]Tag
+	TagGroups  map[string]string
 }

@@ -53,6 +53,7 @@ type Recipe struct {
 type DetailedRecipe struct {
 	Recipe       Recipe
 	Translations map[string][]RecipeTranslationInfo
-	Tags         map[string]Tag
 	Categories   map[string]Category
+	Tags         map[string]Tag
+	TagGroups    map[string]string
 }

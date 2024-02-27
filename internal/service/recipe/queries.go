@@ -23,20 +23,22 @@ func (s *Service) GetRecipes(params entity.RecipesQuery, userId uuid.UUID, langu
 	}
 
 	tags := make(map[string]entity.Tag)
+	tagGroups := make(map[string]string)
 	categories := make(map[string]entity.Category)
-	wg := s.getCategoriesAndTagsAsync(tagIds, categoryIds, userId, language, &tags, &categories)
+	wg := s.getCategoriesAndTagsAsync(tagIds, categoryIds, userId, language, &tags, &tagGroups, &categories)
 
 	authorsMap := s.getProfilesInfo(authors)
 
 	wg.Wait()
 
-	return s.getRecipeInfos(recipes, authorsMap, tags, categories)
+	return s.getRecipeInfos(recipes, authorsMap, tags, tagGroups, categories)
 }
 
 func (s *Service) getRecipeInfos(
 	recipes []entity.BaseRecipeInfo,
 	authors map[string]*profileApi.ProfileMinInfo,
 	tags map[string]entity.Tag,
+	tagGroups map[string]string,
 	categories map[string]entity.Category,
 ) entity.DetailedRecipesInfo {
 	var infos []entity.RecipeInfo
@@ -53,8 +55,9 @@ func (s *Service) getRecipeInfos(
 
 	return entity.DetailedRecipesInfo{
 		Recipes:    infos,
-		Tags:       tags,
 		Categories: categories,
+		Tags:       tags,
+		TagGroups:  tagGroups,
 	}
 }
 
@@ -94,19 +97,21 @@ func (s *Service) GetRecipesBook(userId uuid.UUID, language string) (entity.Deta
 	}
 
 	tags := make(map[string]entity.Tag)
-	go s.getTags(language, tagIds, &tags, &wg)
+	tagGroups := make(map[string]string)
+	go s.getTags(language, tagIds, &tags, &tagGroups, &wg)
 
 	authorsMap := s.getProfilesInfo(authors)
 
 	wg.Wait()
 
-	return s.getRecipeStates(recipes, authorsMap, tags, categories, hasEncryptedVault), nil
+	return s.getRecipeStates(recipes, authorsMap, tags, tagGroups, categories, hasEncryptedVault), nil
 }
 
 func (s *Service) getRecipeStates(
 	recipes []entity.BaseRecipeState,
 	authors map[string]*profileApi.ProfileMinInfo,
 	tags map[string]entity.Tag,
+	tagGroups map[string]string,
 	categories []entity.Category,
 	hasEncryptedVault bool,
 ) entity.DetailedRecipesState {
@@ -125,6 +130,7 @@ func (s *Service) getRecipeStates(
 	return entity.DetailedRecipesState{
 		Recipes:           states,
 		Tags:              tags,
+		TagGroups:         tagGroups,
 		Categories:        categories,
 		HasEncryptedVault: hasEncryptedVault,
 	}

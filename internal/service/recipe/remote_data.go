@@ -43,6 +43,7 @@ func (s *Service) getCategoriesAndTagsAsync(
 	userId uuid.UUID,
 	language string,
 	tagsDestination *map[string]entity.Tag,
+	tagGroupsDestination *map[string]string,
 	categoriesDestination *map[string]entity.Category,
 ) *sync.WaitGroup {
 	wg := sync.WaitGroup{}
@@ -53,7 +54,7 @@ func (s *Service) getCategoriesAndTagsAsync(
 		rawCategoryIds = append(rawCategoryIds, categoryId.String())
 	}
 
-	go s.getTags(language, tagIds, tagsDestination, &wg)
+	go s.getTags(language, tagIds, tagsDestination, tagGroupsDestination, &wg)
 	go s.getCategoriesMap(userId, rawCategoryIds, categoriesDestination, &wg)
 
 	return &wg
@@ -62,7 +63,8 @@ func (s *Service) getCategoriesAndTagsAsync(
 func (s *Service) getTags(
 	languageCode string,
 	tagIds []string,
-	destination *map[string]entity.Tag,
+	tagsDestination *map[string]entity.Tag,
+	groupsDestination *map[string]string,
 	wg *sync.WaitGroup,
 ) {
 	uniqueTagIds := slices.RemoveDuplicates(tagIds)
@@ -79,13 +81,16 @@ func (s *Service) getTags(
 	cancelCtx()
 
 	if err == nil {
-		log.Debugf("found %d tags", len(res.Tags))
 		for tagId, dto := range res.Tags {
-			(*destination)[tagId] = entity.Tag{
-				Id:    tagId,
-				Name:  dto.Name,
-				Emoji: dto.Emoji,
+			(*tagsDestination)[tagId] = entity.Tag{
+				Id:      tagId,
+				Name:    dto.Name,
+				Emoji:   dto.Emoji,
+				GroupId: dto.GroupId,
 			}
+		}
+		for groupId, groupName := range res.GroupNames {
+			(*groupsDestination)[groupId] = groupName
 		}
 	} else {
 		log.Warn("unable to get recipe tags: ", err)
