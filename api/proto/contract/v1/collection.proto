@@ -9,9 +9,8 @@ message Collection {
 
   string visibility = 3;
   repeated CollectionContributor contributors = 4;
-  bool saved = 5;
 
-  int32 recipesCount = 6;
+  int32 recipesCount = 5;
 }
 
 message CollectionInfo {

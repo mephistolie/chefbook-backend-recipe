@@ -22,9 +22,6 @@ var selectCollectionsQuery = fmt.Sprintf(`
 			WHERE %[2]v.collection_id=%[2]v.collection_id
 		) as contributors,
 		(
-			SELECT %[3]v.user_id IS NOT NULL
-		) AS saved,
-		(
 			SELECT COUNT(*)
 			FROM %[4]v
 			WHERE %[4]v.collection_id=%[1]v.collection_id
@@ -55,7 +52,7 @@ func (r *Repository) GetCollections(userId, requesterId uuid.UUID) []entity.Coll
 		m := pgtype.NewMap()
 		err = rows.Scan(
 			&collection.Id, &collection.Name,
-			&collection.Visibility, m.SQLScanner(&collection.Contributors), &collection.Saved,
+			&collection.Visibility, m.SQLScanner(&collection.Contributors),
 			&collection.RecipesCount,
 		)
 		if err != nil {
@@ -152,7 +149,7 @@ func (r *Repository) GetCollection(collectionId, userId uuid.UUID) (entity.Colle
 
 	if err := row.Scan(
 		&collection.Id, &collection.Name,
-		&collection.Visibility, m.SQLScanner(&collection.Contributors), &collection.Saved,
+		&collection.Visibility, m.SQLScanner(&collection.Contributors),
 		&collection.RecipesCount,
 	); err != nil {
 		log.Errorf("unable to get collection %s: %s", collectionId, err)

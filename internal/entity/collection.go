@@ -8,9 +8,8 @@ type Collection struct {
 
 	Visibility   string
 	Contributors []Contributor
-	Saved        bool
 
-	RecipesCount int
+	RecipesCount int32
 }
 
 type DetailedCollection struct {

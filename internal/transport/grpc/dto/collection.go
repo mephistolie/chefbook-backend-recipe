@@ -61,6 +61,7 @@ func newCollection(collection entity.Collection) *api.Collection {
 		Name:         collection.Name,
 		Visibility:   collection.Visibility,
 		Contributors: contributors,
+		RecipesCount: collection.RecipesCount,
 	}
 }
 

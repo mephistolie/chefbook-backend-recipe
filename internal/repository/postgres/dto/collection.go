@@ -14,9 +14,8 @@ type Collection struct {
 
 	Visibility   string
 	Contributors Contributors
-	Saved        bool
 
-	RecipesCount int
+	RecipesCount int32
 }
 
 func (c *Collection) Entity() entity.Collection {
@@ -26,7 +25,6 @@ func (c *Collection) Entity() entity.Collection {
 
 		Contributors: c.Contributors.Entity(),
 		Visibility:   c.Visibility,
-		Saved:        c.Saved,
 
 		RecipesCount: c.RecipesCount,
 	}
