@@ -8,7 +8,6 @@ message CreateCollectionRequest {
   optional string collectionId = 2;
   string name = 3;
   string visibility = 4;
-  repeated string coauthorIds = 5;
 }
 
 message CreateCollectionResponse {
