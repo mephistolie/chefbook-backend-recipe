@@ -7,18 +7,14 @@ import (
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
 )
 
-func NewRecipeTranslations(translations map[string][]entity.RecipeTranslationInfo) map[string]*api.RecipeTranslations {
-	dto := map[string]*api.RecipeTranslations{}
-	for language, languageTranslations := range translations {
-		var dtos []*api.RecipeTranslationInfo
-		for _, translation := range languageTranslations {
-			dtos = append(dtos, &api.RecipeTranslationInfo{
-				AuthorId:     translation.AuthorId.String(),
-				AuthorName:   translation.AuthorName,
-				AuthorAvatar: translation.AuthorAvatar,
-			})
+func NewRecipeTranslations(translators map[string][]uuid.UUID) map[string]*api.LanguageTranslations {
+	dto := map[string]*api.LanguageTranslations{}
+	for language, languageTranslators := range translators {
+		var dtos []string
+		for _, translatorId := range languageTranslators {
+			dtos = append(dtos, translatorId.String())
 		}
-		dto[language] = &api.RecipeTranslations{Translations: dtos}
+		dto[language] = &api.LanguageTranslations{Translators: dtos}
 	}
 	return dto
 }

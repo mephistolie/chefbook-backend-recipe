@@ -15,7 +15,7 @@ func (s *RecipeServer) GetRecipes(_ context.Context, req *api.GetRecipesRequest)
 		return nil, fail.GrpcInvalidBody
 	}
 
-	recipes := s.service.GetRecipes(dto.NewRecipesQuery(req), userId, entity.ValidatedLanguage(req.UserLanguage))
+	recipes := s.recipeService.GetRecipes(dto.NewRecipesQuery(req), userId, entity.ValidatedLanguage(req.UserLanguage))
 	return dto.NewGetRecipesResponse(recipes), nil
 }
 
@@ -29,7 +29,7 @@ func (s *RecipeServer) GetRandomRecipe(_ context.Context, req *api.GetRandomReci
 		languages = &req.RecipeLanguages
 	}
 
-	recipe, err := s.service.GetRandomRecipe(userId, languages, entity.ValidatedLanguage(req.UserLanguage))
+	recipe, err := s.recipeService.GetRandomRecipe(userId, languages, entity.ValidatedLanguage(req.UserLanguage))
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func (s *RecipeServer) GetRecipeBook(_ context.Context, req *api.GetRecipeBookRe
 		return nil, fail.GrpcInvalidBody
 	}
 
-	recipeBook, err := s.service.GetRecipesBook(userId, entity.ValidatedLanguage(req.UserLanguage))
+	recipeBook, err := s.recipeService.GetRecipesBook(userId, entity.ValidatedLanguage(req.UserLanguage))
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (s *RecipeServer) GetRecipeNames(_ context.Context, req *api.GetRecipeNames
 		}
 	}
 
-	recipeNames, err := s.service.GetRecipeNames(recipeIds, userId)
+	recipeNames, err := s.recipeService.GetRecipeNames(recipeIds, userId)
 	if err != nil {
 		return nil, err
 	}

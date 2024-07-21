@@ -11,37 +11,37 @@ type RecipeState struct {
 
 	OwnerId uuid.UUID `db:"owner_id"`
 
-	Translations []string `db:"translations"`
+	Translations RecipeTranslations `db:"translations"`
 
 	Rating float32 `db:"rating"`
 	Score  int32   `db:"score"`
 	Votes  int32   `db:"votes"`
 
-	Tags        []string   `db:"tags"`
-	Categories  Categories `db:"categories"`
-	IsFavourite bool       `db:"favourite"`
+	Tags        []string    `db:"tags"`
+	Collections Collections `db:"collections"`
+	IsFavourite bool        `db:"favourite"`
 }
 
-func (r *RecipeState) Entity() entity.BaseRecipeState {
+func (r *RecipeState) Entity() entity.RecipeState {
 	var score *int32
 	if r.Score > 0 {
 		score = &r.Score
 	}
 
-	return entity.BaseRecipeState{
+	return entity.RecipeState{
 		Id:      r.Id,
 		Version: r.Version,
 
 		OwnerId: r.OwnerId,
 
-		Translations: r.Translations,
+		Translations: TranslationsEntity(r.Translations),
 
 		Rating: r.Rating,
 		Score:  score,
 		Votes:  r.Votes,
 
 		Tags:        r.Tags,
-		Categories:  r.Categories,
+		Collections: r.Collections,
 		IsFavourite: r.IsFavourite,
 	}
 }

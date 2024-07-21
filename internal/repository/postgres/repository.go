@@ -10,22 +10,31 @@ import (
 	"github.com/mephistolie/chefbook-backend-common/log"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/config"
+	"time"
 )
 
 const (
 	recipesTable               = "recipes"
 	translationsTable          = "translations"
 	recipePicturesUploadsTable = "recipe_pictures_uploads"
-	usersTable                 = "recipes_users"
+	recipeUsersTable           = "recipes_users"
 	scoresTable                = "scores"
-	inboxTable                 = "inbox"
-	outboxTable                = "outbox"
+
+	collectionsTable            = "collections"
+	collectionContributorsTable = "collections_contributors"
+	collectionKeysTable         = "collections_keys"
+	collectionUsersTable        = "collections_users"
+	recipesCollectionsTable     = "recipes_collections"
+
+	inboxTable  = "inbox"
+	outboxTable = "outbox"
 
 	errUniqueViolation = "23505"
 )
 
 type Repository struct {
-	db *sqlx.DB
+	db     *sqlx.DB
+	keyTtl time.Duration
 }
 
 func Connect(cfg config.Database) (*sqlx.DB, error) {
@@ -39,8 +48,11 @@ func Connect(cfg config.Database) (*sqlx.DB, error) {
 	return db, nil
 }
 
-func NewRepository(db *sqlx.DB) *Repository {
-	return &Repository{db: db}
+func NewRepository(db *sqlx.DB, cfg config.Recipes) *Repository {
+	return &Repository{
+		db:     db,
+		keyTtl: *cfg.KeyTtl,
+	}
 }
 
 func (r *Repository) startTransaction() (*sql.Tx, error) {

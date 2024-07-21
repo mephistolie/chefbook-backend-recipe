@@ -9,15 +9,34 @@ import (
 )
 
 type RecipeTranslationInfo struct {
-	Language string    `db:"language"`
-	AuthorId uuid.UUID `db:"author_id"`
+	Language string    `db:"language" json:"language"`
+	AuthorId uuid.UUID `db:"author_id" json:"authorId"`
 }
 
-func TranslationsEntity(dto []RecipeTranslationInfo) map[string][]entity.RecipeTranslationInfo {
-	translations := map[string][]entity.RecipeTranslationInfo{}
+type RecipeTranslations []RecipeTranslationInfo
+
+func (c RecipeTranslations) Value() (driver.Value, error) {
+	return json.Marshal(c)
+}
+
+func (c *RecipeTranslations) Scan(value interface{}) error {
+	b, ok := value.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+
+	if err := json.Unmarshal(b, &c); err != nil {
+		return errors.New("unable to unmarshal translation IDs")
+	}
+
+	return nil
+}
+
+func TranslationsEntity(dto RecipeTranslations) map[string][]uuid.UUID {
+	translations := map[string][]uuid.UUID{}
 	for _, translation := range dto {
 		languageTranslations, _ := translations[translation.Language]
-		languageTranslations = append(languageTranslations, entity.RecipeTranslationInfo{AuthorId: translation.AuthorId})
+		languageTranslations = append(languageTranslations, translation.AuthorId)
 		translations[translation.Language] = languageTranslations
 	}
 	return translations

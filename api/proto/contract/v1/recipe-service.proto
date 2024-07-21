@@ -4,7 +4,6 @@ package v1;
 option go_package = "github.com/mephistolie/chefbook-backend-recipe/api/proto/v1";
 
 import "v1/get-recipes.proto";
-import "v1/get-accessible-recipes.proto";
 import "v1/get-random-recipe.proto";
 import "v1/get-recipe-book.proto";
 import "v1/recipe-input.proto";
@@ -17,14 +16,20 @@ import "v1/delete-recipe.proto";
 import "v1/generate-recipe-pictures-upload-links.proto";
 import "v1/set-recipe-pictures.proto";
 import "v1/set-recipe-favourite-status.proto";
+import "v1/set-recipe-collections.proto";
 import "v1/translate-recipe.proto";
 import "v1/get-recipe-policy.proto";
 import "v1/get-recipe-names.proto";
 import "v1/delete-recipe-translation.proto";
+import "v1/get-collections.proto";
+import "v1/create-collection.proto";
+import "v1/get-collection.proto";
+import "v1/update-collection.proto";
+import "v1/delete-collection.proto";
+import "v1/save-collection.proto";
 
 service RecipeService {
   rpc GetRecipes(GetRecipesRequest) returns (GetRecipesResponse);
-  rpc GetAccessibleRecipes(GetAccessibleRecipesRequest) returns (GetAccessibleRecipesResponse);
   rpc GetRandomRecipe(GetRandomRecipeRequest) returns (GetRecipeResponse);
   rpc GetRecipeBook(GetRecipeBookRequest) returns (GetRecipeBookResponse);
 
@@ -40,10 +45,20 @@ service RecipeService {
   rpc SaveToRecipeBook(SaveToRecipeBookRequest) returns (SaveToRecipeBookResponse);
   rpc RemoveFromRecipeBook(RemoveFromRecipeBookRequest) returns (RemoveFromRecipeBookResponse);
   rpc SetRecipeFavouriteStatus(SetRecipeFavouriteStatusRequest) returns (SetRecipeFavouriteStatusResponse);
+  rpc SetRecipeCollections(SetRecipeCollectionsRequest) returns (SetRecipeCollectionsResponse);
 
   rpc TranslateRecipe(TranslateRecipeRequest) returns (TranslateRecipeResponse);
   rpc DeleteRecipeTranslation(DeleteRecipeTranslationRequest) returns (DeleteRecipeTranslationResponse);
 
   rpc GetRecipePolicy(GetRecipePolicyRequest) returns (GetRecipePolicyResponse);
   rpc GetRecipeNames(GetRecipeNamesRequest) returns (GetRecipeNamesResponse);
+
+  rpc GetCollections(GetCollectionsRequest) returns (GetCollectionsResponse);
+  rpc CreateCollection(CreateCollectionRequest) returns (CreateCollectionResponse);
+  rpc GetCollection(GetCollectionRequest) returns (GetCollectionResponse);
+  rpc UpdateCollection(UpdateCollectionRequest) returns (UpdateCollectionResponse);
+  rpc DeleteCollection(DeleteCollectionRequest) returns (DeleteCollectionResponse);
+
+  rpc SaveCollectionToRecipeBook(SaveCollectionToRecipeBookRequest) returns (SaveCollectionToRecipeBookResponse);
+  rpc RemoveCollectionFromRecipeBook(RemoveCollectionFromRecipeBookRequest) returns (RemoveCollectionFromRecipeBookResponse);
 }

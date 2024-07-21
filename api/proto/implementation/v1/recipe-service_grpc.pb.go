@@ -20,7 +20,6 @@ const _ = grpc.SupportPackageIsVersion7
 
 const (
 	RecipeService_GetRecipes_FullMethodName                        = "/v1.RecipeService/GetRecipes"
-	RecipeService_GetAccessibleRecipes_FullMethodName              = "/v1.RecipeService/GetAccessibleRecipes"
 	RecipeService_GetRandomRecipe_FullMethodName                   = "/v1.RecipeService/GetRandomRecipe"
 	RecipeService_GetRecipeBook_FullMethodName                     = "/v1.RecipeService/GetRecipeBook"
 	RecipeService_CreateRecipe_FullMethodName                      = "/v1.RecipeService/CreateRecipe"
@@ -33,10 +32,18 @@ const (
 	RecipeService_SaveToRecipeBook_FullMethodName                  = "/v1.RecipeService/SaveToRecipeBook"
 	RecipeService_RemoveFromRecipeBook_FullMethodName              = "/v1.RecipeService/RemoveFromRecipeBook"
 	RecipeService_SetRecipeFavouriteStatus_FullMethodName          = "/v1.RecipeService/SetRecipeFavouriteStatus"
+	RecipeService_SetRecipeCollections_FullMethodName              = "/v1.RecipeService/SetRecipeCollections"
 	RecipeService_TranslateRecipe_FullMethodName                   = "/v1.RecipeService/TranslateRecipe"
 	RecipeService_DeleteRecipeTranslation_FullMethodName           = "/v1.RecipeService/DeleteRecipeTranslation"
 	RecipeService_GetRecipePolicy_FullMethodName                   = "/v1.RecipeService/GetRecipePolicy"
 	RecipeService_GetRecipeNames_FullMethodName                    = "/v1.RecipeService/GetRecipeNames"
+	RecipeService_GetCollections_FullMethodName                    = "/v1.RecipeService/GetCollections"
+	RecipeService_CreateCollection_FullMethodName                  = "/v1.RecipeService/CreateCollection"
+	RecipeService_GetCollection_FullMethodName                     = "/v1.RecipeService/GetCollection"
+	RecipeService_UpdateCollection_FullMethodName                  = "/v1.RecipeService/UpdateCollection"
+	RecipeService_DeleteCollection_FullMethodName                  = "/v1.RecipeService/DeleteCollection"
+	RecipeService_SaveCollectionToRecipeBook_FullMethodName        = "/v1.RecipeService/SaveCollectionToRecipeBook"
+	RecipeService_RemoveCollectionFromRecipeBook_FullMethodName    = "/v1.RecipeService/RemoveCollectionFromRecipeBook"
 )
 
 // RecipeServiceClient is the client API for RecipeService service.
@@ -44,7 +51,6 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type RecipeServiceClient interface {
 	GetRecipes(ctx context.Context, in *GetRecipesRequest, opts ...grpc.CallOption) (*GetRecipesResponse, error)
-	GetAccessibleRecipes(ctx context.Context, in *GetAccessibleRecipesRequest, opts ...grpc.CallOption) (*GetAccessibleRecipesResponse, error)
 	GetRandomRecipe(ctx context.Context, in *GetRandomRecipeRequest, opts ...grpc.CallOption) (*GetRecipeResponse, error)
 	GetRecipeBook(ctx context.Context, in *GetRecipeBookRequest, opts ...grpc.CallOption) (*GetRecipeBookResponse, error)
 	CreateRecipe(ctx context.Context, in *RecipeInput, opts ...grpc.CallOption) (*CreateRecipeResponse, error)
@@ -57,10 +63,18 @@ type RecipeServiceClient interface {
 	SaveToRecipeBook(ctx context.Context, in *SaveToRecipeBookRequest, opts ...grpc.CallOption) (*SaveToRecipeBookResponse, error)
 	RemoveFromRecipeBook(ctx context.Context, in *RemoveFromRecipeBookRequest, opts ...grpc.CallOption) (*RemoveFromRecipeBookResponse, error)
 	SetRecipeFavouriteStatus(ctx context.Context, in *SetRecipeFavouriteStatusRequest, opts ...grpc.CallOption) (*SetRecipeFavouriteStatusResponse, error)
+	SetRecipeCollections(ctx context.Context, in *SetRecipeCollectionsRequest, opts ...grpc.CallOption) (*SetRecipeCollectionsResponse, error)
 	TranslateRecipe(ctx context.Context, in *TranslateRecipeRequest, opts ...grpc.CallOption) (*TranslateRecipeResponse, error)
 	DeleteRecipeTranslation(ctx context.Context, in *DeleteRecipeTranslationRequest, opts ...grpc.CallOption) (*DeleteRecipeTranslationResponse, error)
 	GetRecipePolicy(ctx context.Context, in *GetRecipePolicyRequest, opts ...grpc.CallOption) (*GetRecipePolicyResponse, error)
 	GetRecipeNames(ctx context.Context, in *GetRecipeNamesRequest, opts ...grpc.CallOption) (*GetRecipeNamesResponse, error)
+	GetCollections(ctx context.Context, in *GetCollectionsRequest, opts ...grpc.CallOption) (*GetCollectionsResponse, error)
+	CreateCollection(ctx context.Context, in *CreateCollectionRequest, opts ...grpc.CallOption) (*CreateCollectionResponse, error)
+	GetCollection(ctx context.Context, in *GetCollectionRequest, opts ...grpc.CallOption) (*GetCollectionResponse, error)
+	UpdateCollection(ctx context.Context, in *UpdateCollectionRequest, opts ...grpc.CallOption) (*UpdateCollectionResponse, error)
+	DeleteCollection(ctx context.Context, in *DeleteCollectionRequest, opts ...grpc.CallOption) (*DeleteCollectionResponse, error)
+	SaveCollectionToRecipeBook(ctx context.Context, in *SaveCollectionToRecipeBookRequest, opts ...grpc.CallOption) (*SaveCollectionToRecipeBookResponse, error)
+	RemoveCollectionFromRecipeBook(ctx context.Context, in *RemoveCollectionFromRecipeBookRequest, opts ...grpc.CallOption) (*RemoveCollectionFromRecipeBookResponse, error)
 }
 
 type recipeServiceClient struct {
@@ -74,15 +88,6 @@ func NewRecipeServiceClient(cc grpc.ClientConnInterface) RecipeServiceClient {
 func (c *recipeServiceClient) GetRecipes(ctx context.Context, in *GetRecipesRequest, opts ...grpc.CallOption) (*GetRecipesResponse, error) {
 	out := new(GetRecipesResponse)
 	err := c.cc.Invoke(ctx, RecipeService_GetRecipes_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *recipeServiceClient) GetAccessibleRecipes(ctx context.Context, in *GetAccessibleRecipesRequest, opts ...grpc.CallOption) (*GetAccessibleRecipesResponse, error) {
-	out := new(GetAccessibleRecipesResponse)
-	err := c.cc.Invoke(ctx, RecipeService_GetAccessibleRecipes_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -197,6 +202,15 @@ func (c *recipeServiceClient) SetRecipeFavouriteStatus(ctx context.Context, in *
 	return out, nil
 }
 
+func (c *recipeServiceClient) SetRecipeCollections(ctx context.Context, in *SetRecipeCollectionsRequest, opts ...grpc.CallOption) (*SetRecipeCollectionsResponse, error) {
+	out := new(SetRecipeCollectionsResponse)
+	err := c.cc.Invoke(ctx, RecipeService_SetRecipeCollections_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *recipeServiceClient) TranslateRecipe(ctx context.Context, in *TranslateRecipeRequest, opts ...grpc.CallOption) (*TranslateRecipeResponse, error) {
 	out := new(TranslateRecipeResponse)
 	err := c.cc.Invoke(ctx, RecipeService_TranslateRecipe_FullMethodName, in, out, opts...)
@@ -233,12 +247,74 @@ func (c *recipeServiceClient) GetRecipeNames(ctx context.Context, in *GetRecipeN
 	return out, nil
 }
 
+func (c *recipeServiceClient) GetCollections(ctx context.Context, in *GetCollectionsRequest, opts ...grpc.CallOption) (*GetCollectionsResponse, error) {
+	out := new(GetCollectionsResponse)
+	err := c.cc.Invoke(ctx, RecipeService_GetCollections_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *recipeServiceClient) CreateCollection(ctx context.Context, in *CreateCollectionRequest, opts ...grpc.CallOption) (*CreateCollectionResponse, error) {
+	out := new(CreateCollectionResponse)
+	err := c.cc.Invoke(ctx, RecipeService_CreateCollection_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *recipeServiceClient) GetCollection(ctx context.Context, in *GetCollectionRequest, opts ...grpc.CallOption) (*GetCollectionResponse, error) {
+	out := new(GetCollectionResponse)
+	err := c.cc.Invoke(ctx, RecipeService_GetCollection_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *recipeServiceClient) UpdateCollection(ctx context.Context, in *UpdateCollectionRequest, opts ...grpc.CallOption) (*UpdateCollectionResponse, error) {
+	out := new(UpdateCollectionResponse)
+	err := c.cc.Invoke(ctx, RecipeService_UpdateCollection_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *recipeServiceClient) DeleteCollection(ctx context.Context, in *DeleteCollectionRequest, opts ...grpc.CallOption) (*DeleteCollectionResponse, error) {
+	out := new(DeleteCollectionResponse)
+	err := c.cc.Invoke(ctx, RecipeService_DeleteCollection_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *recipeServiceClient) SaveCollectionToRecipeBook(ctx context.Context, in *SaveCollectionToRecipeBookRequest, opts ...grpc.CallOption) (*SaveCollectionToRecipeBookResponse, error) {
+	out := new(SaveCollectionToRecipeBookResponse)
+	err := c.cc.Invoke(ctx, RecipeService_SaveCollectionToRecipeBook_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *recipeServiceClient) RemoveCollectionFromRecipeBook(ctx context.Context, in *RemoveCollectionFromRecipeBookRequest, opts ...grpc.CallOption) (*RemoveCollectionFromRecipeBookResponse, error) {
+	out := new(RemoveCollectionFromRecipeBookResponse)
+	err := c.cc.Invoke(ctx, RecipeService_RemoveCollectionFromRecipeBook_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RecipeServiceServer is the server API for RecipeService service.
 // All implementations must embed UnimplementedRecipeServiceServer
 // for forward compatibility
 type RecipeServiceServer interface {
 	GetRecipes(context.Context, *GetRecipesRequest) (*GetRecipesResponse, error)
-	GetAccessibleRecipes(context.Context, *GetAccessibleRecipesRequest) (*GetAccessibleRecipesResponse, error)
 	GetRandomRecipe(context.Context, *GetRandomRecipeRequest) (*GetRecipeResponse, error)
 	GetRecipeBook(context.Context, *GetRecipeBookRequest) (*GetRecipeBookResponse, error)
 	CreateRecipe(context.Context, *RecipeInput) (*CreateRecipeResponse, error)
@@ -251,10 +327,18 @@ type RecipeServiceServer interface {
 	SaveToRecipeBook(context.Context, *SaveToRecipeBookRequest) (*SaveToRecipeBookResponse, error)
 	RemoveFromRecipeBook(context.Context, *RemoveFromRecipeBookRequest) (*RemoveFromRecipeBookResponse, error)
 	SetRecipeFavouriteStatus(context.Context, *SetRecipeFavouriteStatusRequest) (*SetRecipeFavouriteStatusResponse, error)
+	SetRecipeCollections(context.Context, *SetRecipeCollectionsRequest) (*SetRecipeCollectionsResponse, error)
 	TranslateRecipe(context.Context, *TranslateRecipeRequest) (*TranslateRecipeResponse, error)
 	DeleteRecipeTranslation(context.Context, *DeleteRecipeTranslationRequest) (*DeleteRecipeTranslationResponse, error)
 	GetRecipePolicy(context.Context, *GetRecipePolicyRequest) (*GetRecipePolicyResponse, error)
 	GetRecipeNames(context.Context, *GetRecipeNamesRequest) (*GetRecipeNamesResponse, error)
+	GetCollections(context.Context, *GetCollectionsRequest) (*GetCollectionsResponse, error)
+	CreateCollection(context.Context, *CreateCollectionRequest) (*CreateCollectionResponse, error)
+	GetCollection(context.Context, *GetCollectionRequest) (*GetCollectionResponse, error)
+	UpdateCollection(context.Context, *UpdateCollectionRequest) (*UpdateCollectionResponse, error)
+	DeleteCollection(context.Context, *DeleteCollectionRequest) (*DeleteCollectionResponse, error)
+	SaveCollectionToRecipeBook(context.Context, *SaveCollectionToRecipeBookRequest) (*SaveCollectionToRecipeBookResponse, error)
+	RemoveCollectionFromRecipeBook(context.Context, *RemoveCollectionFromRecipeBookRequest) (*RemoveCollectionFromRecipeBookResponse, error)
 	mustEmbedUnimplementedRecipeServiceServer()
 }
 
@@ -264,9 +348,6 @@ type UnimplementedRecipeServiceServer struct {
 
 func (UnimplementedRecipeServiceServer) GetRecipes(context.Context, *GetRecipesRequest) (*GetRecipesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRecipes not implemented")
-}
-func (UnimplementedRecipeServiceServer) GetAccessibleRecipes(context.Context, *GetAccessibleRecipesRequest) (*GetAccessibleRecipesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAccessibleRecipes not implemented")
 }
 func (UnimplementedRecipeServiceServer) GetRandomRecipe(context.Context, *GetRandomRecipeRequest) (*GetRecipeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRandomRecipe not implemented")
@@ -304,6 +385,9 @@ func (UnimplementedRecipeServiceServer) RemoveFromRecipeBook(context.Context, *R
 func (UnimplementedRecipeServiceServer) SetRecipeFavouriteStatus(context.Context, *SetRecipeFavouriteStatusRequest) (*SetRecipeFavouriteStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetRecipeFavouriteStatus not implemented")
 }
+func (UnimplementedRecipeServiceServer) SetRecipeCollections(context.Context, *SetRecipeCollectionsRequest) (*SetRecipeCollectionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetRecipeCollections not implemented")
+}
 func (UnimplementedRecipeServiceServer) TranslateRecipe(context.Context, *TranslateRecipeRequest) (*TranslateRecipeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method TranslateRecipe not implemented")
 }
@@ -315,6 +399,27 @@ func (UnimplementedRecipeServiceServer) GetRecipePolicy(context.Context, *GetRec
 }
 func (UnimplementedRecipeServiceServer) GetRecipeNames(context.Context, *GetRecipeNamesRequest) (*GetRecipeNamesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRecipeNames not implemented")
+}
+func (UnimplementedRecipeServiceServer) GetCollections(context.Context, *GetCollectionsRequest) (*GetCollectionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCollections not implemented")
+}
+func (UnimplementedRecipeServiceServer) CreateCollection(context.Context, *CreateCollectionRequest) (*CreateCollectionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateCollection not implemented")
+}
+func (UnimplementedRecipeServiceServer) GetCollection(context.Context, *GetCollectionRequest) (*GetCollectionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCollection not implemented")
+}
+func (UnimplementedRecipeServiceServer) UpdateCollection(context.Context, *UpdateCollectionRequest) (*UpdateCollectionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateCollection not implemented")
+}
+func (UnimplementedRecipeServiceServer) DeleteCollection(context.Context, *DeleteCollectionRequest) (*DeleteCollectionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteCollection not implemented")
+}
+func (UnimplementedRecipeServiceServer) SaveCollectionToRecipeBook(context.Context, *SaveCollectionToRecipeBookRequest) (*SaveCollectionToRecipeBookResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SaveCollectionToRecipeBook not implemented")
+}
+func (UnimplementedRecipeServiceServer) RemoveCollectionFromRecipeBook(context.Context, *RemoveCollectionFromRecipeBookRequest) (*RemoveCollectionFromRecipeBookResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveCollectionFromRecipeBook not implemented")
 }
 func (UnimplementedRecipeServiceServer) mustEmbedUnimplementedRecipeServiceServer() {}
 
@@ -343,24 +448,6 @@ func _RecipeService_GetRecipes_Handler(srv interface{}, ctx context.Context, dec
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RecipeServiceServer).GetRecipes(ctx, req.(*GetRecipesRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _RecipeService_GetAccessibleRecipes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetAccessibleRecipesRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(RecipeServiceServer).GetAccessibleRecipes(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: RecipeService_GetAccessibleRecipes_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RecipeServiceServer).GetAccessibleRecipes(ctx, req.(*GetAccessibleRecipesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -581,6 +668,24 @@ func _RecipeService_SetRecipeFavouriteStatus_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RecipeService_SetRecipeCollections_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetRecipeCollectionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RecipeServiceServer).SetRecipeCollections(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RecipeService_SetRecipeCollections_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RecipeServiceServer).SetRecipeCollections(ctx, req.(*SetRecipeCollectionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _RecipeService_TranslateRecipe_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(TranslateRecipeRequest)
 	if err := dec(in); err != nil {
@@ -653,6 +758,132 @@ func _RecipeService_GetRecipeNames_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RecipeService_GetCollections_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCollectionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RecipeServiceServer).GetCollections(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RecipeService_GetCollections_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RecipeServiceServer).GetCollections(ctx, req.(*GetCollectionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RecipeService_CreateCollection_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateCollectionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RecipeServiceServer).CreateCollection(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RecipeService_CreateCollection_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RecipeServiceServer).CreateCollection(ctx, req.(*CreateCollectionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RecipeService_GetCollection_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCollectionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RecipeServiceServer).GetCollection(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RecipeService_GetCollection_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RecipeServiceServer).GetCollection(ctx, req.(*GetCollectionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RecipeService_UpdateCollection_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateCollectionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RecipeServiceServer).UpdateCollection(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RecipeService_UpdateCollection_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RecipeServiceServer).UpdateCollection(ctx, req.(*UpdateCollectionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RecipeService_DeleteCollection_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteCollectionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RecipeServiceServer).DeleteCollection(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RecipeService_DeleteCollection_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RecipeServiceServer).DeleteCollection(ctx, req.(*DeleteCollectionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RecipeService_SaveCollectionToRecipeBook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SaveCollectionToRecipeBookRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RecipeServiceServer).SaveCollectionToRecipeBook(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RecipeService_SaveCollectionToRecipeBook_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RecipeServiceServer).SaveCollectionToRecipeBook(ctx, req.(*SaveCollectionToRecipeBookRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RecipeService_RemoveCollectionFromRecipeBook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveCollectionFromRecipeBookRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RecipeServiceServer).RemoveCollectionFromRecipeBook(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RecipeService_RemoveCollectionFromRecipeBook_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RecipeServiceServer).RemoveCollectionFromRecipeBook(ctx, req.(*RemoveCollectionFromRecipeBookRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RecipeService_ServiceDesc is the grpc.ServiceDesc for RecipeService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -663,10 +894,6 @@ var RecipeService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetRecipes",
 			Handler:    _RecipeService_GetRecipes_Handler,
-		},
-		{
-			MethodName: "GetAccessibleRecipes",
-			Handler:    _RecipeService_GetAccessibleRecipes_Handler,
 		},
 		{
 			MethodName: "GetRandomRecipe",
@@ -717,6 +944,10 @@ var RecipeService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _RecipeService_SetRecipeFavouriteStatus_Handler,
 		},
 		{
+			MethodName: "SetRecipeCollections",
+			Handler:    _RecipeService_SetRecipeCollections_Handler,
+		},
+		{
 			MethodName: "TranslateRecipe",
 			Handler:    _RecipeService_TranslateRecipe_Handler,
 		},
@@ -731,6 +962,34 @@ var RecipeService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetRecipeNames",
 			Handler:    _RecipeService_GetRecipeNames_Handler,
+		},
+		{
+			MethodName: "GetCollections",
+			Handler:    _RecipeService_GetCollections_Handler,
+		},
+		{
+			MethodName: "CreateCollection",
+			Handler:    _RecipeService_CreateCollection_Handler,
+		},
+		{
+			MethodName: "GetCollection",
+			Handler:    _RecipeService_GetCollection_Handler,
+		},
+		{
+			MethodName: "UpdateCollection",
+			Handler:    _RecipeService_UpdateCollection_Handler,
+		},
+		{
+			MethodName: "DeleteCollection",
+			Handler:    _RecipeService_DeleteCollection_Handler,
+		},
+		{
+			MethodName: "SaveCollectionToRecipeBook",
+			Handler:    _RecipeService_SaveCollectionToRecipeBook_Handler,
+		},
+		{
+			MethodName: "RemoveCollectionFromRecipeBook",
+			Handler:    _RecipeService_RemoveCollectionFromRecipeBook_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

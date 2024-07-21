@@ -7,6 +7,7 @@ import (
 	"github.com/mephistolie/chefbook-backend-recipe/internal/config"
 	"github.com/peterbourgon/ff/v3"
 	"os"
+	"time"
 )
 
 func main() {
@@ -16,6 +17,9 @@ func main() {
 		Port:        fs.Int("port", 8080, "service port"),
 		LogsPath:    fs.String("logs-path", "", "logs file path"),
 
+		Recipes: config.Recipes{
+			KeyTtl: fs.Duration("recipes-key-ttl", 24*time.Hour, "recipes key time to life"),
+		},
 		Subscription: config.Subscription{
 			CheckSubscription:     fs.Bool("check-subscription", true, "enable free subscription limits"),
 			MaxPicturesFree:       fs.Int("max-pictures-free", 5, "max pictures count per recipe for free subscription"),
@@ -28,10 +32,7 @@ func main() {
 			Addr: fs.String("profile-addr", "", "profile service address"),
 		},
 		TagService: config.Service{
-			Addr: fs.String("tag-addr", "", "category service address"),
-		},
-		CategoryService: config.Service{
-			Addr: fs.String("category-addr", "", "category service address"),
+			Addr: fs.String("tag-addr", "", "tag service address"),
 		},
 		EncryptionService: config.Service{
 			Addr: fs.String("encryption-addr", "", "encryption service address"),

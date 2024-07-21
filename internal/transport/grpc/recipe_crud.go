@@ -16,7 +16,7 @@ func (s *RecipeServer) CreateRecipe(_ context.Context, req *api.RecipeInput) (*a
 		return nil, err
 	}
 
-	id, version, err := s.service.CreateRecipe(input)
+	id, version, err := s.recipeService.CreateRecipe(input)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func (s *RecipeServer) GetRecipe(_ context.Context, req *api.GetRecipeRequest) (
 		}
 	}
 
-	recipe, err := s.service.GetRecipe(recipeId, userId, entity.ValidatedLanguage(req.Language), translatorIdPtr)
+	recipe, err := s.recipeService.GetRecipe(recipeId, userId, entity.ValidatedLanguage(req.Language), translatorIdPtr)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (s *RecipeServer) UpdateRecipe(_ context.Context, req *api.RecipeInput) (*a
 		return nil, err
 	}
 
-	version, err := s.service.UpdateRecipe(input)
+	version, err := s.recipeService.UpdateRecipe(input)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func (s *RecipeServer) DeleteRecipe(_ context.Context, req *api.DeleteRecipeRequ
 		return nil, fail.GrpcInvalidBody
 	}
 
-	if err = s.service.DeleteRecipe(recipeId, userId); err != nil {
+	if err = s.recipeService.DeleteRecipe(recipeId, userId); err != nil {
 		return nil, err
 	}
 

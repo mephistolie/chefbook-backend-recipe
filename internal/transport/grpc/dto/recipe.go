@@ -8,17 +8,18 @@ import (
 
 func NewGetRecipeResponse(data entity.DetailedRecipe) *api.GetRecipeResponse {
 	return &api.GetRecipeResponse{
-		Recipe:     newRecipe(data.Recipe),
-		Categories: newCategoriesMap(data.Categories),
-		Tags:       newTags(data.Tags),
-		TagGroups:  data.TagGroups,
+		Recipe:       newRecipe(data.Recipe),
+		Collections:  newCollectionsMap(data.Collections),
+		Tags:         newTags(data.Tags),
+		TagGroups:    data.TagGroups,
+		ProfilesInfo: newProfilesInfo(data.ProfilesInfo),
 	}
 }
 
 func newRecipe(recipe entity.Recipe) *api.Recipe {
-	var categories []string
-	for _, category := range recipe.Categories {
-		categories = append(categories, category.String())
+	var collections []string
+	for _, collection := range recipe.Collections {
+		collections = append(collections, collection.String())
 	}
 	var macronutrients *api.Macronutrients
 	if recipe.Macronutrients != nil {
@@ -33,9 +34,7 @@ func newRecipe(recipe entity.Recipe) *api.Recipe {
 		RecipeId: recipe.Id.String(),
 		Name:     recipe.Name,
 
-		OwnerId:     recipe.OwnerId.String(),
-		OwnerName:   recipe.OwnerName,
-		OwnerAvatar: recipe.OwnerAvatar,
+		OwnerId: recipe.OwnerId.String(),
 
 		IsOwned:     recipe.IsOwned,
 		IsSaved:     recipe.IsSaved,
@@ -55,7 +54,7 @@ func newRecipe(recipe entity.Recipe) *api.Recipe {
 		Score:  recipe.Score,
 
 		Tags:        recipe.Tags,
-		Categories:  categories,
+		Collections: collections,
 		IsFavourite: recipe.IsFavourite,
 
 		Servings: recipe.Servings,

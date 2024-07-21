@@ -8,10 +8,11 @@ import (
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
 	recipeFail "github.com/mephistolie/chefbook-backend-recipe/internal/entity/fail"
 	api "github.com/mephistolie/chefbook-backend-tag/api/proto/implementation/v1"
+	"sync"
 )
 
 func (s *Service) CreateRecipe(input entity.RecipeInput) (uuid.UUID, int32, error) {
-	id, version, err := s.repo.CreateRecipe(input)
+	id, version, err := s.recipeRepo.CreateRecipe(input)
 	if err == nil {
 		go s.validateTags(input)
 	}
@@ -19,42 +20,57 @@ func (s *Service) CreateRecipe(input entity.RecipeInput) (uuid.UUID, int32, erro
 }
 
 func (s *Service) GetRecipe(recipeId, userId uuid.UUID, language string, translatorId *uuid.UUID) (entity.DetailedRecipe, error) {
-	baseRecipe, err := s.repo.GetRecipe(recipeId, userId)
+	baseRecipe, err := s.recipeRepo.GetRecipe(recipeId, userId)
 	if err != nil {
 		return entity.DetailedRecipe{}, err
 	}
 	if baseRecipe.OwnerId != userId && baseRecipe.Visibility == model.VisibilityPrivate {
 		return entity.DetailedRecipe{}, fail.GrpcAccessDenied
 	}
-	return s.fillBaseRecipe(baseRecipe, userId, language, translatorId), nil
+	return s.fillBaseRecipe(baseRecipe, language, translatorId), nil
 }
 
 func (s *Service) GetRandomRecipe(userId uuid.UUID, recipeLanguages *[]string, userLanguage string) (entity.DetailedRecipe, error) {
-	baseRecipe, err := s.repo.GetRandomRecipe(userId, recipeLanguages)
+	baseRecipe, err := s.recipeRepo.GetRandomRecipe(userId, recipeLanguages)
 	if err != nil {
 		return entity.DetailedRecipe{}, err
 	}
-	return s.fillBaseRecipe(baseRecipe, userId, userLanguage, nil), nil
+	return s.fillBaseRecipe(baseRecipe, userLanguage, nil), nil
 }
 
-func (s *Service) fillBaseRecipe(baseRecipe entity.BaseRecipe, userId uuid.UUID, language string, translatorId *uuid.UUID) entity.DetailedRecipe {
-	recipe := entity.Recipe{BaseRecipe: baseRecipe}
+func (s *Service) fillBaseRecipe(recipe entity.Recipe, language string, translatorId *uuid.UUID) entity.DetailedRecipe {
+	wg := sync.WaitGroup{}
+	wg.Add(3)
 
-	tags := make(map[string]entity.Tag)
-	tagGroups := make(map[string]string)
-	categories := make(map[string]entity.Category)
-	wg := s.getCategoriesAndTagsAsync(baseRecipe.Tags, baseRecipe.Categories, userId, language, &tags, &tagGroups, &categories)
+	var tags map[string]entity.Tag
+	var tagGroups map[string]string
+	go func() {
+		tags, tagGroups = s.getTags(recipe.Tags, language)
+		wg.Done()
+	}()
+
+	var collections map[uuid.UUID]entity.CollectionInfo
+	go func() {
+		collections = s.getCollectionsMap(recipe.Collections)
+		wg.Done()
+	}()
+
+	var profilesInfo map[string]entity.ProfileInfo
+	go func() {
+		profilesInfo = s.getRecipeProfilesInfo(recipe)
+		wg.Done()
+	}()
 
 	s.fillRecipeTranslation(&recipe, language, translatorId)
-	s.fillProfilesData(&recipe)
 
 	wg.Wait()
 
 	return entity.DetailedRecipe{
-		Recipe:     recipe,
-		Tags:       tags,
-		TagGroups:  tagGroups,
-		Categories: categories,
+		Recipe:       recipe,
+		Tags:         tags,
+		TagGroups:    tagGroups,
+		Collections:  collections,
+		ProfilesInfo: profilesInfo,
 	}
 }
 
@@ -66,7 +82,7 @@ func (s *Service) fillRecipeTranslation(recipe *entity.Recipe, language string, 
 		return
 	}
 
-	translation := s.repo.GetRecipeTranslation(recipe.Id, language, translatorId)
+	translation := s.recipeRepo.GetRecipeTranslation(recipe.Id, language, translatorId)
 	if translation == nil {
 		return
 	}
@@ -90,34 +106,8 @@ func (s *Service) fillRecipeTranslation(recipe *entity.Recipe, language string, 
 	}
 }
 
-func (s *Service) fillProfilesData(recipe *entity.Recipe) {
-	profiles := []string{recipe.OwnerId.String()}
-	for i, _ := range recipe.Translations {
-		for j, _ := range recipe.Translations[i] {
-			profiles = append(profiles, recipe.Translations[i][j].AuthorId.String())
-		}
-	}
-
-	profilesMap := s.getProfilesInfo(profiles)
-
-	if info, ok := profilesMap[recipe.OwnerId.String()]; ok && info != nil {
-		recipe.OwnerName = info.VisibleName
-		recipe.OwnerAvatar = info.Avatar
-	}
-
-	for i, _ := range recipe.Translations {
-		for j, _ := range recipe.Translations[i] {
-			if info, ok := profilesMap[recipe.Translations[i][j].AuthorId.String()]; ok && info != nil {
-				recipe.Translations[i][j].AuthorName = info.VisibleName
-				recipe.Translations[i][j].AuthorAvatar = info.Avatar
-			}
-
-		}
-	}
-}
-
 func (s *Service) UpdateRecipe(input entity.RecipeInput) (int32, error) {
-	policy, err := s.repo.GetRecipePolicy(*input.RecipeId)
+	policy, err := s.recipeRepo.GetRecipePolicy(*input.RecipeId)
 	if err != nil {
 		return 0, err
 	}
@@ -128,7 +118,7 @@ func (s *Service) UpdateRecipe(input entity.RecipeInput) (int32, error) {
 		return 0, recipeFail.GrpcChangedEncryptionStatus
 	}
 
-	version, err := s.repo.UpdateRecipe(input)
+	version, err := s.recipeRepo.UpdateRecipe(input)
 	if err == nil {
 		go s.validateTags(input)
 	}
@@ -136,14 +126,14 @@ func (s *Service) UpdateRecipe(input entity.RecipeInput) (int32, error) {
 }
 
 func (s *Service) DeleteRecipe(recipeId, userId uuid.UUID) error {
-	policy, err := s.repo.GetRecipePolicy(recipeId)
+	policy, err := s.recipeRepo.GetRecipePolicy(recipeId)
 	if err != nil {
 		return err
 	}
 	if policy.OwnerId != userId {
 		return fail.GrpcAccessDenied
 	}
-	msg, err := s.repo.DeleteRecipe(recipeId)
+	msg, err := s.recipeRepo.DeleteRecipe(recipeId)
 
 	if err == nil {
 		go s.mqPublisher.PublishMessage(msg)
@@ -170,7 +160,7 @@ func (s *Service) validateTags(input entity.RecipeInput) {
 			}
 		}
 		if len(usedTags) < len(input.Tags) {
-			_ = s.repo.SetRecipeTags(*input.RecipeId, usedTags)
+			_ = s.recipeRepo.SetRecipeTags(*input.RecipeId, usedTags)
 		}
 	}
 }

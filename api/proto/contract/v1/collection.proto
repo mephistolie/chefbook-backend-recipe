@@ -1,0 +1,25 @@
+syntax = "proto3";
+package v1;
+
+option go_package = "github.com/mephistolie/chefbook-backend-recipe/api/proto/v1";
+
+message Collection {
+  string collectionId = 1;
+  string name = 2;
+
+  string visibility = 3;
+  repeated CollectionContributor contributors = 4;
+  bool saved = 5;
+
+  int32 recipesCount = 6;
+}
+
+message CollectionInfo {
+  string collectionId = 1;
+  string name = 2;
+}
+
+message CollectionContributor {
+  string contributorId = 1;
+  string role = 2;
+}

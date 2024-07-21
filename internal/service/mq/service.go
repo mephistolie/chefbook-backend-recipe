@@ -9,25 +9,27 @@ import (
 	"github.com/mephistolie/chefbook-backend-common/log"
 	"github.com/mephistolie/chefbook-backend-common/mq/model"
 	encryption "github.com/mephistolie/chefbook-backend-encryption/api/mq"
-	"github.com/mephistolie/chefbook-backend-recipe/internal/repository/grpc"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/service/dependencies/repository"
 )
 
 type Service struct {
-	repo     repository.Recipe
-	grpc     *grpc.Repository
-	firebase *firebase.Client
+	mqRepo         repository.MQ
+	recipeRepo     repository.Recipe
+	collectionRepo repository.Collection
+	firebase       *firebase.Client
 }
 
 func NewService(
-	repo repository.Recipe,
-	grpc *grpc.Repository,
+	mqRepo repository.MQ,
+	recipeRepo repository.Recipe,
+	collectionRepo repository.Collection,
 	firebase *firebase.Client,
 ) *Service {
 	return &Service{
-		repo:     repo,
-		grpc:     grpc,
-		firebase: firebase,
+		mqRepo:         mqRepo,
+		recipeRepo:     recipeRepo,
+		collectionRepo: collectionRepo,
+		firebase:       firebase,
 	}
 }
 
@@ -73,7 +75,7 @@ func (s *Service) handleProfileDeletedMsg(messageId uuid.UUID, data []byte) erro
 	}
 
 	log.Infof("deleting user %s...", body.UserId)
-	return s.DeleteUserRecipes(userId, body.DeleteSharedData, messageId)
+	return s.mqRepo.DeleteUserData(userId, body.DeleteSharedData, messageId)
 }
 
 func (s *Service) handleVaultDeletedMsg(messageId uuid.UUID, data []byte) error {
@@ -83,5 +85,5 @@ func (s *Service) handleVaultDeletedMsg(messageId uuid.UUID, data []byte) error 
 	}
 
 	log.Infof("deleting encrypted recipes for user %s...", body.UserId)
-	return s.DeleteUserEncryptedRecipes(body.UserId, messageId)
+	return s.mqRepo.DeleteUserEncryptedRecipes(body.UserId, messageId)
 }

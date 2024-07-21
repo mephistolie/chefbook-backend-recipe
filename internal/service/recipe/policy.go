@@ -6,5 +6,5 @@ import (
 )
 
 func (s *Service) GetRecipePolicy(recipeId uuid.UUID) (entity.RecipePolicy, error) {
-	return s.repo.GetRecipePolicy(recipeId)
+	return s.recipeRepo.GetRecipePolicy(recipeId)
 }

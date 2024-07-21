@@ -1,10 +1,8 @@
 package mq
 
 import (
-	"context"
 	"errors"
 	"github.com/google/uuid"
-	categoryApi "github.com/mephistolie/chefbook-backend-category/api/proto/implementation/v1"
 	"github.com/mephistolie/chefbook-backend-common/firebase"
 	"github.com/mephistolie/chefbook-backend-common/log"
 	"github.com/mephistolie/chefbook-backend-recipe/api/model"
@@ -26,19 +24,19 @@ func (s *Service) ImportFirebaseRecipes(userId uuid.UUID, firebaseId string, mes
 	}
 
 	log.Infof("found %d Firebase recipes for user %s...", len(firebaseRecipes), userId)
-	if err := s.repo.ConfirmFirebaseDataLoad(messageId); err != nil {
+	if err := s.mqRepo.ConfirmFirebaseDataLoad(messageId); err != nil {
 		return err
 	}
 
-	categories := make(map[string]uuid.UUID)
+	collections := make(map[string]uuid.UUID)
 	for _, firebaseRecipe := range firebaseRecipes {
-		s.importFirebaseRecipe(firebaseRecipe, userId, &categories)
+		s.importFirebaseRecipe(firebaseRecipe, userId, &collections)
 	}
 
 	return nil
 }
 
-func (s *Service) importFirebaseRecipe(firebaseRecipe firebase.Recipe, userId uuid.UUID, categories *map[string]uuid.UUID) {
+func (s *Service) importFirebaseRecipe(firebaseRecipe firebase.Recipe, userId uuid.UUID, collections *map[string]uuid.UUID) {
 	var servingsPtr *int32
 	if firebaseRecipe.Servings != nil {
 		servings := int32(*firebaseRecipe.Servings)
@@ -64,29 +62,29 @@ func (s *Service) importFirebaseRecipe(firebaseRecipe firebase.Recipe, userId uu
 		CreationTimestamp: firebaseRecipe.CreationTimestamp,
 	}
 
-	var recipeCategories []uuid.UUID
+	var recipeCollections []uuid.UUID
 	for _, category := range firebaseRecipe.Categories {
-		if categoryId, ok := (*categories)[category]; ok {
-			recipeCategories = append(recipeCategories, categoryId)
+		if categoryId, ok := (*collections)[category]; ok {
+			recipeCollections = append(recipeCollections, categoryId)
 		} else {
-			if res, err := s.grpc.Category.CreateCategory(context.Background(), &categoryApi.CreateCategoryRequest{
-				Name:   category,
-				UserId: userId.String(),
+			if res, err := s.collectionRepo.CreateCollection(entity.CollectionInput{
+				Id:         uuid.New(),
+				UserId:     userId,
+				Name:       category,
+				Visibility: model.VisibilityPrivate,
 			}); err == nil {
-				if categoryId, err = uuid.Parse(res.CategoryId); err == nil {
-					(*categories)[category] = categoryId
-					recipeCategories = append(recipeCategories, categoryId)
-				}
+				(*collections)[category] = res
+				recipeCollections = append(recipeCollections, categoryId)
 			}
 		}
 	}
 
-	if recipeId, _, err := s.repo.CreateRecipe(recipe); err == nil {
+	if recipeId, _, err := s.recipeRepo.CreateRecipe(recipe); err == nil {
 		if firebaseRecipe.IsFavourite {
-			_ = s.repo.SetRecipeFavouriteStatus(recipeId, userId, true)
+			_ = s.recipeRepo.SetRecipeFavouriteStatus(recipeId, userId, true)
 		}
-		if len(recipeCategories) > 0 {
-			_ = s.repo.SetRecipeCategories(recipeId, userId, recipeCategories)
+		if len(recipeCollections) > 0 {
+			_ = s.recipeRepo.SetRecipeCollections(recipeId, userId, recipeCollections)
 		}
 	}
 }

@@ -3,25 +3,24 @@ package v1;
 
 option go_package = "github.com/mephistolie/chefbook-backend-recipe/api/proto/v1";
 
-import "v1/recipe-category.proto";
+import "v1/recipe.proto";
 import "v1/recipe-tag.proto";
+import "v1/collection.proto";
+import "v1/profile-info.proto";
 
 message RecipeState {
   string recipeId = 1;
   int32 version = 2;
 
-  optional string ownerName = 3;
-  optional string ownerAvatar = 4;
+  map<string, LanguageTranslations> translations = 3;
 
-  repeated string translations = 5;
+  float rating = 4;
+  optional int32 score = 5;
+  int32 votes = 6;
 
-  float rating = 6;
-  optional int32 score = 7;
-  int32 votes = 8;
-
-  repeated string categories = 9;
-  bool isFavourite = 10;
-  repeated string tags = 11;
+  repeated string collections = 7;
+  bool isFavourite = 8;
+  repeated string tags = 9;
 }
 
 message GetRecipeBookRequest {
@@ -31,8 +30,9 @@ message GetRecipeBookRequest {
 
 message GetRecipeBookResponse {
   repeated RecipeState recipes = 1;
-  repeated RecipeCategory categories = 2;
+  repeated Collection collections = 2;
   map<string, RecipeTag> tags = 3;
   map<string, string> tagGroups = 4;
   bool hasEncryptedVault = 5;
+  map<string, RecipeProfileInfo> profilesInfo = 6;
 }

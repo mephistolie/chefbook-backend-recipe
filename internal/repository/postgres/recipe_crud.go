@@ -91,7 +91,7 @@ func (r *Repository) CreateRecipe(input entity.RecipeInput) (uuid.UUID, int32, e
 	addToRecipeBookQuery := fmt.Sprintf(`
 			INSERT INTO %s (recipe_id, user_id)
 			VALUES ($1, $2)
-		`, usersTable)
+		`, recipeUsersTable)
 
 	if _, err = tx.Exec(addToRecipeBookQuery, id, input.UserId); err != nil {
 		log.Errorf("unable to add recipe to owner %s recipe book: %s", input.UserId, err)
@@ -101,7 +101,7 @@ func (r *Repository) CreateRecipe(input entity.RecipeInput) (uuid.UUID, int32, e
 	return id, 1, commitTransaction(tx)
 }
 
-func (r *Repository) GetRecipe(recipeId, userId uuid.UUID) (entity.BaseRecipe, error) {
+func (r *Repository) GetRecipe(recipeId, userId uuid.UUID) (entity.Recipe, error) {
 	var recipe dto.Recipe
 
 	query := fmt.Sprintf(`
@@ -109,9 +109,17 @@ func (r *Repository) GetRecipe(recipeId, userId uuid.UUID) (entity.BaseRecipe, e
 			%[1]v.recipe_id, %[1]v.name,
 			%[1]v.owner_id,
 			%[1]v.visibility, %[1]v.encrypted,
-			%[1]v.language, %[1]v.description,
+			%[1]v.language,
+			ARRAY(
+				SELECT json_agg(json_build_object('language', %[4]v.language, 'author_id', %[4]v.author_id))
+				FROM %[4]v
+				WHERE recipe_id=$1 AND hidden=false
+			) AS translations,
+			%[1]v.description,
 			%[1]v.rating, %[1]v.votes, coalesce(%[3]v.score, 0),
-			%[1]v.tags, coalesce(%[2]v.categories, '[]'::jsonb), coalesce(%[2]v.favourite, false),
+			%[1]v.tags,
+			ARRAY(%[5]v) as collections,
+			coalesce(%[2]v.favourite, false),
 			(
 				SELECT EXISTS
 				(
@@ -131,7 +139,7 @@ func (r *Repository) GetRecipe(recipeId, userId uuid.UUID) (entity.BaseRecipe, e
 		LEFT JOIN
 			%[3]v ON %[3]v.recipe_id=%[1]v.recipe_id AND %[3]v.user_id=$2
 		WHERE %[1]v.recipe_id=$1
-	`, recipesTable, usersTable, scoresTable)
+	`, recipesTable, recipeUsersTable, scoresTable, translationsTable, getRecipeCollectionIdsSubquery)
 
 	row := r.db.QueryRow(query, recipeId, userId)
 	m := pgtype.NewMap()
@@ -139,20 +147,17 @@ func (r *Repository) GetRecipe(recipeId, userId uuid.UUID) (entity.BaseRecipe, e
 		&recipe.Id, &recipe.Name,
 		&recipe.OwnerId,
 		&recipe.Visibility, &recipe.IsEncrypted,
-		&recipe.Language, &recipe.Description,
+		&recipe.Language, m.SQLScanner(&recipe.Translations), &recipe.Description,
 		&recipe.Rating, &recipe.Votes, &recipe.Score,
-		m.SQLScanner(&recipe.Tags), &recipe.Categories, &recipe.IsFavourite, &recipe.IsSaved,
+		m.SQLScanner(&recipe.Tags), m.SQLScanner(&recipe.Collections), &recipe.IsFavourite, &recipe.IsSaved,
 		&recipe.Ingredients, &recipe.Cooking, &recipe.Pictures,
 		&recipe.Servings, &recipe.Time,
 		&recipe.Calories, &recipe.Protein, &recipe.Fats, &recipe.Carbohydrates,
 		&recipe.CreationTimestamp, &recipe.UpdateTimestamp, &recipe.Version,
 	); err != nil {
 		log.Warnf("unable to get recipe %s for user %s: %s", recipeId, userId, err)
-		return entity.BaseRecipe{}, fail.GrpcNotFound
+		return entity.Recipe{}, fail.GrpcNotFound
 	}
-
-	recipe.Translations, _ = r.GetRecipeTranslations(recipeId)
-	delete(recipe.Translations, recipe.Language)
 
 	return recipe.Entity(userId), nil
 }
@@ -195,7 +200,7 @@ func (r *Repository) UpdateRecipe(input entity.RecipeInput) (int32, error) {
 		args = append(args, *input.Version)
 	}
 
-	query += " RETURNING version"
+	query += fmt.Sprint(" RETURNING version")
 
 	if err := r.db.Get(&version, query, args...); err != nil {
 		if input.Version != nil {

@@ -25,8 +25,8 @@ type RecipeInfo struct {
 
 	Tags []string `db:"tags"`
 
-	IsFavourite bool       `db:"favourite"`
-	Categories  Categories `db:"categories"`
+	IsFavourite bool        `db:"favourite"`
+	Collections Collections `db:"categories"`
 
 	Pictures RecipePictures `db:"pictures"`
 
@@ -40,13 +40,13 @@ type RecipeInfo struct {
 	Version           int32     `db:"version"`
 }
 
-func (r *RecipeInfo) Entity(userId uuid.UUID) entity.BaseRecipeInfo {
+func (r *RecipeInfo) Entity(userId uuid.UUID) entity.RecipeInfo {
 	var score *int32
 	if r.Score > 0 {
 		score = &r.Score
 	}
 
-	return entity.BaseRecipeInfo{
+	return entity.RecipeInfo{
 		Id:   r.Id,
 		Name: r.Name,
 
@@ -70,7 +70,7 @@ func (r *RecipeInfo) Entity(userId uuid.UUID) entity.BaseRecipeInfo {
 		Votes:  r.Votes,
 
 		Tags:        r.Tags,
-		Categories:  r.Categories,
+		Collections: r.Collections,
 		IsFavourite: r.IsFavourite,
 
 		Servings: r.Servings,

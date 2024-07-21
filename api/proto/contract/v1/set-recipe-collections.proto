@@ -3,12 +3,12 @@ package v1;
 
 option go_package = "github.com/mephistolie/chefbook-backend-recipe/api/proto/v1";
 
-message SetRecipeCategoriesRequest {
+message SetRecipeCollectionsRequest {
   string recipeId = 1;
   string userId = 2;
-  repeated string categoryIds = 3;
+  repeated string collectionIds = 3;
 }
 
-message SetRecipeCategoriesResponse {
+message SetRecipeCollectionsResponse {
   string message = 1;
 }

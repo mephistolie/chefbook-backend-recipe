@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type BaseRecipe struct {
+type Recipe struct {
 	Id   uuid.UUID
 	Name string
 
@@ -17,7 +17,7 @@ type BaseRecipe struct {
 	IsEncrypted bool
 
 	Language     string
-	Translations map[string][]RecipeTranslationInfo
+	Translations map[string][]uuid.UUID
 	Description  *string
 
 	CreationTimestamp time.Time
@@ -29,7 +29,7 @@ type BaseRecipe struct {
 	Votes  int32
 
 	Tags        []string
-	Categories  []uuid.UUID
+	Collections []uuid.UUID
 	IsFavourite bool
 
 	Servings *int32
@@ -43,17 +43,10 @@ type BaseRecipe struct {
 	Pictures    RecipePictures
 }
 
-type Recipe struct {
-	BaseRecipe
-
-	OwnerName   *string
-	OwnerAvatar *string
-}
-
 type DetailedRecipe struct {
 	Recipe       Recipe
-	Translations map[string][]RecipeTranslationInfo
-	Categories   map[string]Category
 	Tags         map[string]Tag
 	TagGroups    map[string]string
+	Collections  map[uuid.UUID]CollectionInfo
+	ProfilesInfo map[string]ProfileInfo
 }

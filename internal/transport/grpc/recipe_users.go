@@ -25,7 +25,7 @@ func (s *RecipeServer) RateRecipe(_ context.Context, req *api.RateRecipeRequest)
 		return nil, fail.GrpcInvalidBody
 	}
 
-	if err = s.service.RateRecipe(recipeId, userId, int(req.Score)); err != nil {
+	if err = s.recipeService.RateRecipe(recipeId, userId, int(req.Score)); err != nil {
 		return nil, err
 	}
 
@@ -42,7 +42,7 @@ func (s *RecipeServer) SaveToRecipeBook(_ context.Context, req *api.SaveToRecipe
 		return nil, fail.GrpcInvalidBody
 	}
 
-	if err = s.service.SaveToRecipeBook(recipeId, userId); err != nil {
+	if err = s.recipeService.SaveToRecipeBook(recipeId, userId); err != nil {
 		return nil, err
 	}
 
@@ -59,7 +59,7 @@ func (s *RecipeServer) RemoveFromRecipeBook(_ context.Context, req *api.RemoveFr
 		return nil, fail.GrpcInvalidBody
 	}
 
-	if err = s.service.RemoveFromRecipeBook(recipeId, userId); err != nil {
+	if err = s.recipeService.RemoveFromRecipeBook(recipeId, userId); err != nil {
 		return nil, err
 	}
 
@@ -76,14 +76,14 @@ func (s *RecipeServer) SetRecipeFavouriteStatus(_ context.Context, req *api.SetR
 		return nil, fail.GrpcInvalidBody
 	}
 
-	if err = s.service.SetRecipeFavouriteStatus(recipeId, userId, req.Favourite); err != nil {
+	if err = s.recipeService.SetRecipeFavouriteStatus(recipeId, userId, req.Favourite); err != nil {
 		return nil, err
 	}
 
 	return &api.SetRecipeFavouriteStatusResponse{Message: "recipe favourite status set"}, nil
 }
 
-func (s *RecipeServer) SetRecipeCategories(_ context.Context, req *api.SetRecipeCategoriesRequest) (*api.SetRecipeCategoriesResponse, error) {
+func (s *RecipeServer) SetRecipeCollections(_ context.Context, req *api.SetRecipeCollectionsRequest) (*api.SetRecipeCollectionsResponse, error) {
 	userId, err := uuid.Parse(req.UserId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
@@ -93,9 +93,9 @@ func (s *RecipeServer) SetRecipeCategories(_ context.Context, req *api.SetRecipe
 		return nil, fail.GrpcInvalidBody
 	}
 
-	req.CategoryIds = sliceUtils.RemoveDuplicates(req.CategoryIds)
+	req.CollectionIds = sliceUtils.RemoveDuplicates(req.CollectionIds)
 	var categoryIds []uuid.UUID
-	for i, rawId := range req.CategoryIds {
+	for i, rawId := range req.CollectionIds {
 		if i > maxRecipeCategoriesCount {
 			break
 		}
@@ -104,9 +104,9 @@ func (s *RecipeServer) SetRecipeCategories(_ context.Context, req *api.SetRecipe
 		}
 	}
 
-	if err = s.service.SetRecipeCategories(recipeId, userId, categoryIds); err != nil {
+	if err = s.recipeService.SetRecipeCategories(recipeId, userId, categoryIds); err != nil {
 		return nil, err
 	}
 
-	return &api.SetRecipeCategoriesResponse{Message: "recipe categories set"}, nil
+	return &api.SetRecipeCollectionsResponse{Message: "recipe categories set"}, nil
 }

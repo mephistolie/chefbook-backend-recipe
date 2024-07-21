@@ -5,13 +5,14 @@ import (
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
 )
 
-func NewGetRecipeBookResponse(data entity.DetailedRecipesState) *api.GetRecipeBookResponse {
+func NewGetRecipeBookResponse(data entity.RecipeBook) *api.GetRecipeBookResponse {
 	return &api.GetRecipeBookResponse{
 		Recipes:           newRecipeStates(data.Recipes),
-		Categories:        newCategories(data.Categories),
+		Collections:       newCollections(data.Collections),
 		Tags:              newTags(data.Tags),
 		TagGroups:         data.TagGroups,
 		HasEncryptedVault: data.HasEncryptedVault,
+		ProfilesInfo:      newProfilesInfo(data.ProfilesInfo),
 	}
 }
 
@@ -24,22 +25,20 @@ func newRecipeStates(recipes []entity.RecipeState) []*api.RecipeState {
 }
 
 func newRecipeState(recipe entity.RecipeState) *api.RecipeState {
-	var categories []string
-	for _, category := range recipe.Categories {
-		categories = append(categories, category.String())
+	var collections []string
+	for _, collection := range recipe.Collections {
+		collections = append(collections, collection.String())
 	}
 
 	return &api.RecipeState{
 		RecipeId:     recipe.Id.String(),
-		OwnerName:    recipe.OwnerName,
-		OwnerAvatar:  recipe.OwnerAvatar,
 		Version:      recipe.Version,
-		Translations: recipe.Translations,
+		Translations: NewRecipeTranslations(recipe.Translations),
 		Rating:       recipe.Rating,
 		Votes:        recipe.Votes,
 		Score:        recipe.Score,
 		Tags:         recipe.Tags,
-		Categories:   categories,
+		Collections:  collections,
 		IsFavourite:  recipe.IsFavourite,
 	}
 }

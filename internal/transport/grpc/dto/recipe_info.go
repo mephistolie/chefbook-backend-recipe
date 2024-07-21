@@ -94,12 +94,13 @@ func NewRecipesQuery(req *api.GetRecipesRequest) entity.RecipesQuery {
 	}
 }
 
-func NewGetRecipesResponse(data entity.DetailedRecipesInfo) *api.GetRecipesResponse {
+func NewGetRecipesResponse(data entity.RecipesInfo) *api.GetRecipesResponse {
 	return &api.GetRecipesResponse{
-		Recipes:    newRecipeInfos(data.Recipes),
-		Categories: newCategoriesMap(data.Categories),
-		Tags:       newTags(data.Tags),
-		TagGroups:  data.TagGroups,
+		Recipes:      newRecipeInfos(data.Recipes),
+		Collections:  newCollectionsMap(data.Collections),
+		Tags:         newTags(data.Tags),
+		TagGroups:    data.TagGroups,
+		ProfilesInfo: newProfilesInfo(data.ProfilesInfo),
 	}
 }
 
@@ -112,18 +113,16 @@ func newRecipeInfos(recipes []entity.RecipeInfo) []*api.RecipeInfo {
 }
 
 func newRecipeInfo(recipe entity.RecipeInfo) *api.RecipeInfo {
-	var categories []string
-	for _, category := range recipe.Categories {
-		categories = append(categories, category.String())
+	var collections []string
+	for _, collection := range recipe.Collections {
+		collections = append(collections, collection.String())
 	}
 
 	return &api.RecipeInfo{
 		RecipeId: recipe.Id.String(),
 		Name:     recipe.Name,
 
-		OwnerId:     recipe.OwnerId.String(),
-		OwnerName:   recipe.OwnerName,
-		OwnerAvatar: recipe.OwnerAvatar,
+		OwnerId: recipe.OwnerId.String(),
 
 		IsOwned:     recipe.IsOwned,
 		IsSaved:     recipe.IsSaved,
@@ -143,7 +142,7 @@ func newRecipeInfo(recipe entity.RecipeInfo) *api.RecipeInfo {
 		Score:  recipe.Score,
 
 		Tags:        recipe.Tags,
-		Categories:  categories,
+		Collections: collections,
 		IsFavourite: recipe.IsFavourite,
 
 		Servings: recipe.Servings,

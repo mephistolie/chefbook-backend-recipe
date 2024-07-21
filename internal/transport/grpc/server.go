@@ -8,13 +8,19 @@ import (
 
 type RecipeServer struct {
 	api.UnsafeRecipeServiceServer
-	service             service.Recipe
+	recipeService       service.Recipe
+	collectionService   service.Collection
 	subscriptionLimiter helpers.SubscriptionLimiter
 }
 
-func NewServer(service service.Recipe, subscriptionLimiter helpers.SubscriptionLimiter) *RecipeServer {
+func NewServer(
+	service service.Recipe,
+	collectionService service.Collection,
+	subscriptionLimiter helpers.SubscriptionLimiter,
+) *RecipeServer {
 	return &RecipeServer{
-		service:             service,
+		recipeService:       service,
+		collectionService:   collectionService,
 		subscriptionLimiter: subscriptionLimiter,
 	}
 }

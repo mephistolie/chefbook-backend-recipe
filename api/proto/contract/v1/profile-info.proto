@@ -1,0 +1,9 @@
+syntax = "proto3";
+package v1;
+
+option go_package = "github.com/mephistolie/chefbook-backend-recipe/api/proto/v1";
+
+message RecipeProfileInfo {
+  optional string name = 1;
+  optional string avatar = 2;
+}

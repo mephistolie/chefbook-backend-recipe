@@ -15,9 +15,9 @@ type Recipe struct {
 	Visibility  string `db:"visibility"`
 	IsEncrypted bool   `db:"encrypted"`
 
-	Language     string                                    `db:"language"`
-	Translations map[string][]entity.RecipeTranslationInfo `db:"translations"`
-	Description  *string                                   `db:"description"`
+	Language     string             `db:"language"`
+	Translations RecipeTranslations `db:"translations"`
+	Description  *string            `db:"description"`
 
 	Rating float32 `db:"rating"`
 	Score  int32   `db:"score"`
@@ -25,9 +25,9 @@ type Recipe struct {
 
 	Tags []string `db:"tags"`
 
-	IsSaved     bool       `db:"isSaved"`
-	IsFavourite bool       `db:"isFavourite"`
-	Categories  Categories `db:"categories"`
+	IsSaved     bool        `db:"isSaved"`
+	IsFavourite bool        `db:"isFavourite"`
+	Collections Collections `db:"collections"`
 
 	Ingredients Ingredients    `db:"ingredients"`
 	Cooking     Cooking        `db:"cooking"`
@@ -46,7 +46,7 @@ type Recipe struct {
 	Version           int32     `db:"version"`
 }
 
-func (r *Recipe) Entity(userId uuid.UUID) entity.BaseRecipe {
+func (r *Recipe) Entity(userId uuid.UUID) entity.Recipe {
 	var macronutrients *entity.Macronutrients
 	if r.Protein != nil || r.Fats != nil || r.Carbohydrates != nil {
 		macronutrients = &entity.Macronutrients{
@@ -60,7 +60,7 @@ func (r *Recipe) Entity(userId uuid.UUID) entity.BaseRecipe {
 		score = &r.Score
 	}
 
-	return entity.BaseRecipe{
+	return entity.Recipe{
 		Id:   r.Id,
 		Name: r.Name,
 
@@ -72,7 +72,7 @@ func (r *Recipe) Entity(userId uuid.UUID) entity.BaseRecipe {
 		IsEncrypted: r.IsEncrypted,
 
 		Language:     r.Language,
-		Translations: r.Translations,
+		Translations: TranslationsEntity(r.Translations),
 		Description:  r.Description,
 
 		CreationTimestamp: r.CreationTimestamp,
@@ -84,7 +84,7 @@ func (r *Recipe) Entity(userId uuid.UUID) entity.BaseRecipe {
 		Votes:  r.Votes,
 
 		Tags:        r.Tags,
-		Categories:  r.Categories,
+		Collections: r.Collections,
 		IsFavourite: r.IsFavourite,
 
 		Servings: r.Servings,

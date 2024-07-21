@@ -11,6 +11,7 @@ import (
 	"github.com/mephistolie/chefbook-backend-recipe/internal/helpers"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/repository/grpc"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/repository/s3"
+	"github.com/mephistolie/chefbook-backend-recipe/internal/service/collection"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/service/dependencies/repository"
 	mqInbox "github.com/mephistolie/chefbook-backend-recipe/internal/service/mq"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/service/recipe"
@@ -18,13 +19,14 @@ import (
 
 type Service struct {
 	Recipe
+	Collection
 	MQ mq.Inbox
 }
 
 type Recipe interface {
-	GetRecipes(params entity.RecipesQuery, userId uuid.UUID, language string) entity.DetailedRecipesInfo
+	GetRecipes(params entity.RecipesQuery, userId uuid.UUID, language string) entity.RecipesInfo
 	GetRandomRecipe(userId uuid.UUID, recipeLanguages *[]string, userLanguage string) (entity.DetailedRecipe, error)
-	GetRecipesBook(userId uuid.UUID, language string) (entity.DetailedRecipesState, error)
+	GetRecipesBook(userId uuid.UUID, language string) (entity.RecipeBook, error)
 	GetRecipeNames(recipeIds []uuid.UUID, userId uuid.UUID) (map[uuid.UUID]string, error)
 	CreateRecipe(input entity.RecipeInput) (uuid.UUID, int32, error)
 	GetRecipe(recipeId, userId uuid.UUID, language string, translatorId *uuid.UUID) (entity.DetailedRecipe, error)
@@ -46,9 +48,19 @@ type Recipe interface {
 	GetRecipePolicy(userId uuid.UUID) (entity.RecipePolicy, error)
 }
 
+type Collection interface {
+	GetCollections(userId uuid.UUID, requesterId uuid.UUID) entity.DetailedCollections
+	CreateCollection(input entity.CollectionInput) (uuid.UUID, error)
+	GetCollection(collectionId uuid.UUID, userId uuid.UUID) (entity.DetailedCollection, error)
+	UpdateCollection(input entity.CollectionInput) error
+	DeleteCollection(collectionId, userId uuid.UUID) error
+}
+
 func New(
 	cfg *config.Config,
-	repo repository.Recipe,
+	recipeRepo repository.Recipe,
+	collectionRepo repository.Collection,
+	mqRepo repository.MQ,
 	grpc *grpc.Repository,
 	s3 *s3.Repository,
 	mqPublisher *amqp.Publisher,
@@ -66,7 +78,8 @@ func New(
 	}
 
 	return &Service{
-		Recipe: recipe.NewService(repo, grpc, s3, mqPublisher, subscriptionLimiter),
-		MQ:     mqInbox.NewService(repo, grpc, client),
+		Recipe:     recipe.NewService(recipeRepo, collectionRepo, grpc, s3, mqPublisher, subscriptionLimiter),
+		Collection: collection.NewService(collectionRepo, grpc),
+		MQ:         mqInbox.NewService(mqRepo, recipeRepo, collectionRepo, client),
 	}, nil
 }

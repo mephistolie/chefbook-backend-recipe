@@ -4,72 +4,61 @@ import (
 	"context"
 	"github.com/google/uuid"
 	encryptionApi "github.com/mephistolie/chefbook-backend-encryption/api/proto/implementation/v1"
-	profileApi "github.com/mephistolie/chefbook-backend-profile/api/proto/implementation/v1"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
 	"sync"
 	"time"
 )
 
-func (s *Service) GetRecipes(params entity.RecipesQuery, userId uuid.UUID, language string) entity.DetailedRecipesInfo {
-	recipes := s.repo.GetRecipes(params, userId)
+func (s *Service) GetRecipes(params entity.RecipesQuery, userId uuid.UUID, language string) entity.RecipesInfo {
+	recipes := s.recipeRepo.GetRecipes(params, userId)
 
-	var authors []string
 	var tagIds []string
-	var categoryIds []uuid.UUID
+	var collectionIds []uuid.UUID
+	var profileIds []string
 	for _, recipe := range recipes {
-		authors = append(authors, recipe.OwnerId.String())
 		tagIds = append(tagIds, recipe.Tags...)
-		categoryIds = append(categoryIds, recipe.Categories...)
+		collectionIds = append(collectionIds, recipe.Collections...)
+		profileIds = append(profileIds, recipe.OwnerId.String())
 	}
 
-	tags := make(map[string]entity.Tag)
-	tagGroups := make(map[string]string)
-	categories := make(map[string]entity.Category)
-	wg := s.getCategoriesAndTagsAsync(tagIds, categoryIds, userId, language, &tags, &tagGroups, &categories)
-
-	authorsMap := s.getProfilesInfo(authors)
-
-	wg.Wait()
-
-	return s.getRecipeInfos(recipes, authorsMap, tags, tagGroups, categories)
-}
-
-func (s *Service) getRecipeInfos(
-	recipes []entity.BaseRecipeInfo,
-	authors map[string]*profileApi.ProfileMinInfo,
-	tags map[string]entity.Tag,
-	tagGroups map[string]string,
-	categories map[string]entity.Category,
-) entity.DetailedRecipesInfo {
-	var infos []entity.RecipeInfo
-	for _, baseRecipe := range recipes {
-		recipe := entity.RecipeInfo{BaseRecipeInfo: baseRecipe}
-
-		if info, ok := authors[recipe.OwnerId.String()]; ok && info != nil {
-			recipe.OwnerName = info.VisibleName
-			recipe.OwnerAvatar = info.Avatar
-		}
-
-		infos = append(infos, recipe)
-	}
-
-	return entity.DetailedRecipesInfo{
-		Recipes:    infos,
-		Categories: categories,
-		Tags:       tags,
-		TagGroups:  tagGroups,
-	}
-}
-
-func (s *Service) GetRecipesBook(userId uuid.UUID, language string) (entity.DetailedRecipesState, error) {
 	wg := sync.WaitGroup{}
 	wg.Add(3)
 
-	var categories []entity.Category
+	var tags map[string]entity.Tag
+	var tagGroups map[string]string
 	go func() {
-		categories = s.getUserCategories(userId)
+		tags, tagGroups = s.getTags(tagIds, language)
 		wg.Done()
 	}()
+
+	var collections map[uuid.UUID]entity.CollectionInfo
+	go func() {
+		collections = s.getCollectionsMap(collectionIds)
+		wg.Done()
+	}()
+
+	var profilesInfo map[string]entity.ProfileInfo
+	go func() {
+		profilesInfo = s.getProfilesInfo(profileIds)
+		wg.Done()
+	}()
+
+	wg.Wait()
+
+	return entity.RecipesInfo{
+		Recipes:      recipes,
+		Collections:  collections,
+		Tags:         tags,
+		TagGroups:    tagGroups,
+		ProfilesInfo: profilesInfo,
+	}
+}
+
+func (s *Service) GetRecipesBook(userId uuid.UUID, language string) (entity.RecipeBook, error) {
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+
+	collections := s.collectionRepo.GetCollections(userId, userId)
 
 	var hasEncryptedVault bool
 	go func() {
@@ -82,60 +71,44 @@ func (s *Service) GetRecipesBook(userId uuid.UUID, language string) (entity.Deta
 		wg.Done()
 	}()
 
-	recipes, err := s.repo.GetRecipeBook(userId)
+	recipes, err := s.recipeRepo.GetRecipeBook(userId)
 	if err != nil {
-		return entity.DetailedRecipesState{}, err
+		return entity.RecipeBook{}, err
 	}
 
-	var authors []string
+	var profiles []string
 	var tagIds []string
-	var categoryIds []uuid.UUID
 	for _, recipe := range recipes {
-		authors = append(authors, recipe.OwnerId.String())
+		profiles = append(profiles, recipe.OwnerId.String())
 		tagIds = append(tagIds, recipe.Tags...)
-		categoryIds = append(categoryIds, recipe.Categories...)
+	}
+	for _, collection := range collections {
+		for _, contributor := range collection.Contributors {
+			profiles = append(profiles, contributor.Id.String())
+		}
 	}
 
-	tags := make(map[string]entity.Tag)
-	tagGroups := make(map[string]string)
-	go s.getTags(language, tagIds, &tags, &tagGroups, &wg)
+	var tags map[string]entity.Tag
+	var tagGroups map[string]string
+	go func() {
+		tags, tagGroups = s.getTags(tagIds, language)
+		wg.Done()
+	}()
 
-	authorsMap := s.getProfilesInfo(authors)
+	profilesInfo := s.getProfilesInfo(profiles)
 
 	wg.Wait()
 
-	return s.getRecipeStates(recipes, authorsMap, tags, tagGroups, categories, hasEncryptedVault), nil
-}
-
-func (s *Service) getRecipeStates(
-	recipes []entity.BaseRecipeState,
-	authors map[string]*profileApi.ProfileMinInfo,
-	tags map[string]entity.Tag,
-	tagGroups map[string]string,
-	categories []entity.Category,
-	hasEncryptedVault bool,
-) entity.DetailedRecipesState {
-	var states []entity.RecipeState
-	for _, baseRecipe := range recipes {
-		recipe := entity.RecipeState{BaseRecipeState: baseRecipe}
-
-		if info, ok := authors[recipe.OwnerId.String()]; ok && info != nil {
-			recipe.OwnerName = info.VisibleName
-			recipe.OwnerAvatar = info.Avatar
-		}
-
-		states = append(states, recipe)
-	}
-
-	return entity.DetailedRecipesState{
-		Recipes:           states,
+	return entity.RecipeBook{
+		Recipes:           recipes,
 		Tags:              tags,
 		TagGroups:         tagGroups,
-		Categories:        categories,
+		Collections:       collections,
 		HasEncryptedVault: hasEncryptedVault,
-	}
+		ProfilesInfo:      profilesInfo,
+	}, nil
 }
 
 func (s *Service) GetRecipeNames(recipeIds []uuid.UUID, userId uuid.UUID) (map[uuid.UUID]string, error) {
-	return s.repo.GetRecipeNames(recipeIds, userId)
+	return s.recipeRepo.GetRecipeNames(recipeIds, userId)
 }

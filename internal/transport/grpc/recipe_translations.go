@@ -18,7 +18,7 @@ func (s *RecipeServer) TranslateRecipe(_ context.Context, req *api.TranslateReci
 		return nil, err
 	}
 
-	if err = s.service.TranslateRecipe(recipeId, translation); err != nil {
+	if err = s.recipeService.TranslateRecipe(recipeId, translation); err != nil {
 		return nil, err
 	}
 	return &api.TranslateRecipeResponse{Message: "recipe translation saved"}, nil
@@ -37,7 +37,7 @@ func (s *RecipeServer) DeleteRecipeTranslation(_ context.Context, req *api.Delet
 		return nil, fail.GrpcInvalidBody
 	}
 
-	if err = s.service.DeleteRecipeTranslation(recipeId, requesterId, req.Language); err != nil {
+	if err = s.recipeService.DeleteRecipeTranslation(recipeId, requesterId, req.Language); err != nil {
 		return nil, err
 	}
 	return &api.DeleteRecipeTranslationResponse{Message: "recipe translation deleted"}, nil

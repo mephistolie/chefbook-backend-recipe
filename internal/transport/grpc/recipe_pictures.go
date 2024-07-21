@@ -30,7 +30,7 @@ func (s *RecipeServer) GenerateRecipePicturesUploadLinks(_ context.Context, req 
 		picturesCount = maxPictures
 	}
 
-	uploads, err := s.service.GenerateRecipePicturesUploadLinks(recipeId, userId, picturesCount, req.Subscription)
+	uploads, err := s.recipeService.GenerateRecipePicturesUploadLinks(recipeId, userId, picturesCount, req.Subscription)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (s *RecipeServer) SetRecipePictures(_ context.Context, req *api.SetRecipePi
 		return nil, recipeFail.GrpcDuplicatePictures
 	}
 
-	version, validatedPictures, err := s.service.SetRecipePictures(recipeId, userId, pictures, req.Version, req.Subscription)
+	version, validatedPictures, err := s.recipeService.SetRecipePictures(recipeId, userId, pictures, req.Version, req.Subscription)
 	if err != nil {
 		return nil, err
 	}

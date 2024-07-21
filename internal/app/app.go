@@ -32,7 +32,7 @@ func Run(cfg *config.Config) {
 		return
 	}
 
-	repository := postgres.NewRepository(db)
+	repository := postgres.NewRepository(db, cfg.Recipes)
 
 	grpcRepository, err := grpcRepo.NewRepository(cfg)
 	if err != nil {
@@ -52,7 +52,7 @@ func Run(cfg *config.Config) {
 		return
 	}
 
-	recipeService, err := service.New(cfg, repository, grpcRepository, s3Repository, mqPublisher, subscriptionLimiter)
+	recipeService, err := service.New(cfg, repository, repository, repository, grpcRepository, s3Repository, mqPublisher, subscriptionLimiter)
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -77,7 +77,7 @@ func Run(cfg *config.Config) {
 	)
 
 	healthServer := health.NewServer()
-	recipeServer := recipe.NewServer(recipeService.Recipe, subscriptionLimiter)
+	recipeServer := recipe.NewServer(recipeService.Recipe, recipeService.Collection, subscriptionLimiter)
 
 	go monitorHealthChecking(db, healthServer)
 

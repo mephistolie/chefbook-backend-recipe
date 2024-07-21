@@ -13,6 +13,8 @@ config:
   # Leave empty for stdout only
   logsPath: ""
 
+  recipesKeyTtl: 24h
+
   checkSubscription: true
   maxPicturesFree: 5
   maxPicturesPremium: 15
@@ -43,10 +45,6 @@ services:
     port: 8080
   tag:
     name: chefbook-backend-tag-service
-    namespace: ""
-    port: 8080
-  category:
-    name: chefbook-backend-category-service
     namespace: ""
     port: 8080
   encryption:

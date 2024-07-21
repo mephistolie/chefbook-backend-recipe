@@ -41,6 +41,9 @@ spec:
             - name: LOGS_PATH
               value: {{ .Values.config.logsPath }}
 
+            - name: RECIPES_KEY_TTL
+              value: {{ .Values.config.recipesKeyTtl | quote }}
+
             - name: CHECK_SUBSCRIPTION
               value: {{ .Values.config.checkSubscription | quote }}
 
@@ -65,11 +68,6 @@ spec:
 
             - name: TAG_ADDR
               value: "{{ .Values.services.tag.name }}.{{ .Values.services.tag.namespace | default .Release.Namespace }}.svc.cluster.local:{{ .Values.services.tag.port }}"
-
-            # Category Microservice
-
-            - name: CATEGORY_ADDR
-              value: "{{ .Values.services.category.name }}.{{ .Values.services.category.namespace | default .Release.Namespace }}.svc.cluster.local:{{ .Values.services.category.port }}"
 
             # Encryption Microservice
 

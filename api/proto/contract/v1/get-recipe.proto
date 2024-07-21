@@ -3,9 +3,10 @@ package v1;
 
 option go_package = "github.com/mephistolie/chefbook-backend-recipe/api/proto/v1";
 
+import "v1/collection.proto";
 import "v1/recipe.proto";
-import "v1/recipe-category.proto";
 import "v1/recipe-tag.proto";
+import "v1/profile-info.proto";
 
 message GetRecipeRequest {
   string recipeId = 1;
@@ -18,7 +19,8 @@ message GetRecipeRequest {
 
 message GetRecipeResponse {
   Recipe recipe = 1;
-  map<string, RecipeCategoryInfo> categories = 2;
+  map<string, CollectionInfo> collections = 2;
   map<string, RecipeTag> tags = 3;
   map<string, string> tagGroups = 4;
+  map<string, RecipeProfileInfo> profilesInfo = 5;
 }

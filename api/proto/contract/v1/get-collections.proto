@@ -1,0 +1,17 @@
+syntax = "proto3";
+package v1;
+
+option go_package = "github.com/mephistolie/chefbook-backend-recipe/api/proto/v1";
+
+import "v1/collection.proto";
+import "v1/profile-info.proto";
+
+message GetCollectionsRequest {
+  string userId = 1;
+  string requesterId = 2;
+}
+
+message GetCollectionsResponse {
+  repeated Collection collections = 1;
+  map<string, RecipeProfileInfo> profilesInfo = 2;
+}

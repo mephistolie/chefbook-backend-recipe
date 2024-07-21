@@ -4,41 +4,40 @@ package v1;
 option go_package = "github.com/mephistolie/chefbook-backend-recipe/api/proto/v1";
 
 import "google/protobuf/timestamp.proto";
-import "v1/recipe-category.proto";
+import "v1/collection.proto";
 import "v1/recipe-tag.proto";
+import "v1/profile-info.proto";
 
 message RecipeInfo {
   string recipeId = 1;
   string name = 2;
 
   string ownerId = 3;
-  optional string ownerName = 4;
-  optional string ownerAvatar = 5;
 
-  bool isOwned = 6;
-  bool isSaved = 7;
-  string visibility = 8;
-  bool isEncrypted = 9;
-  string language = 10;
-  repeated string translations = 11;
-  optional string preview = 12;
+  bool isOwned = 4;
+  bool isSaved = 5;
+  string visibility = 6;
+  bool isEncrypted = 7;
+  string language = 8;
+  repeated string translations = 9;
+  optional string preview = 10;
 
-  google.protobuf.Timestamp creationTimestamp = 13;
-  google.protobuf.Timestamp updateTimestamp = 14;
-  int32 version = 15;
+  google.protobuf.Timestamp creationTimestamp = 11;
+  google.protobuf.Timestamp updateTimestamp = 12;
+  int32 version = 13;
 
-  float rating = 16;
-  optional int32 score = 17;
-  int32 votes = 18;
+  float rating = 14;
+  optional int32 score = 15;
+  int32 votes = 16;
 
-  repeated string tags = 19;
-  repeated string categories = 20;
-  bool isFavourite = 21;
+  repeated string tags = 17;
+  repeated string collections = 18;
+  bool isFavourite = 19;
 
-  optional int32 servings = 22;
-  optional int32 time = 23;
+  optional int32 servings = 20;
+  optional int32 time = 21;
 
-  optional int32 calories = 24;
+  optional int32 calories = 22;
 }
 
 message GetRecipesRequest {
@@ -78,11 +77,13 @@ message GetRecipesRequest {
   optional string userLanguage = 25;
 
   repeated string tags = 26;
+  repeated string collectionId = 27;
 }
 
 message GetRecipesResponse {
   repeated RecipeInfo recipes = 1;
-  map<string, RecipeCategoryInfo> categories = 3;
+  map<string, CollectionInfo> collections = 3;
   map<string, RecipeTag> tags = 2;
   map<string, string> tagGroups = 4;
+  map<string, RecipeProfileInfo> profilesInfo = 5;
 }

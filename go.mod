@@ -7,7 +7,6 @@ require (
 	github.com/jackc/pgx/v5 v5.3.1
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/mephistolie/chefbook-backend-auth/api v1.6.0
-	github.com/mephistolie/chefbook-backend-category/api v1.1.0
 	github.com/mephistolie/chefbook-backend-common/firebase v0.9.0
 	github.com/mephistolie/chefbook-backend-common/log v0.6.0
 	github.com/mephistolie/chefbook-backend-common/migrate/sql v0.6.0

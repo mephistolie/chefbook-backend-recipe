@@ -3,74 +3,65 @@ package recipe
 import (
 	"context"
 	"github.com/google/uuid"
-	categoryApi "github.com/mephistolie/chefbook-backend-category/api/proto/implementation/v1"
 	"github.com/mephistolie/chefbook-backend-common/log"
 	slices "github.com/mephistolie/chefbook-backend-common/utils/slices"
 	profileApi "github.com/mephistolie/chefbook-backend-profile/api/proto/implementation/v1"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
 	tagApi "github.com/mephistolie/chefbook-backend-tag/api/proto/implementation/v1"
-	"sync"
 	"time"
 )
 
-func (s *Service) getProfilesInfo(authorIds []string) map[string]*profileApi.ProfileMinInfo {
-	uniqueAuthorIds := slices.RemoveDuplicates(authorIds)
-	infos := make(map[string]*profileApi.ProfileMinInfo)
-	if len(uniqueAuthorIds) == 0 {
-		return infos
+func (s *Service) getRecipeProfilesInfo(
+	recipe entity.Recipe,
+) map[string]entity.ProfileInfo {
+	profiles := []string{recipe.OwnerId.String()}
+
+	for i, _ := range recipe.Translations {
+		for j, _ := range recipe.Translations[i] {
+			profiles = append(profiles, recipe.Translations[i][j].String())
+		}
+	}
+
+	return s.getProfilesInfo(profiles)
+}
+
+func (s *Service) getProfilesInfo(profileIds []string) map[string]entity.ProfileInfo {
+	uniqueProfileIds := slices.RemoveDuplicates(profileIds)
+	profilesInfo := make(map[string]entity.ProfileInfo)
+	if len(uniqueProfileIds) == 0 {
+		return profilesInfo
 	}
 
 	ctx, cancelCtx := context.WithTimeout(context.Background(), 3*time.Second)
-	res, err := s.grpc.Profile.GetProfilesMinInfo(ctx, &profileApi.GetProfilesMinInfoRequest{ProfileIds: uniqueAuthorIds})
+	res, err := s.grpc.Profile.GetProfilesMinInfo(ctx, &profileApi.GetProfilesMinInfoRequest{ProfileIds: uniqueProfileIds})
 	cancelCtx()
 
 	if err == nil {
-		for _, authorId := range uniqueAuthorIds {
-			if info, ok := res.Infos[authorId]; ok {
-				infos[authorId] = info
+		for _, profileId := range uniqueProfileIds {
+			if info, ok := res.Infos[profileId]; ok {
+				profilesInfo[profileId] = entity.ProfileInfo{
+					Name:   info.VisibleName,
+					Avatar: info.Avatar,
+				}
 			}
 		}
 	} else {
-		log.Warn("unable to get recipe authors data: %s", err)
+		log.Warn("unable to get profiles info: %s", err)
 	}
 
-	return infos
-}
-
-func (s *Service) getCategoriesAndTagsAsync(
-	tagIds []string,
-	categoryIds []uuid.UUID,
-	userId uuid.UUID,
-	language string,
-	tagsDestination *map[string]entity.Tag,
-	tagGroupsDestination *map[string]string,
-	categoriesDestination *map[string]entity.Category,
-) *sync.WaitGroup {
-	wg := sync.WaitGroup{}
-	wg.Add(2)
-
-	var rawCategoryIds []string
-	for _, categoryId := range categoryIds {
-		rawCategoryIds = append(rawCategoryIds, categoryId.String())
-	}
-
-	go s.getTags(language, tagIds, tagsDestination, tagGroupsDestination, &wg)
-	go s.getCategoriesMap(userId, rawCategoryIds, categoriesDestination, &wg)
-
-	return &wg
+	return profilesInfo
 }
 
 func (s *Service) getTags(
-	languageCode string,
 	tagIds []string,
-	tagsDestination *map[string]entity.Tag,
-	groupsDestination *map[string]string,
-	wg *sync.WaitGroup,
-) {
+	languageCode string,
+) (map[string]entity.Tag, map[string]string) {
+	tags := make(map[string]entity.Tag)
+	groups := make(map[string]string)
+
 	uniqueTagIds := slices.RemoveDuplicates(tagIds)
 	if len(uniqueTagIds) == 0 {
-		wg.Done()
-		return
+		return tags, groups
 	}
 
 	ctx, cancelCtx := context.WithTimeout(context.Background(), 3*time.Second)
@@ -82,7 +73,7 @@ func (s *Service) getTags(
 
 	if err == nil {
 		for tagId, dto := range res.Tags {
-			(*tagsDestination)[tagId] = entity.Tag{
+			tags[tagId] = entity.Tag{
 				Id:      tagId,
 				Name:    dto.Name,
 				Emoji:   dto.Emoji,
@@ -90,65 +81,32 @@ func (s *Service) getTags(
 			}
 		}
 		for groupId, groupName := range res.GroupNames {
-			(*groupsDestination)[groupId] = groupName
+			groups[groupId] = groupName
 		}
 	} else {
 		log.Warn("unable to get recipe tags: ", err)
 	}
 
-	wg.Done()
+	return tags, groups
 }
 
-func (s *Service) getUserCategories(
-	userId uuid.UUID,
-) []entity.Category {
-	ctx, cancelCtx := context.WithTimeout(context.Background(), 3*time.Second)
-	res, err := s.grpc.Category.GetUserCategories(ctx, &categoryApi.GetUserCategoriesRequest{UserId: userId.String()})
-	cancelCtx()
+func (s *Service) getCollectionsMap(
+	collectionIds []uuid.UUID,
+) map[uuid.UUID]entity.CollectionInfo {
+	collections := make(map[uuid.UUID]entity.CollectionInfo)
 
-	var categories []entity.Category
-
-	if err == nil {
-		for _, dto := range res.Categories {
-			categories = append(categories, entity.Category{
-				Id:    dto.CategoryId,
-				Name:  dto.Name,
-				Emoji: dto.Emoji,
-			})
+	collectionIdsMap := make(map[uuid.UUID]bool)
+	var uniqueCollectionIds []uuid.UUID
+	for _, collectionId := range collectionIds {
+		if _, ok := collectionIdsMap[collectionId]; !ok {
+			uniqueCollectionIds = append(uniqueCollectionIds, collectionId)
+			collectionIdsMap[collectionId] = true
 		}
 	}
 
-	return categories
-}
-
-func (s *Service) getCategoriesMap(
-	userId uuid.UUID,
-	categoryIds []string,
-	destination *map[string]entity.Category,
-	wg *sync.WaitGroup,
-) {
-	uniqueCategoryIds := slices.RemoveDuplicates(categoryIds)
-	if len(uniqueCategoryIds) == 0 {
-		wg.Done()
-		return
+	if len(uniqueCollectionIds) > 0 {
+		collections = s.collectionRepo.GetCollectionsMap(collectionIds)
 	}
 
-	ctx, cancelCtx := context.WithTimeout(context.Background(), 3*time.Second)
-	res, err := s.grpc.Category.GetCategoriesMap(ctx, &categoryApi.GetCategoriesMapRequest{
-		CategoryIds: uniqueCategoryIds,
-		UserId:      userId.String(),
-	})
-	cancelCtx()
-
-	if err == nil {
-		for categoryId, dto := range res.Categories {
-			(*destination)[categoryId] = entity.Category{
-				Id:    categoryId,
-				Name:  dto.Name,
-				Emoji: dto.Emoji,
-			}
-		}
-	}
-
-	wg.Done()
+	return collections
 }

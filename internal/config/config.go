@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/mephistolie/chefbook-backend-common/log"
 	amqpConfig "github.com/mephistolie/chefbook-backend-common/mq/config"
+	"time"
 )
 
 const (
@@ -15,17 +16,21 @@ type Config struct {
 	Port        *int
 	LogsPath    *string
 
+	Recipes      Recipes
 	Subscription Subscription
 
 	ProfileService    Service
 	TagService        Service
-	CategoryService   Service
 	EncryptionService Service
 
 	Firebase Firebase
 	Database Database
 	S3       S3
 	Amqp     amqpConfig.Amqp
+}
+
+type Recipes struct {
+	KeyTtl *time.Duration
 }
 
 type Subscription struct {
@@ -74,6 +79,7 @@ func (c Config) Print() {
 		"Environment: %v\n"+
 		"Port: %v\n"+
 		"Logs path: %v\n\n"+
+		"Recipes key TTL: %v\n\n"+
 		"Check subscription: %v\n"+
 		"Max recipe pictures for free subscription: %v\n"+
 		"Max recipe pictures for premium subscription: %v\n"+
@@ -81,7 +87,6 @@ func (c Config) Print() {
 		"Max recipe picture size for premium subscription: %vB\n\n"+
 		"Profile Service Address: %v\n"+
 		"Tag Service Address: %v\n"+
-		"Category Service Address: %v\n\n"+
 		"Database host: %v\n"+
 		"Database port: %v\n"+
 		"Database name: %v\n\n"+
@@ -92,9 +97,10 @@ func (c Config) Print() {
 		"MQ port: %v\n"+
 		"MQ vhost: %v\n\n",
 		*c.Environment, *c.Port, *c.LogsPath,
+		*c.Recipes.KeyTtl,
 		*c.Subscription.CheckSubscription, *c.Subscription.MaxPicturesFree, *c.Subscription.MaxPicturesPremium,
 		*c.Subscription.PictureMaxSizeFree, *c.Subscription.PictureMaxSizePremium,
-		*c.ProfileService.Addr, *c.TagService.Addr, *c.CategoryService.Addr,
+		*c.ProfileService.Addr, *c.TagService.Addr,
 		*c.Database.Host, *c.Database.Port, *c.Database.DBName,
 		*c.S3.Host, *c.S3.Bucket, *c.S3.Region,
 		*c.Amqp.Host, *c.Amqp.Port, *c.Amqp.VHost,

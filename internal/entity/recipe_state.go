@@ -4,33 +4,28 @@ import (
 	"github.com/google/uuid"
 )
 
-type BaseRecipeState struct {
+type RecipeState struct {
 	Id      uuid.UUID
 	Version int32
 
 	OwnerId uuid.UUID
 
-	Translations []string
+	Translations map[string][]uuid.UUID
 
 	Rating float32
 	Score  *int32
 	Votes  int32
 
 	Tags        []string
-	Categories  []uuid.UUID
+	Collections []uuid.UUID
 	IsFavourite bool
 }
 
-type RecipeState struct {
-	BaseRecipeState
-	OwnerName   *string
-	OwnerAvatar *string
-}
-
-type DetailedRecipesState struct {
+type RecipeBook struct {
 	Recipes           []RecipeState
-	Categories        []Category
+	Collections       []Collection
 	Tags              map[string]Tag
 	TagGroups         map[string]string
 	HasEncryptedVault bool
+	ProfilesInfo      map[string]ProfileInfo
 }

@@ -13,11 +13,11 @@ func (s *Service) TranslateRecipe(recipeId uuid.UUID, translation entity.RecipeT
 		return err
 	}
 
-	return s.repo.TranslateRecipe(recipeId, translation)
+	return s.recipeRepo.TranslateRecipe(recipeId, translation)
 }
 
 func (s *Service) validateTranslation(recipeId uuid.UUID, translation entity.RecipeTranslation) error {
-	recipe, err := s.repo.GetRecipe(recipeId, translation.AuthorId)
+	recipe, err := s.recipeRepo.GetRecipe(recipeId, translation.AuthorId)
 	if err != nil {
 		return err
 	}
@@ -55,5 +55,5 @@ func (s *Service) validateTranslation(recipeId uuid.UUID, translation entity.Rec
 }
 
 func (s *Service) DeleteRecipeTranslation(recipeId, userId uuid.UUID, language string) error {
-	return s.repo.DeleteRecipeTranslation(recipeId, userId, language)
+	return s.recipeRepo.DeleteRecipeTranslation(recipeId, userId, language)
 }

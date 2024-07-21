@@ -11,7 +11,7 @@ import (
 	"k8s.io/utils/strings/slices"
 )
 
-func (r *Repository) GetRecipeTranslations(recipeId uuid.UUID) (map[string][]entity.RecipeTranslationInfo, error) {
+func (r *Repository) GetRecipeTranslations(recipeId uuid.UUID) (map[string][]uuid.UUID, error) {
 	query := fmt.Sprintf(`
 		SELECT language, author_id
 		FROM %s

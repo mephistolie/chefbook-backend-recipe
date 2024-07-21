@@ -9,7 +9,8 @@ import (
 )
 
 type Service struct {
-	repo                repository.Recipe
+	recipeRepo          repository.Recipe
+	collectionRepo      repository.Collection
 	grpc                *grpc.Repository
 	s3                  *s3.Repository
 	mqPublisher         *amqp.Publisher
@@ -17,14 +18,16 @@ type Service struct {
 }
 
 func NewService(
-	repo repository.Recipe,
+	recipeRepo repository.Recipe,
+	collectionRepo repository.Collection,
 	grpc *grpc.Repository,
 	s3 *s3.Repository,
 	mqPublisher *amqp.Publisher,
 	subscriptionLimiter helpers.SubscriptionLimiter,
 ) *Service {
 	return &Service{
-		repo:                repo,
+		recipeRepo:          recipeRepo,
+		collectionRepo:      collectionRepo,
 		grpc:                grpc,
 		s3:                  s3,
 		mqPublisher:         mqPublisher,

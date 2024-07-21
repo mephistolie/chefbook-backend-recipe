@@ -13,7 +13,7 @@ func (s *RecipeServer) GetRecipePolicy(_ context.Context, req *api.GetRecipePoli
 		return nil, fail.GrpcInvalidBody
 	}
 
-	policy, err := s.service.GetRecipePolicy(recipeId)
+	policy, err := s.recipeService.GetRecipePolicy(recipeId)
 	if err != nil {
 		return nil, err
 	}

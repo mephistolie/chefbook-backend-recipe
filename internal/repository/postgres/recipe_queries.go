@@ -15,8 +15,8 @@ import (
 
 var ascendingSortings = []string{entity.SortingTime, entity.SortingCalories}
 
-func (r *Repository) GetRecipes(params entity.RecipesQuery, userId uuid.UUID) []entity.BaseRecipeInfo {
-	var recipes []entity.BaseRecipeInfo
+func (r *Repository) GetRecipes(params entity.RecipesQuery, userId uuid.UUID) []entity.RecipeInfo {
+	var recipes []entity.RecipeInfo
 
 	query, args := r.getRecipesByParamsQuery(params, userId)
 	log.Debug("Get recipes query generated:\n", query, "\nArgs: ", args)
@@ -24,7 +24,7 @@ func (r *Repository) GetRecipes(params entity.RecipesQuery, userId uuid.UUID) []
 	rows, err := r.db.Query(query, args...)
 	if err != nil {
 		log.Errorf("unable to get recipes: %s", err)
-		return []entity.BaseRecipeInfo{}
+		return []entity.RecipeInfo{}
 	}
 
 	for rows.Next() {
@@ -36,13 +36,13 @@ func (r *Repository) GetRecipes(params entity.RecipesQuery, userId uuid.UUID) []
 			&recipe.Visibility, &recipe.IsEncrypted,
 			&recipe.Language, m.SQLScanner(&recipe.Translations),
 			&recipe.Rating, &recipe.Votes, &recipe.Score,
-			m.SQLScanner(&recipe.Tags), &recipe.Categories, &recipe.IsFavourite, &recipe.IsSaved,
+			m.SQLScanner(&recipe.Tags), m.SQLScanner(&recipe.Collections), &recipe.IsFavourite, &recipe.IsSaved,
 			&recipe.Pictures,
 			&recipe.Servings, &recipe.Time,
 			&recipe.Calories,
 			&recipe.CreationTimestamp, &recipe.UpdateTimestamp, &recipe.Version,
 		); err != nil {
-			log.Warnf("unable to parse recipe info: ", err)
+			log.Warnf("unable to parse recipe info: %s", err)
 			continue
 		}
 		recipes = append(recipes, recipe.Entity(userId))
@@ -61,7 +61,9 @@ func (r *Repository) getRecipesByParamsQuery(params entity.RecipesQuery, userId 
 			%[1]v.visibility, %[1]v.encrypted,
 			%[1]v.language, %[1]v.translations,
 			%[1]v.rating, %[1]v.votes, coalesce(%[3]v.score, 0),
-			%[1]v.tags, coalesce(%[2]v.categories, '[]'::jsonb), coalesce(%[2]v.favourite, false),
+			%[1]v.tags,
+			ARRAY(%[4]v) as collections,
+			coalesce(%[2]v.favourite, false),
 			(
 				SELECT EXISTS
 				(
@@ -80,7 +82,7 @@ func (r *Repository) getRecipesByParamsQuery(params entity.RecipesQuery, userId 
 			%[2]v ON %[2]v.recipe_id=%[1]v.recipe_id AND %[2]v.user_id=$1
 		LEFT JOIN
 			%[3]v ON %[3]v.recipe_id=%[1]v.recipe_id AND %[3]v.user_id=$1
-	`, recipesTable, usersTable, scoresTable)
+	`, recipesTable, recipeUsersTable, scoresTable, getRecipeCollectionIdsSubquery)
 	args = append(args, userId)
 
 	whereStatement, whereArgs, argNumber := r.getRecipesWhereStatementByParams(params, 2)
@@ -99,16 +101,16 @@ func (r *Repository) getRecipesWhereStatementByParams(params entity.RecipesQuery
 	whereStatement := " WHERE"
 
 	if params.Owned && params.Saved {
-		whereStatement += fmt.Sprintf(" %s.user_id=$1 AND %s.owner_id=$1", usersTable, recipesTable)
+		whereStatement += fmt.Sprintf(" %s.user_id=$1 AND %s.owner_id=$1", recipeUsersTable, recipesTable)
 	} else if params.Owned {
 		whereStatement += fmt.Sprintf(" %s.owner_id=$1", recipesTable)
 	} else if params.Saved {
 		if params.AuthorId != nil {
 			whereStatement += fmt.Sprintf(" %[1]v.user_id=$1 AND %[2]v.owner_id=%[3]v AND %[2]v.visibility<>'%[4]v'",
-				usersTable, recipesTable, *params.AuthorId, model.VisibilityPrivate)
+				recipeUsersTable, recipesTable, *params.AuthorId, model.VisibilityPrivate)
 		} else {
 			whereStatement += fmt.Sprintf(" %[1]v.user_id=$1 AND (%[2]v.owner_id=$1 OR %[2]v.visibility<>'%[3]v')",
-				usersTable, recipesTable, model.VisibilityPrivate)
+				recipeUsersTable, recipesTable, model.VisibilityPrivate)
 		}
 	} else {
 		whereStatement += fmt.Sprintf(" %[1]v.visibility='%[2]v'", recipesTable, model.VisibilityPublic)
@@ -252,7 +254,7 @@ func (r *Repository) getPagingStatement(params entity.RecipesQuery, initArg int)
 	return pagingStatement, args
 }
 
-func (r *Repository) GetRandomRecipe(userId uuid.UUID, languages *[]string) (entity.BaseRecipe, error) {
+func (r *Repository) GetRandomRecipe(userId uuid.UUID, languages *[]string) (entity.Recipe, error) {
 	var recipe dto.Recipe
 
 	query := fmt.Sprintf(`
@@ -260,7 +262,13 @@ func (r *Repository) GetRandomRecipe(userId uuid.UUID, languages *[]string) (ent
 			%[1]v.recipe_id, %[1]v.name,
 			%[1]v.owner_id,
 			%[1]v.visibility, %[1]v.encrypted,
-			%[1]v.language, %[1]v.description,
+			%[1]v.language,
+			ARRAY(
+				SELECT json_agg(json_build_object('language', %[4]v.language, 'author_id', %[4]v.author_id))
+				FROM %[4]v
+				WHERE recipe_id=$1 AND hidden=false
+			) AS translations,
+			%[1]v.description,
 			%[1]v.rating, %[1]v.votes, coalesce(%[3]v.score, 0),
 			%[1]v.tags,
 			%[1]v.ingredients, %[1]v.cooking, %[1]v.pictures,
@@ -274,14 +282,14 @@ func (r *Repository) GetRandomRecipe(userId uuid.UUID, languages *[]string) (ent
 		LEFT JOIN
 			%[3]v ON %[3]v.recipe_id=%[1]v.recipe_id AND %[3]v.user_id=$1
 		WHERE
-			%[1]v.visibility='%[4]v' AND %[1]v.owner_id<>$1 AND
+			%[1]v.visibility='%[5]v' AND %[1]v.owner_id<>$1 AND
 			NOT EXISTS
 			(
 				SELECT 1
 				FROM %[2]v
 				WHERE %[2]v.recipe_id=%[1]v.recipe_id AND user_id=$1
 			)
-	`, recipesTable, usersTable, scoresTable, model.VisibilityPublic)
+	`, recipesTable, recipeUsersTable, scoresTable, translationsTable, model.VisibilityPublic)
 
 	var args []interface{}
 	args = append(args, userId)
@@ -291,7 +299,7 @@ func (r *Repository) GetRandomRecipe(userId uuid.UUID, languages *[]string) (ent
 		args = append(args, *languages)
 	}
 
-	query += " ORDER BY RANDOM() LIMIT 1"
+	query += fmt.Sprint(" ORDER BY RANDOM() LIMIT 1")
 
 	row := r.db.QueryRow(query, args...)
 	m := pgtype.NewMap()
@@ -299,7 +307,7 @@ func (r *Repository) GetRandomRecipe(userId uuid.UUID, languages *[]string) (ent
 		&recipe.Id, &recipe.Name,
 		&recipe.OwnerId,
 		&recipe.Visibility, &recipe.IsEncrypted,
-		&recipe.Language, &recipe.Description,
+		&recipe.Language, m.SQLScanner(&recipe.Translations), &recipe.Description,
 		&recipe.Rating, &recipe.Votes, &recipe.Score,
 		m.SQLScanner(&recipe.Tags),
 		&recipe.Ingredients, &recipe.Cooking, &recipe.Pictures,
@@ -308,11 +316,8 @@ func (r *Repository) GetRandomRecipe(userId uuid.UUID, languages *[]string) (ent
 		&recipe.CreationTimestamp, &recipe.UpdateTimestamp, &recipe.Version,
 	); err != nil {
 		log.Debug("unable to get random recipe for user %s: %s", userId, err)
-		return entity.BaseRecipe{}, fail.GrpcNotFound
+		return entity.Recipe{}, fail.GrpcNotFound
 	}
-
-	recipe.Translations, _ = r.GetRecipeTranslations(recipe.Id)
-	delete(recipe.Translations, recipe.Language)
 
 	return recipe.Entity(userId), nil
 }

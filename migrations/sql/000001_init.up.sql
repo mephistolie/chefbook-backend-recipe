@@ -68,7 +68,6 @@ CREATE TABLE recipes_users
     recipe_id  UUID REFERENCES recipes (recipe_id) ON DELETE CASCADE NOT NULL,
     user_id    UUID                                                  NOT NULL,
     favourite  BOOLEAN                                               NOT NULL DEFAULT FALSE,
-    categories JSONB                                                 NOT NULL DEFAULT '[]'::jsonb,
     UNIQUE (user_id, recipe_id)
 );
 
