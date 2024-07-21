@@ -108,5 +108,5 @@ func (s *RecipeServer) SetRecipeCollections(_ context.Context, req *api.SetRecip
 		return nil, err
 	}
 
-	return &api.SetRecipeCollectionsResponse{Message: "recipe categories set"}, nil
+	return &api.SetRecipeCollectionsResponse{Message: "recipe collections set"}, nil
 }

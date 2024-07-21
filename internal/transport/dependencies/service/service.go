@@ -40,7 +40,7 @@ type Recipe interface {
 	SaveToRecipeBook(recipeId, userId uuid.UUID) error
 	RemoveFromRecipeBook(recipeId, userId uuid.UUID) error
 	SetRecipeFavouriteStatus(recipeId, userId uuid.UUID, favourite bool) error
-	SetRecipeCollections(recipeId, userId uuid.UUID, categories []uuid.UUID) error
+	SetRecipeCollections(recipeId, userId uuid.UUID, collections []uuid.UUID) error
 
 	TranslateRecipe(recipeId uuid.UUID, translation entity.RecipeTranslation) error
 	DeleteRecipeTranslation(recipeId, userId uuid.UUID, language string) error

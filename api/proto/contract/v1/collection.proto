@@ -14,8 +14,7 @@ message Collection {
 }
 
 message CollectionInfo {
-  string collectionId = 1;
-  string name = 2;
+  string name = 1;
 }
 
 message CollectionContributor {

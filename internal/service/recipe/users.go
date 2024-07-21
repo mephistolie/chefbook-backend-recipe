@@ -40,11 +40,11 @@ func (s *Service) SetRecipeFavouriteStatus(recipeId, userId uuid.UUID, favourite
 	return s.recipeRepo.SetRecipeFavouriteStatus(recipeId, userId, favourite)
 }
 
-func (s *Service) SetRecipeCollections(recipeId, userId uuid.UUID, categories []uuid.UUID) error {
+func (s *Service) SetRecipeCollections(recipeId, userId uuid.UUID, collections []uuid.UUID) error {
 	if err := s.checkRecipeAccessible(recipeId, userId); err != nil {
 		return err
 	}
-	return s.recipeRepo.SetRecipeCollections(recipeId, userId, categories)
+	return s.recipeRepo.SetRecipeCollections(recipeId, userId, collections)
 }
 
 func (s *Service) checkRecipeAccessible(recipeId, userId uuid.UUID) error {
