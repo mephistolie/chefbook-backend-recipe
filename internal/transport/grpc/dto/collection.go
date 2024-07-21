@@ -32,10 +32,10 @@ func newCollections(collections []entity.Collection) []*api.Collection {
 	return dtos
 }
 
-func newCollectionsMap(categories map[uuid.UUID]entity.CollectionInfo) map[string]*api.CollectionInfo {
+func newCollectionsMap(collections map[uuid.UUID]entity.CollectionInfo) map[string]*api.CollectionInfo {
 	response := make(map[string]*api.CollectionInfo)
-	for id, category := range categories {
-		response[id.String()] = newCollectionInfo(category)
+	for id, collection := range collections {
+		response[id.String()] = newCollectionInfo(collection)
 	}
 	return response
 }

@@ -26,7 +26,7 @@ type RecipeInfo struct {
 	Tags []string `db:"tags"`
 
 	IsFavourite bool        `db:"favourite"`
-	Collections Collections `db:"categories"`
+	Collections Collections `db:"collections"`
 
 	Pictures RecipePictures `db:"pictures"`
 

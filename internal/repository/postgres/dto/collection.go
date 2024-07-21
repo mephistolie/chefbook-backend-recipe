@@ -45,7 +45,7 @@ func (c *Collections) Scan(value interface{}) error {
 	}
 
 	if err := json.Unmarshal(b, &c); err != nil {
-		return errors.New("unable to unmarshal category IDs")
+		return errors.New("unable to unmarshal collection IDs")
 	}
 
 	return nil

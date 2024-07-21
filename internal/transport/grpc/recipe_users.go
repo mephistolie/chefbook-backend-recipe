@@ -94,17 +94,17 @@ func (s *RecipeServer) SetRecipeCollections(_ context.Context, req *api.SetRecip
 	}
 
 	req.CollectionIds = sliceUtils.RemoveDuplicates(req.CollectionIds)
-	var categoryIds []uuid.UUID
+	var collectionIds []uuid.UUID
 	for i, rawId := range req.CollectionIds {
 		if i > maxRecipeCategoriesCount {
 			break
 		}
 		if id, err := uuid.Parse(rawId); err == nil {
-			categoryIds = append(categoryIds, id)
+			collectionIds = append(collectionIds, id)
 		}
 	}
 
-	if err = s.recipeService.SetRecipeCategories(recipeId, userId, categoryIds); err != nil {
+	if err = s.recipeService.SetRecipeCollections(recipeId, userId, collectionIds); err != nil {
 		return nil, err
 	}
 
