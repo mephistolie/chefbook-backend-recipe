@@ -78,17 +78,14 @@ func (r *Repository) GetRecipeBook(userId uuid.UUID) ([]entity.RecipeState, erro
 
 func (r *Repository) SaveRecipeToRecipeBook(recipeId, userId uuid.UUID) error {
 	query := fmt.Sprintf(`
-			INSERT INTO %s (recipe_id, user_id)
-			VALUES ($1, $2)
-			ON CONFLICT (recipe_id, user_id) DO NOTHING
-		`, recipeBookTable)
+		INSERT INTO %s (recipe_id, user_id)
+		VALUES ($1, $2)
+		ON CONFLICT (recipe_id, user_id) DO NOTHING
+	`, recipeBookTable)
 
 	if _, err := r.db.Exec(query, recipeId, userId); err != nil {
-		if isUniqueViolationError(err) {
-			return nil
-		}
 		log.Errorf("unable to add recipe %s to user %s recipe book: %s", recipeId, userId, err)
-		return fail.GrpcNotFound
+		return fail.GrpcUnknown
 	}
 
 	return nil
@@ -96,13 +93,13 @@ func (r *Repository) SaveRecipeToRecipeBook(recipeId, userId uuid.UUID) error {
 
 func (r *Repository) RemoveRecipeFromRecipeBook(recipeId, userId uuid.UUID) error {
 	query := fmt.Sprintf(`
-			DELETE FROM %s
-			WHERE recipe_id=$1 AND user_id=$2
-		`, recipeBookTable)
+		DELETE FROM %s
+		WHERE recipe_id=$1 AND user_id=$2
+	`, recipeBookTable)
 
 	if _, err := r.db.Exec(query, recipeId, userId); err != nil {
-		log.Errorf("unable to delete recipe %s from user %s recipe book: %s", recipeId, userId, err)
-		return fail.GrpcNotFound
+		log.Errorf("unable to remove recipe %s from user %s recipe book: %s", recipeId, userId, err)
+		return fail.GrpcUnknown
 	}
 
 	return nil
@@ -110,17 +107,14 @@ func (r *Repository) RemoveRecipeFromRecipeBook(recipeId, userId uuid.UUID) erro
 
 func (r *Repository) SaveRecipeToFavourites(recipeId, userId uuid.UUID) error {
 	query := fmt.Sprintf(`
-			INSERT INTO %s (recipe_id, user_id)
-			VALUES ($1, $2)
-			ON CONFLICT (recipe_id, user_id) DO NOTHING
-		`, favouritesTable)
+		INSERT INTO %s (recipe_id, user_id)
+		VALUES ($1, $2)
+		ON CONFLICT (recipe_id, user_id) DO NOTHING
+	`, favouritesTable)
 
 	if _, err := r.db.Exec(query, recipeId, userId); err != nil {
-		if isUniqueViolationError(err) {
-			return nil
-		}
 		log.Errorf("unable to add recipe %s to user %s favourites: %s", recipeId, userId, err)
-		return fail.GrpcNotFound
+		return fail.GrpcUnknown
 	}
 
 	return nil
@@ -128,13 +122,13 @@ func (r *Repository) SaveRecipeToFavourites(recipeId, userId uuid.UUID) error {
 
 func (r *Repository) RemoveRecipeFromFavourites(recipeId, userId uuid.UUID) error {
 	query := fmt.Sprintf(`
-			DELETE FROM %s
-			WHERE recipe_id=$1 AND user_id=$2
-		`, favouritesTable)
+		DELETE FROM %s
+		WHERE recipe_id=$1 AND user_id=$2
+	`, favouritesTable)
 
 	if _, err := r.db.Exec(query, recipeId, userId); err != nil {
-		log.Errorf("unable to delete recipe %s from user %s favourites: %s", recipeId, userId, err)
-		return fail.GrpcNotFound
+		log.Errorf("unable to remove recipe %s from user %s favourites: %s", recipeId, userId, err)
+		return fail.GrpcUnknown
 	}
 
 	return nil

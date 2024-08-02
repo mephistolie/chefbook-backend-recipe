@@ -28,6 +28,53 @@ var getRecipeCollectionIdsSubquery = fmt.Sprintf(`
 `, recipesTable, recipesCollectionsTable, collectionsTable, collectionContributorsTable, collectionUsersTable,
 	model.VisibilityPrivate, entity.RoleOwner)
 
+func (r *Repository) AddRecipeToCollection(recipeId, collectionId, userId uuid.UUID) error {
+	tx, err := r.startTransaction()
+	if err != nil {
+		return err
+	}
+
+	if !r.checkCollectionAccessible(tx, collectionId, userId) {
+		return errorWithTransactionRollback(tx, fail.GrpcAccessDenied)
+	}
+
+	query := fmt.Sprintf(`
+		INSERT INTO %s (recipe_id, collection_id)
+		VALUES ($1, $2)
+		ON CONFLICT (recipe_id, collection_id) DO NOTHING
+	`, recipesCollectionsTable)
+
+	if _, err := r.db.Exec(query, recipeId, collectionId); err != nil {
+		log.Errorf("unable to add recipe %s to collection %s: %s", recipeId, collectionId, err)
+		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
+	}
+
+	return commitTransaction(tx)
+}
+
+func (r *Repository) RemoveRecipeFromCollection(recipeId, collectionId, userId uuid.UUID) error {
+	tx, err := r.startTransaction()
+	if err != nil {
+		return err
+	}
+
+	if !r.checkCollectionAccessible(tx, collectionId, userId) {
+		return errorWithTransactionRollback(tx, fail.GrpcAccessDenied)
+	}
+
+	query := fmt.Sprintf(`
+		DELETE FROM %[1]v
+		WHERE recipe_id=$1 AND collection_id=$2
+	`, recipesCollectionsTable)
+
+	if _, err := r.db.Exec(query, recipeId, collectionId); err != nil {
+		log.Errorf("unable to remove recipe %s from collection %s: %s", recipeId, collectionId, err)
+		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
+	}
+
+	return commitTransaction(tx)
+}
+
 func (r *Repository) SetRecipeCollections(recipeId, userId uuid.UUID, collections []uuid.UUID) error {
 	tx, err := r.startTransaction()
 	if err != nil {
@@ -40,6 +87,7 @@ func (r *Repository) SetRecipeCollections(recipeId, userId uuid.UUID, collection
 	}
 
 	if len(editableCollections) == 0 {
+		_ = tx.Rollback()
 		return nil
 	}
 
@@ -88,7 +136,7 @@ func (r *Repository) SetRecipeCollections(recipeId, userId uuid.UUID, collection
 }
 
 func (r *Repository) getEditableCollections(tx *sql.Tx, userId uuid.UUID) ([]uuid.UUID, error) {
-	var getEditableCollectionsQuery = fmt.Sprintf(`
+	query := fmt.Sprintf(`
 		SELECT %[1]v.collection_id
 		FROM %[1]v
 		LEFT JOIN
@@ -96,7 +144,7 @@ func (r *Repository) getEditableCollections(tx *sql.Tx, userId uuid.UUID) ([]uui
 		WHERE %[1]v.contributor_id=$1 AND %[2]v.user_id=$1
 	`, collectionContributorsTable, collectionUsersTable)
 
-	rows, err := tx.Query(getEditableCollectionsQuery, userId)
+	rows, err := tx.Query(query, userId)
 	if err != nil {
 		log.Errorf("unable to get editable collections for user %s: %s", userId, err)
 		return []uuid.UUID{}, fail.GrpcUnknown
@@ -113,4 +161,19 @@ func (r *Repository) getEditableCollections(tx *sql.Tx, userId uuid.UUID) ([]uui
 	}
 
 	return editableCollectionIds, nil
+}
+
+func (r *Repository) checkCollectionAccessible(tx *sql.Tx, collectionId, userId uuid.UUID) bool {
+	query := fmt.Sprintf(`
+		SELECT 1
+		FROM %[1]v
+		WHERE %[1]v.collection_id=$1 %[1]v.contributor_id=$2
+	`, collectionContributorsTable)
+
+	result, err := tx.Exec(query, collectionId, userId)
+	if err != nil {
+		return false
+	}
+	rows, err := result.RowsAffected()
+	return err == nil && rows > 0
 }

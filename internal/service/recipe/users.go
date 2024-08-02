@@ -44,6 +44,20 @@ func (s *Service) RemoveRecipeFromFavourites(recipeId, userId uuid.UUID) error {
 	return s.recipeRepo.RemoveRecipeFromFavourites(recipeId, userId)
 }
 
+func (s *Service) AddRecipeToCollection(recipeId, collectionId, userId uuid.UUID) error {
+	if err := s.checkRecipeAccessible(recipeId, userId); err != nil {
+		return err
+	}
+	return s.recipeRepo.AddRecipeToCollection(recipeId, collectionId, userId)
+}
+
+func (s *Service) RemoveRecipeFromCollection(recipeId, collectionId, userId uuid.UUID) error {
+	if err := s.checkRecipeAccessible(recipeId, userId); err != nil {
+		return err
+	}
+	return s.recipeRepo.AddRecipeToCollection(recipeId, collectionId, userId)
+}
+
 func (s *Service) SetRecipeCollections(recipeId, userId uuid.UUID, collections []uuid.UUID) error {
 	if err := s.checkRecipeAccessible(recipeId, userId); err != nil {
 		return err

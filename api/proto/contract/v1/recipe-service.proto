@@ -46,6 +46,8 @@ service RecipeService {
   rpc RemoveRecipeFromRecipeBook(RemoveRecipeFromRecipeBookRequest) returns (RemoveRecipeFromRecipeBookResponse);
   rpc SaveRecipeToFavourites(SaveRecipeToFavouritesRequest) returns (SaveRecipeToFavouritesResponse);
   rpc RemoveRecipeFromFavourites(RemoveRecipeFromFavouritesRequest) returns (RemoveRecipeFromFavouritesResponse);
+  rpc AddRecipeToCollection(AddRecipeToCollectionRequest) returns (AddRecipeToCollectionResponse);
+  rpc RemoveRecipeFromCollection(RemoveRecipeFromCollectionRequest) returns (RemoveRecipeFromCollectionResponse);
   rpc SetRecipeCollections(SetRecipeCollectionsRequest) returns (SetRecipeCollectionsResponse);
 
   rpc TranslateRecipe(TranslateRecipeRequest) returns (TranslateRecipeResponse);

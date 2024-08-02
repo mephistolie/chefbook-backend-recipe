@@ -41,6 +41,8 @@ type Recipe interface {
 	RemoveRecipeFromRecipeBook(recipeId, userId uuid.UUID) error
 	SaveRecipeToFavourites(recipeId, userId uuid.UUID) error
 	RemoveRecipeFromFavourites(recipeId, userId uuid.UUID) error
+	AddRecipeToCollection(recipeId, collectionId, userId uuid.UUID) error
+	RemoveRecipeFromCollection(recipeId, collectionId, userId uuid.UUID) error
 	SetRecipeCollections(recipeId, userId uuid.UUID, collections []uuid.UUID) error
 
 	TranslateRecipe(recipeId uuid.UUID, translation entity.RecipeTranslation) error

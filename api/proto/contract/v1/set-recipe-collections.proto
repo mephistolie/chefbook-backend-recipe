@@ -3,6 +3,26 @@ package v1;
 
 option go_package = "github.com/mephistolie/chefbook-backend-recipe/api/proto/v1";
 
+message AddRecipeToCollectionRequest {
+  string recipeId = 1;
+  string collectionId = 2;
+  string userId = 3;
+}
+
+message AddRecipeToCollectionResponse {
+  string message = 1;
+}
+
+message RemoveRecipeFromCollectionRequest {
+  string recipeId = 1;
+  string collectionId = 2;
+  string userId = 3;
+}
+
+message RemoveRecipeFromCollectionResponse {
+  string message = 1;
+}
+
 message SetRecipeCollectionsRequest {
   string recipeId = 1;
   string userId = 2;
@@ -12,3 +32,4 @@ message SetRecipeCollectionsRequest {
 message SetRecipeCollectionsResponse {
   string message = 1;
 }
+
