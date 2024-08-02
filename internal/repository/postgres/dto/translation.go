@@ -10,7 +10,24 @@ import (
 
 type RecipeTranslationInfo struct {
 	Language string    `db:"language" json:"language"`
-	AuthorId uuid.UUID `db:"author_id" json:"authorId"`
+	AuthorId uuid.UUID `db:"author_id" json:"author_id"`
+}
+
+func (c RecipeTranslationInfo) Value() (driver.Value, error) {
+	return json.Marshal(c)
+}
+
+func (c *RecipeTranslationInfo) Scan(value interface{}) error {
+	b, ok := value.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+
+	if err := json.Unmarshal(b, &c); err != nil {
+		return errors.New("unable to unmarshal translation")
+	}
+
+	return nil
 }
 
 type RecipeTranslations []RecipeTranslationInfo
@@ -26,7 +43,7 @@ func (c *RecipeTranslations) Scan(value interface{}) error {
 	}
 
 	if err := json.Unmarshal(b, &c); err != nil {
-		return errors.New("unable to unmarshal translation IDs")
+		return errors.New("unable to unmarshal translations")
 	}
 
 	return nil

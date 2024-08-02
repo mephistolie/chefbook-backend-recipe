@@ -11,11 +11,11 @@ import "v1/create-recipe.proto";
 import "v1/get-recipe.proto";
 import "v1/update-recipe.proto";
 import "v1/rate-recipe.proto";
-import "v1/save-recipe.proto";
 import "v1/delete-recipe.proto";
 import "v1/generate-recipe-pictures-upload-links.proto";
 import "v1/set-recipe-pictures.proto";
-import "v1/set-recipe-favourite-status.proto";
+import "v1/recipe-book.proto";
+import "v1/favourites.proto";
 import "v1/set-recipe-collections.proto";
 import "v1/translate-recipe.proto";
 import "v1/get-recipe-policy.proto";
@@ -42,9 +42,10 @@ service RecipeService {
   rpc SetRecipePictures(SetRecipePicturesRequest) returns (SetRecipePicturesResponse);
 
   rpc RateRecipe(RateRecipeRequest) returns (RateRecipeResponse);
-  rpc SaveToRecipeBook(SaveToRecipeBookRequest) returns (SaveToRecipeBookResponse);
-  rpc RemoveFromRecipeBook(RemoveFromRecipeBookRequest) returns (RemoveFromRecipeBookResponse);
-  rpc SetRecipeFavouriteStatus(SetRecipeFavouriteStatusRequest) returns (SetRecipeFavouriteStatusResponse);
+  rpc SaveRecipeToRecipeBook(SaveRecipeToRecipeBookRequest) returns (SaveRecipeToRecipeBookResponse);
+  rpc RemoveRecipeFromRecipeBook(RemoveRecipeFromRecipeBookRequest) returns (RemoveRecipeFromRecipeBookResponse);
+  rpc SaveRecipeToFavourites(SaveRecipeToFavouritesRequest) returns (SaveRecipeToFavouritesResponse);
+  rpc RemoveRecipeFromFavourites(RemoveRecipeFromFavouritesRequest) returns (RemoveRecipeFromFavouritesResponse);
   rpc SetRecipeCollections(SetRecipeCollectionsRequest) returns (SetRecipeCollectionsResponse);
 
   rpc TranslateRecipe(TranslateRecipeRequest) returns (TranslateRecipeResponse);

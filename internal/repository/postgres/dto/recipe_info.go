@@ -25,8 +25,8 @@ type RecipeInfo struct {
 
 	Tags []string `db:"tags"`
 
-	IsFavourite bool        `db:"favourite"`
-	Collections Collections `db:"collections"`
+	IsFavourite bool          `db:"favourite"`
+	Collections CollectionIds `db:"collections"`
 
 	Pictures RecipePictures `db:"pictures"`
 
@@ -41,6 +41,11 @@ type RecipeInfo struct {
 }
 
 func (r *RecipeInfo) Entity(userId uuid.UUID) entity.RecipeInfo {
+	var collections []uuid.UUID
+	for _, collection := range r.Collections {
+		collections = append(collections, collection.UUID)
+	}
+
 	var score *int32
 	if r.Score > 0 {
 		score = &r.Score
@@ -70,7 +75,7 @@ func (r *RecipeInfo) Entity(userId uuid.UUID) entity.RecipeInfo {
 		Votes:  r.Votes,
 
 		Tags:        r.Tags,
-		Collections: r.Collections,
+		Collections: collections,
 		IsFavourite: r.IsFavourite,
 
 		Servings: r.Servings,

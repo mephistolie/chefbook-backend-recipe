@@ -58,7 +58,7 @@ func (r *Repository) DeleteUserData(userId uuid.UUID, deleteSharedData bool, mes
 	deleteRecipeBookQuery := fmt.Sprintf(`
 		DELETE FROM %s
 		WHERE user_id=$1
-	`, recipeUsersTable)
+	`, recipeBookTable)
 
 	if _, err := tx.Exec(deleteRecipeBookQuery, userId); err != nil {
 		log.Errorf("unable to delete user %s recipe book: %s", userId, err)
@@ -99,7 +99,7 @@ func (r *Repository) DeleteUserData(userId uuid.UUID, deleteSharedData bool, mes
 				WHERE
 					%[1]v.owner_id=$1 AND %[1]v.visibility<>'%[3]v' AND user_id<>$1
 			)
-		`, recipesTable, recipeUsersTable, model.VisibilityPrivate)
+		`, recipesTable, recipeBookTable, model.VisibilityPrivate)
 
 		if _, err := tx.Exec(deleteNotUsedRecipesQuery, userId); err != nil {
 			log.Errorf("unable to delete not used user %s recipes: %s", userId, err)

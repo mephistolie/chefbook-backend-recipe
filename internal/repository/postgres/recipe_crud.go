@@ -91,7 +91,7 @@ func (r *Repository) CreateRecipe(input entity.RecipeInput) (uuid.UUID, int32, e
 	addToRecipeBookQuery := fmt.Sprintf(`
 			INSERT INTO %s (recipe_id, user_id)
 			VALUES ($1, $2)
-		`, recipeUsersTable)
+		`, recipeBookTable)
 
 	if _, err = tx.Exec(addToRecipeBookQuery, id, input.UserId); err != nil {
 		log.Errorf("unable to add recipe to owner %s recipe book: %s", input.UserId, err)
@@ -110,16 +110,27 @@ func (r *Repository) GetRecipe(recipeId, userId uuid.UUID) (entity.Recipe, error
 			%[1]v.owner_id,
 			%[1]v.visibility, %[1]v.encrypted,
 			%[1]v.language,
-			ARRAY(
-				SELECT json_agg(json_build_object('language', %[4]v.language, 'author_id', %[4]v.author_id))
-				FROM %[4]v
-				WHERE recipe_id=$1 AND hidden=false
+			(
+				SELECT COALESCE(
+					jsonb_agg(json_build_object('language', %[5]v.language, 'author_id', %[5]v.author_id))
+					FILTER (WHERE %[5]v.author_id IS NOT NULL),
+					'[]'
+				)
+				FROM %[5]v
+				WHERE %[5]v.recipe_id=%[1]v.recipe_id
 			) AS translations,
 			%[1]v.description,
-			%[1]v.rating, %[1]v.votes, coalesce(%[3]v.score, 0),
+			%[1]v.rating, %[1]v.votes, coalesce(%[4]v.score, 0),
 			%[1]v.tags,
-			ARRAY(%[5]v) as collections,
-			coalesce(%[2]v.favourite, false),
+			(%[6]v) as collections,
+			(
+				SELECT EXISTS
+				(
+					SELECT 1
+					FROM %[3]v
+					WHERE %[3]v.recipe_id=%[3]v.recipe_id AND user_id=$2
+				)
+			) AS favoutie,
 			(
 				SELECT EXISTS
 				(
@@ -135,11 +146,9 @@ func (r *Repository) GetRecipe(recipeId, userId uuid.UUID) (entity.Recipe, error
 		FROM
 			%[1]v
 		LEFT JOIN
-			%[2]v ON %[2]v.recipe_id=%[1]v.recipe_id AND %[2]v.user_id=$2
-		LEFT JOIN
-			%[3]v ON %[3]v.recipe_id=%[1]v.recipe_id AND %[3]v.user_id=$2
+			%[4]v ON %[4]v.recipe_id=%[4]v.recipe_id AND %[4]v.user_id=$2
 		WHERE %[1]v.recipe_id=$1
-	`, recipesTable, recipeUsersTable, scoresTable, translationsTable, getRecipeCollectionIdsSubquery)
+	`, recipesTable, recipeBookTable, favouritesTable, scoresTable, translationsTable, getRecipeCollectionIdsSubquery)
 
 	row := r.db.QueryRow(query, recipeId, userId)
 	m := pgtype.NewMap()

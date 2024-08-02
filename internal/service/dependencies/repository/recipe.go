@@ -24,9 +24,10 @@ type Recipe interface {
 	GetRecipeRatingAndVotes(recipeId uuid.UUID) (float32, int, error)
 	RateRecipe(recipeId, userId uuid.UUID, score int) (*model.MessageData, error)
 
-	SaveToRecipeBook(recipeId, userId uuid.UUID) error
-	RemoveFromRecipeBook(recipeId, userId uuid.UUID) error
-	SetRecipeFavouriteStatus(recipeId, userId uuid.UUID, isFavourite bool) error
+	SaveRecipeToRecipeBook(recipeId, userId uuid.UUID) error
+	RemoveRecipeFromRecipeBook(recipeId, userId uuid.UUID) error
+	SaveRecipeToFavourites(recipeId, userId uuid.UUID) error
+	RemoveRecipeFromFavourites(recipeId, userId uuid.UUID) error
 	SetRecipeCollections(recipeId, userId uuid.UUID, collections []uuid.UUID) error
 
 	GetRecipeTranslation(recipeId uuid.UUID, language string, authorId *uuid.UUID) *entity.RecipeTranslation

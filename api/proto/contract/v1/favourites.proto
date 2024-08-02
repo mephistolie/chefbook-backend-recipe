@@ -3,20 +3,20 @@ package v1;
 
 option go_package = "github.com/mephistolie/chefbook-backend-recipe/api/proto/v1";
 
-message SaveToRecipeBookRequest {
+message SaveRecipeToFavouritesRequest {
   string recipeId = 1;
   string userId = 2;
 }
 
-message SaveToRecipeBookResponse {
+message SaveRecipeToFavouritesResponse {
   string message = 1;
 }
 
-message RemoveFromRecipeBookRequest {
+message RemoveRecipeFromFavouritesRequest {
   string recipeId = 1;
   string userId = 2;
 }
 
-message RemoveFromRecipeBookResponse {
+message RemoveRecipeFromFavouritesResponse {
   string message = 1;
 }

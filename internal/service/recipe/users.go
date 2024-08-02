@@ -22,22 +22,26 @@ func (s *Service) RateRecipe(recipeId, userId uuid.UUID, score int) error {
 	return err
 }
 
-func (s *Service) SaveToRecipeBook(recipeId, userId uuid.UUID) error {
+func (s *Service) SaveRecipeToRecipeBook(recipeId, userId uuid.UUID) error {
 	if err := s.checkRecipeAccessible(recipeId, userId); err != nil {
 		return err
 	}
-	return s.recipeRepo.SaveToRecipeBook(recipeId, userId)
+	return s.recipeRepo.SaveRecipeToRecipeBook(recipeId, userId)
 }
 
-func (s *Service) RemoveFromRecipeBook(recipeId, userId uuid.UUID) error {
-	return s.recipeRepo.RemoveFromRecipeBook(recipeId, userId)
+func (s *Service) RemoveRecipeFromRecipeBook(recipeId, userId uuid.UUID) error {
+	return s.recipeRepo.RemoveRecipeFromRecipeBook(recipeId, userId)
 }
 
-func (s *Service) SetRecipeFavouriteStatus(recipeId, userId uuid.UUID, favourite bool) error {
+func (s *Service) SaveRecipeToFavourites(recipeId, userId uuid.UUID) error {
 	if err := s.checkRecipeAccessible(recipeId, userId); err != nil {
 		return err
 	}
-	return s.recipeRepo.SetRecipeFavouriteStatus(recipeId, userId, favourite)
+	return s.recipeRepo.SaveRecipeToFavourites(recipeId, userId)
+}
+
+func (s *Service) RemoveRecipeFromFavourites(recipeId, userId uuid.UUID) error {
+	return s.recipeRepo.RemoveRecipeFromFavourites(recipeId, userId)
 }
 
 func (s *Service) SetRecipeCollections(recipeId, userId uuid.UUID, collections []uuid.UUID) error {

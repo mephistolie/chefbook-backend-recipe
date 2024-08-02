@@ -37,9 +37,10 @@ type Recipe interface {
 	SetRecipePictures(recipeId, userId uuid.UUID, pictures entity.RecipePictures, version *int32, subscriptionPlan string) (int32, entity.RecipePictures, error)
 
 	RateRecipe(recipeId, userId uuid.UUID, score int) error
-	SaveToRecipeBook(recipeId, userId uuid.UUID) error
-	RemoveFromRecipeBook(recipeId, userId uuid.UUID) error
-	SetRecipeFavouriteStatus(recipeId, userId uuid.UUID, favourite bool) error
+	SaveRecipeToRecipeBook(recipeId, userId uuid.UUID) error
+	RemoveRecipeFromRecipeBook(recipeId, userId uuid.UUID) error
+	SaveRecipeToFavourites(recipeId, userId uuid.UUID) error
+	RemoveRecipeFromFavourites(recipeId, userId uuid.UUID) error
 	SetRecipeCollections(recipeId, userId uuid.UUID, collections []uuid.UUID) error
 
 	TranslateRecipe(recipeId uuid.UUID, translation entity.RecipeTranslation) error

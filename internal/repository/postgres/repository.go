@@ -17,7 +17,8 @@ const (
 	recipesTable               = "recipes"
 	translationsTable          = "translations"
 	recipePicturesUploadsTable = "recipe_pictures_uploads"
-	recipeUsersTable           = "recipes_users"
+	recipeBookTable            = "recipe_book"
+	favouritesTable            = "favourites"
 	scoresTable                = "scores"
 
 	collectionsTable            = "collections"

@@ -53,7 +53,6 @@ CREATE TABLE translations
     description VARCHAR(1500)                                                  DEFAULT NULL,
     ingredients JSONB                                                 NOT NULL,
     cooking     JSONB                                                 NOT NULL,
-    hidden      BOOLEAN                                               NOT NULL DEFAULT false,
     UNIQUE (recipe_id, author_id)
 );
 
@@ -63,11 +62,17 @@ CREATE TABLE recipe_pictures_uploads
     pictures  JSONB                                                 NOT NULL
 );
 
-CREATE TABLE recipes_users
+CREATE TABLE recipe_book
 (
     recipe_id  UUID REFERENCES recipes (recipe_id) ON DELETE CASCADE NOT NULL,
     user_id    UUID                                                  NOT NULL,
-    favourite  BOOLEAN                                               NOT NULL DEFAULT FALSE,
+    UNIQUE (user_id, recipe_id)
+);
+
+CREATE TABLE favourites
+(
+    recipe_id  UUID REFERENCES recipes (recipe_id) ON DELETE CASCADE NOT NULL,
+    user_id    UUID                                                  NOT NULL,
     UNIQUE (user_id, recipe_id)
 );
 

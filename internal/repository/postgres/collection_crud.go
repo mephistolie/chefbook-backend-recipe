@@ -11,34 +11,34 @@ import (
 	"github.com/mephistolie/chefbook-backend-recipe/internal/repository/postgres/dto"
 )
 
-var selectCollectionsQuery = fmt.Sprintf(`
-	SELECT
-		%[1]v.collection_id,
-		%[1]v.name,
-		%[1]v.visibility,
-		ARRAY(
-			SELECT json_agg(json_build_object('contributor_id', %[2]v.contributor_id, 'role', %[2]v.role))
-			FROM %[2]v
-			WHERE %[2]v.collection_id=%[2]v.collection_id
-		) as contributors,
-		(
-			SELECT COUNT(*)
-			FROM %[4]v
-			WHERE %[4]v.collection_id=%[1]v.collection_id
-		) AS recipes_count
-	FROM %[3]v
-	LEFT JOIN
-		%[1]v ON %[1]v.collection_id=%[1]v.collection_id
-	LEFT JOIN
-		%[3]v ON %[3]v.collection_id=%[1]v.collection_id
-`, collectionsTable, collectionContributorsTable, collectionUsersTable, recipesCollectionsTable)
-
 func (r *Repository) GetCollections(userId, requesterId uuid.UUID) []entity.Collection {
 	query := fmt.Sprintf(`
-		%[1]v
+		SELECT
+			%[1]v.collection_id,
+			%[1]v.name,
+			%[1]v.visibility,
+			(
+				SELECT COALESCE(
+					jsonb_agg(json_build_object('contributor_id', %[2]v.contributor_id, 'role', %[2]v.role))
+					FILTER (WHERE %[2]v.contributor_id IS NOT NULL),
+					'[]'
+				)
+				FROM %[2]v
+				WHERE %[2]v.collection_id=%[1]v.collection_id
+			) as contributors,
+			(
+				SELECT COUNT(*)
+				FROM %[4]v
+				WHERE %[4]v.collection_id=%[1]v.collection_id
+			) AS recipes_count
+		FROM %[3]v
+		LEFT JOIN
+			%[1]v ON %[1]v.collection_id=%[3]v.collection_id
+		LEFT JOIN
+			%[2]v ON %[2]v.collection_id=%[3]v.collection_id
 		WHERE
-			%[4]v.user_id=$1 AND (%[2]v.visibility<>'%[5]v' OR %[3]v.contributor_id=$2)
-	`, selectCollectionsQuery, collectionsTable, collectionContributorsTable, collectionUsersTable, model.VisibilityPrivate)
+			%[3]v.user_id=$1 AND (%[1]v.visibility<>'%[5]v' OR %[2]v.contributor_id=$2)
+	`, collectionsTable, collectionContributorsTable, collectionUsersTable, recipesCollectionsTable, model.VisibilityPrivate)
 
 	rows, err := r.db.Query(query, userId, requesterId)
 	if err != nil {
@@ -56,7 +56,7 @@ func (r *Repository) GetCollections(userId, requesterId uuid.UUID) []entity.Coll
 			&collection.RecipesCount,
 		)
 		if err != nil {
-			log.Errorf("unable to parse user %s collection: %s", userId, err)
+			log.Warnf("unable to parse user %s collection: %s", userId, err)
 			continue
 		}
 		collections = append(collections, collection.Entity())
@@ -108,7 +108,7 @@ func (r *Repository) CreateCollection(input entity.CollectionInput) (uuid.UUID, 
 	`, collectionsTable)
 
 	if _, err = tx.Exec(createCollectionQuery, input.Id, input.Visibility, input.Name); err != nil {
-		log.Errorf("unable to add input %s: %s", input.Id, err)
+		log.Errorf("unable to add collection %s: %s", input.Id, err)
 		return uuid.UUID{}, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -139,10 +139,32 @@ func (r *Repository) GetCollection(collectionId, userId uuid.UUID) (entity.Colle
 	var collection dto.Collection
 
 	query := fmt.Sprintf(`
-		%[1]v
+		SELECT
+			%[1]v.collection_id,
+			%[1]v.name,
+			%[1]v.visibility,
+			(
+				SELECT COALESCE(
+					jsonb_agg(json_build_object('contributor_id', %[2]v.contributor_id, 'role', %[2]v.role))
+					FILTER (WHERE %[2]v.contributor_id IS NOT NULL),
+					'[]'
+				)
+				FROM %[2]v
+				WHERE %[2]v.collection_id=%[1]v.collection_id
+			) as contributors,
+			(
+				SELECT COUNT(*)
+				FROM %[4]v
+				WHERE %[4]v.collection_id=%[1]v.collection_id
+			) AS recipes_count
+		FROM %[1]v
+		LEFT JOIN
+			%[2]v ON %[2]v.collection_id=%[1]v.collection_id
+		LEFT JOIN
+			%[3]v ON %[3]v.collection_id=%[1]v.collection_id
 		WHERE
-			%[2]v.collection_id=$1 AND (%[2]v.visibility<>'%[4]v' OR %[3]v.contributor_id=$2)
-	`, selectCollectionsQuery, collectionsTable, collectionContributorsTable, model.VisibilityPrivate)
+			%[1]v.collection_id=$1 AND (%[1]v.visibility<>'%[5]v' OR %[2]v.contributor_id=$2)
+	`, collectionsTable, collectionContributorsTable, collectionUsersTable, recipesCollectionsTable, model.VisibilityPrivate)
 
 	row := r.db.QueryRow(query, collectionId, userId)
 	m := pgtype.NewMap()

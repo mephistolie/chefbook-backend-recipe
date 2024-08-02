@@ -25,9 +25,9 @@ type Recipe struct {
 
 	Tags []string `db:"tags"`
 
-	IsSaved     bool        `db:"isSaved"`
-	IsFavourite bool        `db:"isFavourite"`
-	Collections Collections `db:"collections"`
+	IsSaved     bool          `db:"isSaved"`
+	IsFavourite bool          `db:"isFavourite"`
+	Collections CollectionIds `db:"collections"`
 
 	Ingredients Ingredients    `db:"ingredients"`
 	Cooking     Cooking        `db:"cooking"`
@@ -47,6 +47,11 @@ type Recipe struct {
 }
 
 func (r *Recipe) Entity(userId uuid.UUID) entity.Recipe {
+	var collections []uuid.UUID
+	for _, collection := range r.Collections {
+		collections = append(collections, collection.UUID)
+	}
+
 	var macronutrients *entity.Macronutrients
 	if r.Protein != nil || r.Fats != nil || r.Carbohydrates != nil {
 		macronutrients = &entity.Macronutrients{
@@ -84,7 +89,7 @@ func (r *Recipe) Entity(userId uuid.UUID) entity.Recipe {
 		Votes:  r.Votes,
 
 		Tags:        r.Tags,
-		Collections: r.Collections,
+		Collections: collections,
 		IsFavourite: r.IsFavourite,
 
 		Servings: r.Servings,

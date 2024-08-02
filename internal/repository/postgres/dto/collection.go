@@ -30,13 +30,13 @@ func (c *Collection) Entity() entity.Collection {
 	}
 }
 
-type Collections []uuid.UUID
+type CollectionIds []CollectionId
 
-func (c Collections) Value() (driver.Value, error) {
+func (c CollectionIds) Value() (driver.Value, error) {
 	return json.Marshal(c)
 }
 
-func (c *Collections) Scan(value interface{}) error {
+func (c *CollectionIds) Scan(value interface{}) error {
 	b, ok := value.([]byte)
 	if !ok {
 		return errors.New("type assertion to []byte failed")
@@ -44,6 +44,27 @@ func (c *Collections) Scan(value interface{}) error {
 
 	if err := json.Unmarshal(b, &c); err != nil {
 		return errors.New("unable to unmarshal collection IDs")
+	}
+
+	return nil
+}
+
+type CollectionId struct {
+	uuid.UUID
+}
+
+func (c CollectionId) Value() (driver.Value, error) {
+	return json.Marshal(c)
+}
+
+func (c *CollectionId) Scan(value interface{}) error {
+	b, ok := value.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+
+	if err := json.Unmarshal(b, &c); err != nil {
+		return errors.New("unable to unmarshal collection ID")
 	}
 
 	return nil

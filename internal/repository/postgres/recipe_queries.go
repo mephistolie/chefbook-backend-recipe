@@ -60,10 +60,17 @@ func (r *Repository) getRecipesByParamsQuery(params entity.RecipesQuery, userId 
 			%[1]v.owner_id,
 			%[1]v.visibility, %[1]v.encrypted,
 			%[1]v.language, %[1]v.translations,
-			%[1]v.rating, %[1]v.votes, coalesce(%[3]v.score, 0),
+			%[1]v.rating, %[1]v.votes, COALESCE(%[4]v.score, 0),
 			%[1]v.tags,
-			ARRAY(%[4]v) as collections,
-			coalesce(%[2]v.favourite, false),
+			(%[5]v) as collections,
+			(
+				SELECT EXISTS
+				(
+					SELECT 1
+					FROM %[3]v
+					WHERE %[3]v.recipe_id=%[3]v.recipe_id AND user_id=$1
+				)
+			) AS favoutie,
 			(
 				SELECT EXISTS
 				(
@@ -81,8 +88,8 @@ func (r *Repository) getRecipesByParamsQuery(params entity.RecipesQuery, userId 
 		LEFT JOIN
 			%[2]v ON %[2]v.recipe_id=%[1]v.recipe_id AND %[2]v.user_id=$1
 		LEFT JOIN
-			%[3]v ON %[3]v.recipe_id=%[1]v.recipe_id AND %[3]v.user_id=$1
-	`, recipesTable, recipeUsersTable, scoresTable, getRecipeCollectionIdsSubquery)
+			%[4]v ON %[4]v.recipe_id=%[4]v.recipe_id AND %[4]v.user_id=$1
+	`, recipesTable, recipeBookTable, favouritesTable, scoresTable, getRecipeCollectionIdsSubquery)
 	args = append(args, userId)
 
 	whereStatement, whereArgs, argNumber := r.getRecipesWhereStatementByParams(params, 2)
@@ -101,16 +108,16 @@ func (r *Repository) getRecipesWhereStatementByParams(params entity.RecipesQuery
 	whereStatement := " WHERE"
 
 	if params.Owned && params.Saved {
-		whereStatement += fmt.Sprintf(" %s.user_id=$1 AND %s.owner_id=$1", recipeUsersTable, recipesTable)
+		whereStatement += fmt.Sprintf(" %s.user_id=$1 AND %s.owner_id=$1", recipeBookTable, recipesTable)
 	} else if params.Owned {
 		whereStatement += fmt.Sprintf(" %s.owner_id=$1", recipesTable)
 	} else if params.Saved {
 		if params.AuthorId != nil {
 			whereStatement += fmt.Sprintf(" %[1]v.user_id=$1 AND %[2]v.owner_id=%[3]v AND %[2]v.visibility<>'%[4]v'",
-				recipeUsersTable, recipesTable, *params.AuthorId, model.VisibilityPrivate)
+				recipeBookTable, recipesTable, *params.AuthorId, model.VisibilityPrivate)
 		} else {
 			whereStatement += fmt.Sprintf(" %[1]v.user_id=$1 AND (%[2]v.owner_id=$1 OR %[2]v.visibility<>'%[3]v')",
-				recipeUsersTable, recipesTable, model.VisibilityPrivate)
+				recipeBookTable, recipesTable, model.VisibilityPrivate)
 		}
 	} else {
 		whereStatement += fmt.Sprintf(" %[1]v.visibility='%[2]v'", recipesTable, model.VisibilityPublic)
@@ -263,13 +270,17 @@ func (r *Repository) GetRandomRecipe(userId uuid.UUID, languages *[]string) (ent
 			%[1]v.owner_id,
 			%[1]v.visibility, %[1]v.encrypted,
 			%[1]v.language,
-			ARRAY(
-				SELECT json_agg(json_build_object('language', %[4]v.language, 'author_id', %[4]v.author_id))
+			(
+				SELECT COALESCE(
+					jsonb_agg(json_build_object('language', %[4]v.language, 'author_id', %[4]v.author_id))
+					FILTER (WHERE %[4]v.author_id IS NOT NULL),
+					'[]'
+				)
 				FROM %[4]v
-				WHERE recipe_id=$1 AND hidden=false
+				WHERE recipe_id=$1
 			) AS translations,
 			%[1]v.description,
-			%[1]v.rating, %[1]v.votes, coalesce(%[3]v.score, 0),
+			%[1]v.rating, %[1]v.votes, COALESCE(%[3]v.score, 0),
 			%[1]v.tags,
 			%[1]v.ingredients, %[1]v.cooking, %[1]v.pictures,
 			%[1]v.servings, %[1]v.cooking_time,
@@ -289,7 +300,7 @@ func (r *Repository) GetRandomRecipe(userId uuid.UUID, languages *[]string) (ent
 				FROM %[2]v
 				WHERE %[2]v.recipe_id=%[1]v.recipe_id AND user_id=$1
 			)
-	`, recipesTable, recipeUsersTable, scoresTable, translationsTable, model.VisibilityPublic)
+	`, recipesTable, recipeBookTable, scoresTable, translationsTable, model.VisibilityPublic)
 
 	var args []interface{}
 	args = append(args, userId)

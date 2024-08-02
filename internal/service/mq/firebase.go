@@ -64,8 +64,8 @@ func (s *Service) importFirebaseRecipe(firebaseRecipe firebase.Recipe, userId uu
 
 	var recipeCollections []uuid.UUID
 	for _, category := range firebaseRecipe.Categories {
-		if categoryId, ok := (*collections)[category]; ok {
-			recipeCollections = append(recipeCollections, categoryId)
+		if collectionId, ok := (*collections)[category]; ok {
+			recipeCollections = append(recipeCollections, collectionId)
 		} else {
 			if res, err := s.collectionRepo.CreateCollection(entity.CollectionInput{
 				Id:         uuid.New(),
@@ -74,14 +74,14 @@ func (s *Service) importFirebaseRecipe(firebaseRecipe firebase.Recipe, userId uu
 				Visibility: model.VisibilityPrivate,
 			}); err == nil {
 				(*collections)[category] = res
-				recipeCollections = append(recipeCollections, categoryId)
+				recipeCollections = append(recipeCollections, res)
 			}
 		}
 	}
 
 	if recipeId, _, err := s.recipeRepo.CreateRecipe(recipe); err == nil {
 		if firebaseRecipe.IsFavourite {
-			_ = s.recipeRepo.SetRecipeFavouriteStatus(recipeId, userId, true)
+			_ = s.recipeRepo.SaveRecipeToFavourites(recipeId, userId)
 		}
 		if len(recipeCollections) > 0 {
 			_ = s.recipeRepo.SetRecipeCollections(recipeId, userId, recipeCollections)

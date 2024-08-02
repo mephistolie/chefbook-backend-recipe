@@ -17,12 +17,17 @@ type RecipeState struct {
 	Score  int32   `db:"score"`
 	Votes  int32   `db:"votes"`
 
-	Tags        []string    `db:"tags"`
-	Collections Collections `db:"collections"`
-	IsFavourite bool        `db:"favourite"`
+	Tags        []string      `db:"tags"`
+	Collections CollectionIds `db:"collections"`
+	IsFavourite bool          `db:"favourite"`
 }
 
 func (r *RecipeState) Entity() entity.RecipeState {
+	var collections []uuid.UUID
+	for _, collection := range r.Collections {
+		collections = append(collections, collection.UUID)
+	}
+
 	var score *int32
 	if r.Score > 0 {
 		score = &r.Score
@@ -41,7 +46,7 @@ func (r *RecipeState) Entity() entity.RecipeState {
 		Votes:  r.Votes,
 
 		Tags:        r.Tags,
-		Collections: r.Collections,
+		Collections: collections,
 		IsFavourite: r.IsFavourite,
 	}
 }

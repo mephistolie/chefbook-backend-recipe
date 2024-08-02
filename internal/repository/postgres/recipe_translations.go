@@ -15,7 +15,7 @@ func (r *Repository) GetRecipeTranslations(recipeId uuid.UUID) (map[string][]uui
 	query := fmt.Sprintf(`
 		SELECT language, author_id
 		FROM %s
-		WHERE recipe_id=$1 AND hidden=false
+		WHERE recipe_id=$1
 	`, translationsTable)
 
 	rows, err := r.db.Query(query, recipeId)
@@ -40,7 +40,7 @@ func (r *Repository) GetRecipeTranslation(recipeId uuid.UUID, language string, a
 	query := fmt.Sprintf(`
 		SELECT author_id, name, description, ingredients, cooking
 		FROM %s
-		WHERE recipe_id=$1 AND language=$2 AND hidden=false
+		WHERE recipe_id=$1 AND language=$2
 	`, translationsTable)
 
 	args := []interface{}{recipeId, language}

@@ -33,8 +33,8 @@ CREATE INDEX collections_users_user_id_key ON collections_users (user_id);
 
 CREATE TABLE recipes_collections
 (
-    recipe_id       UUID REFERENCES recipes (recipe_id) ON DELETE CASCADE         NOT NULL,
-    collection_id   UUID REFERENCES collections (collection_id) ON DELETE CASCADE NOT NULL,
+    recipe_id         UUID REFERENCES recipes (recipe_id) ON DELETE CASCADE         NOT NULL,
+    collection_id     UUID REFERENCES collections (collection_id) ON DELETE CASCADE NOT NULL,
     binding_timestamp TIMESTAMP WITH TIME ZONE                                      NOT NULL DEFAULT now()::timestamp,
     UNIQUE (recipe_id, collection_id)
 );

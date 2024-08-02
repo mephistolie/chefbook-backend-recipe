@@ -29,9 +29,10 @@ const (
 	RecipeService_GenerateRecipePicturesUploadLinks_FullMethodName = "/v1.RecipeService/GenerateRecipePicturesUploadLinks"
 	RecipeService_SetRecipePictures_FullMethodName                 = "/v1.RecipeService/SetRecipePictures"
 	RecipeService_RateRecipe_FullMethodName                        = "/v1.RecipeService/RateRecipe"
-	RecipeService_SaveToRecipeBook_FullMethodName                  = "/v1.RecipeService/SaveToRecipeBook"
-	RecipeService_RemoveFromRecipeBook_FullMethodName              = "/v1.RecipeService/RemoveFromRecipeBook"
-	RecipeService_SetRecipeFavouriteStatus_FullMethodName          = "/v1.RecipeService/SetRecipeFavouriteStatus"
+	RecipeService_SaveRecipeToRecipeBook_FullMethodName            = "/v1.RecipeService/SaveRecipeToRecipeBook"
+	RecipeService_RemoveRecipeFromRecipeBook_FullMethodName        = "/v1.RecipeService/RemoveRecipeFromRecipeBook"
+	RecipeService_SaveRecipeToFavourites_FullMethodName            = "/v1.RecipeService/SaveRecipeToFavourites"
+	RecipeService_RemoveRecipeFromFavourites_FullMethodName        = "/v1.RecipeService/RemoveRecipeFromFavourites"
 	RecipeService_SetRecipeCollections_FullMethodName              = "/v1.RecipeService/SetRecipeCollections"
 	RecipeService_TranslateRecipe_FullMethodName                   = "/v1.RecipeService/TranslateRecipe"
 	RecipeService_DeleteRecipeTranslation_FullMethodName           = "/v1.RecipeService/DeleteRecipeTranslation"
@@ -60,9 +61,10 @@ type RecipeServiceClient interface {
 	GenerateRecipePicturesUploadLinks(ctx context.Context, in *GenerateRecipePicturesUploadLinksRequest, opts ...grpc.CallOption) (*GenerateRecipePicturesUploadLinksResponse, error)
 	SetRecipePictures(ctx context.Context, in *SetRecipePicturesRequest, opts ...grpc.CallOption) (*SetRecipePicturesResponse, error)
 	RateRecipe(ctx context.Context, in *RateRecipeRequest, opts ...grpc.CallOption) (*RateRecipeResponse, error)
-	SaveToRecipeBook(ctx context.Context, in *SaveToRecipeBookRequest, opts ...grpc.CallOption) (*SaveToRecipeBookResponse, error)
-	RemoveFromRecipeBook(ctx context.Context, in *RemoveFromRecipeBookRequest, opts ...grpc.CallOption) (*RemoveFromRecipeBookResponse, error)
-	SetRecipeFavouriteStatus(ctx context.Context, in *SetRecipeFavouriteStatusRequest, opts ...grpc.CallOption) (*SetRecipeFavouriteStatusResponse, error)
+	SaveRecipeToRecipeBook(ctx context.Context, in *SaveRecipeToRecipeBookRequest, opts ...grpc.CallOption) (*SaveRecipeToRecipeBookResponse, error)
+	RemoveRecipeFromRecipeBook(ctx context.Context, in *RemoveRecipeFromRecipeBookRequest, opts ...grpc.CallOption) (*RemoveRecipeFromRecipeBookResponse, error)
+	SaveRecipeToFavourites(ctx context.Context, in *SaveRecipeToFavouritesRequest, opts ...grpc.CallOption) (*SaveRecipeToFavouritesResponse, error)
+	RemoveRecipeFromFavourites(ctx context.Context, in *RemoveRecipeFromFavouritesRequest, opts ...grpc.CallOption) (*RemoveRecipeFromFavouritesResponse, error)
 	SetRecipeCollections(ctx context.Context, in *SetRecipeCollectionsRequest, opts ...grpc.CallOption) (*SetRecipeCollectionsResponse, error)
 	TranslateRecipe(ctx context.Context, in *TranslateRecipeRequest, opts ...grpc.CallOption) (*TranslateRecipeResponse, error)
 	DeleteRecipeTranslation(ctx context.Context, in *DeleteRecipeTranslationRequest, opts ...grpc.CallOption) (*DeleteRecipeTranslationResponse, error)
@@ -175,27 +177,36 @@ func (c *recipeServiceClient) RateRecipe(ctx context.Context, in *RateRecipeRequ
 	return out, nil
 }
 
-func (c *recipeServiceClient) SaveToRecipeBook(ctx context.Context, in *SaveToRecipeBookRequest, opts ...grpc.CallOption) (*SaveToRecipeBookResponse, error) {
-	out := new(SaveToRecipeBookResponse)
-	err := c.cc.Invoke(ctx, RecipeService_SaveToRecipeBook_FullMethodName, in, out, opts...)
+func (c *recipeServiceClient) SaveRecipeToRecipeBook(ctx context.Context, in *SaveRecipeToRecipeBookRequest, opts ...grpc.CallOption) (*SaveRecipeToRecipeBookResponse, error) {
+	out := new(SaveRecipeToRecipeBookResponse)
+	err := c.cc.Invoke(ctx, RecipeService_SaveRecipeToRecipeBook_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *recipeServiceClient) RemoveFromRecipeBook(ctx context.Context, in *RemoveFromRecipeBookRequest, opts ...grpc.CallOption) (*RemoveFromRecipeBookResponse, error) {
-	out := new(RemoveFromRecipeBookResponse)
-	err := c.cc.Invoke(ctx, RecipeService_RemoveFromRecipeBook_FullMethodName, in, out, opts...)
+func (c *recipeServiceClient) RemoveRecipeFromRecipeBook(ctx context.Context, in *RemoveRecipeFromRecipeBookRequest, opts ...grpc.CallOption) (*RemoveRecipeFromRecipeBookResponse, error) {
+	out := new(RemoveRecipeFromRecipeBookResponse)
+	err := c.cc.Invoke(ctx, RecipeService_RemoveRecipeFromRecipeBook_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *recipeServiceClient) SetRecipeFavouriteStatus(ctx context.Context, in *SetRecipeFavouriteStatusRequest, opts ...grpc.CallOption) (*SetRecipeFavouriteStatusResponse, error) {
-	out := new(SetRecipeFavouriteStatusResponse)
-	err := c.cc.Invoke(ctx, RecipeService_SetRecipeFavouriteStatus_FullMethodName, in, out, opts...)
+func (c *recipeServiceClient) SaveRecipeToFavourites(ctx context.Context, in *SaveRecipeToFavouritesRequest, opts ...grpc.CallOption) (*SaveRecipeToFavouritesResponse, error) {
+	out := new(SaveRecipeToFavouritesResponse)
+	err := c.cc.Invoke(ctx, RecipeService_SaveRecipeToFavourites_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *recipeServiceClient) RemoveRecipeFromFavourites(ctx context.Context, in *RemoveRecipeFromFavouritesRequest, opts ...grpc.CallOption) (*RemoveRecipeFromFavouritesResponse, error) {
+	out := new(RemoveRecipeFromFavouritesResponse)
+	err := c.cc.Invoke(ctx, RecipeService_RemoveRecipeFromFavourites_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -324,9 +335,10 @@ type RecipeServiceServer interface {
 	GenerateRecipePicturesUploadLinks(context.Context, *GenerateRecipePicturesUploadLinksRequest) (*GenerateRecipePicturesUploadLinksResponse, error)
 	SetRecipePictures(context.Context, *SetRecipePicturesRequest) (*SetRecipePicturesResponse, error)
 	RateRecipe(context.Context, *RateRecipeRequest) (*RateRecipeResponse, error)
-	SaveToRecipeBook(context.Context, *SaveToRecipeBookRequest) (*SaveToRecipeBookResponse, error)
-	RemoveFromRecipeBook(context.Context, *RemoveFromRecipeBookRequest) (*RemoveFromRecipeBookResponse, error)
-	SetRecipeFavouriteStatus(context.Context, *SetRecipeFavouriteStatusRequest) (*SetRecipeFavouriteStatusResponse, error)
+	SaveRecipeToRecipeBook(context.Context, *SaveRecipeToRecipeBookRequest) (*SaveRecipeToRecipeBookResponse, error)
+	RemoveRecipeFromRecipeBook(context.Context, *RemoveRecipeFromRecipeBookRequest) (*RemoveRecipeFromRecipeBookResponse, error)
+	SaveRecipeToFavourites(context.Context, *SaveRecipeToFavouritesRequest) (*SaveRecipeToFavouritesResponse, error)
+	RemoveRecipeFromFavourites(context.Context, *RemoveRecipeFromFavouritesRequest) (*RemoveRecipeFromFavouritesResponse, error)
 	SetRecipeCollections(context.Context, *SetRecipeCollectionsRequest) (*SetRecipeCollectionsResponse, error)
 	TranslateRecipe(context.Context, *TranslateRecipeRequest) (*TranslateRecipeResponse, error)
 	DeleteRecipeTranslation(context.Context, *DeleteRecipeTranslationRequest) (*DeleteRecipeTranslationResponse, error)
@@ -376,14 +388,17 @@ func (UnimplementedRecipeServiceServer) SetRecipePictures(context.Context, *SetR
 func (UnimplementedRecipeServiceServer) RateRecipe(context.Context, *RateRecipeRequest) (*RateRecipeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RateRecipe not implemented")
 }
-func (UnimplementedRecipeServiceServer) SaveToRecipeBook(context.Context, *SaveToRecipeBookRequest) (*SaveToRecipeBookResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SaveToRecipeBook not implemented")
+func (UnimplementedRecipeServiceServer) SaveRecipeToRecipeBook(context.Context, *SaveRecipeToRecipeBookRequest) (*SaveRecipeToRecipeBookResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SaveRecipeToRecipeBook not implemented")
 }
-func (UnimplementedRecipeServiceServer) RemoveFromRecipeBook(context.Context, *RemoveFromRecipeBookRequest) (*RemoveFromRecipeBookResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RemoveFromRecipeBook not implemented")
+func (UnimplementedRecipeServiceServer) RemoveRecipeFromRecipeBook(context.Context, *RemoveRecipeFromRecipeBookRequest) (*RemoveRecipeFromRecipeBookResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveRecipeFromRecipeBook not implemented")
 }
-func (UnimplementedRecipeServiceServer) SetRecipeFavouriteStatus(context.Context, *SetRecipeFavouriteStatusRequest) (*SetRecipeFavouriteStatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SetRecipeFavouriteStatus not implemented")
+func (UnimplementedRecipeServiceServer) SaveRecipeToFavourites(context.Context, *SaveRecipeToFavouritesRequest) (*SaveRecipeToFavouritesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SaveRecipeToFavourites not implemented")
+}
+func (UnimplementedRecipeServiceServer) RemoveRecipeFromFavourites(context.Context, *RemoveRecipeFromFavouritesRequest) (*RemoveRecipeFromFavouritesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveRecipeFromFavourites not implemented")
 }
 func (UnimplementedRecipeServiceServer) SetRecipeCollections(context.Context, *SetRecipeCollectionsRequest) (*SetRecipeCollectionsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetRecipeCollections not implemented")
@@ -614,56 +629,74 @@ func _RecipeService_RateRecipe_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
-func _RecipeService_SaveToRecipeBook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SaveToRecipeBookRequest)
+func _RecipeService_SaveRecipeToRecipeBook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SaveRecipeToRecipeBookRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RecipeServiceServer).SaveToRecipeBook(ctx, in)
+		return srv.(RecipeServiceServer).SaveRecipeToRecipeBook(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RecipeService_SaveToRecipeBook_FullMethodName,
+		FullMethod: RecipeService_SaveRecipeToRecipeBook_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RecipeServiceServer).SaveToRecipeBook(ctx, req.(*SaveToRecipeBookRequest))
+		return srv.(RecipeServiceServer).SaveRecipeToRecipeBook(ctx, req.(*SaveRecipeToRecipeBookRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _RecipeService_RemoveFromRecipeBook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RemoveFromRecipeBookRequest)
+func _RecipeService_RemoveRecipeFromRecipeBook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveRecipeFromRecipeBookRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RecipeServiceServer).RemoveFromRecipeBook(ctx, in)
+		return srv.(RecipeServiceServer).RemoveRecipeFromRecipeBook(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RecipeService_RemoveFromRecipeBook_FullMethodName,
+		FullMethod: RecipeService_RemoveRecipeFromRecipeBook_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RecipeServiceServer).RemoveFromRecipeBook(ctx, req.(*RemoveFromRecipeBookRequest))
+		return srv.(RecipeServiceServer).RemoveRecipeFromRecipeBook(ctx, req.(*RemoveRecipeFromRecipeBookRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _RecipeService_SetRecipeFavouriteStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SetRecipeFavouriteStatusRequest)
+func _RecipeService_SaveRecipeToFavourites_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SaveRecipeToFavouritesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RecipeServiceServer).SetRecipeFavouriteStatus(ctx, in)
+		return srv.(RecipeServiceServer).SaveRecipeToFavourites(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RecipeService_SetRecipeFavouriteStatus_FullMethodName,
+		FullMethod: RecipeService_SaveRecipeToFavourites_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RecipeServiceServer).SetRecipeFavouriteStatus(ctx, req.(*SetRecipeFavouriteStatusRequest))
+		return srv.(RecipeServiceServer).SaveRecipeToFavourites(ctx, req.(*SaveRecipeToFavouritesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RecipeService_RemoveRecipeFromFavourites_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveRecipeFromFavouritesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RecipeServiceServer).RemoveRecipeFromFavourites(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RecipeService_RemoveRecipeFromFavourites_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RecipeServiceServer).RemoveRecipeFromFavourites(ctx, req.(*RemoveRecipeFromFavouritesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -932,16 +965,20 @@ var RecipeService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _RecipeService_RateRecipe_Handler,
 		},
 		{
-			MethodName: "SaveToRecipeBook",
-			Handler:    _RecipeService_SaveToRecipeBook_Handler,
+			MethodName: "SaveRecipeToRecipeBook",
+			Handler:    _RecipeService_SaveRecipeToRecipeBook_Handler,
 		},
 		{
-			MethodName: "RemoveFromRecipeBook",
-			Handler:    _RecipeService_RemoveFromRecipeBook_Handler,
+			MethodName: "RemoveRecipeFromRecipeBook",
+			Handler:    _RecipeService_RemoveRecipeFromRecipeBook_Handler,
 		},
 		{
-			MethodName: "SetRecipeFavouriteStatus",
-			Handler:    _RecipeService_SetRecipeFavouriteStatus_Handler,
+			MethodName: "SaveRecipeToFavourites",
+			Handler:    _RecipeService_SaveRecipeToFavourites_Handler,
+		},
+		{
+			MethodName: "RemoveRecipeFromFavourites",
+			Handler:    _RecipeService_RemoveRecipeFromFavourites_Handler,
 		},
 		{
 			MethodName: "SetRecipeCollections",
