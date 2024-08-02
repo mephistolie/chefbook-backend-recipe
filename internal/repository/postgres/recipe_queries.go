@@ -68,15 +68,15 @@ func (r *Repository) getRecipesByParamsQuery(params entity.RecipesQuery, userId 
 				(
 					SELECT 1
 					FROM %[3]v
-					WHERE %[3]v.recipe_id=%[3]v.recipe_id AND user_id=$1
+					WHERE %[3]v.recipe_id=%[1]v.recipe_id AND %[3]v.user_id=$1
 				)
-			) AS favoutie,
+			) AS favourite,
 			(
 				SELECT EXISTS
 				(
 					SELECT 1
 					FROM %[2]v
-					WHERE %[2]v.recipe_id=%[1]v.recipe_id AND user_id=$1
+					WHERE %[2]v.recipe_id=%[1]v.recipe_id AND %[2]v.user_id=$1
 				)
 			) AS saved,
 			%[1]v.pictures,

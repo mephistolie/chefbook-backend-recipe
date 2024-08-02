@@ -35,16 +35,16 @@ func (r *Repository) GetRecipeBook(userId uuid.UUID) ([]entity.RecipeState, erro
 				(
 					SELECT 1
 					FROM %[3]v
-					WHERE %[3]v.recipe_id=%[3]v.recipe_id AND user_id=$1
+					WHERE %[3]v.recipe_id=%[2]v.recipe_id AND %[3]v.user_id=$1
 				)
-			) AS favoutie,
+			) AS favourite,
 			%[1]v.version
 		FROM
 			%[2]v
 		LEFT JOIN
-			%[1]v ON %[1]v.recipe_id=%[2]v.recipe_id AND user_id=$1
+			%[1]v ON %[1]v.recipe_id=%[2]v.recipe_id
 		LEFT JOIN
-			%[4]v ON %[4]v.recipe_id=%[2]v.recipe_id AND user_id=$1
+			%[4]v ON %[4]v.recipe_id=%[2]v.recipe_id AND %[4]v.user_id=$1
 		WHERE
 			%[2]v.user_id=$1 AND (%[1]v.owner_id=$1 OR %[1]v.visibility<>'%[7]v')
 	`, recipesTable, recipeBookTable, favouritesTable, scoresTable, translationsTable,
@@ -52,7 +52,7 @@ func (r *Repository) GetRecipeBook(userId uuid.UUID) ([]entity.RecipeState, erro
 
 	rows, err := r.db.Query(query, userId)
 	if err != nil {
-		log.Errorf("unable to get recipes: %s", query)
+		log.Errorf("unable to get recipes: %s", err)
 		return []entity.RecipeState{}, fail.GrpcUnknown
 	}
 
@@ -67,7 +67,7 @@ func (r *Repository) GetRecipeBook(userId uuid.UUID) ([]entity.RecipeState, erro
 			m.SQLScanner(&recipe.Tags), m.SQLScanner(&recipe.Collections), &recipe.IsFavourite,
 			&recipe.Version,
 		); err != nil {
-			log.Warnf("unable to parse recipe info: ", err)
+			log.Warnf("unable to parse recipe info: %s", err)
 			continue
 		}
 		recipes = append(recipes, recipe.Entity())
