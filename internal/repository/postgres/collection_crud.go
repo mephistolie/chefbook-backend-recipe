@@ -184,19 +184,22 @@ func (r *Repository) GetCollection(collectionId, userId uuid.UUID) (entity.Colle
 func (r *Repository) UpdateCollection(collection entity.CollectionInput) error {
 	query := fmt.Sprintf(`
 		UPDATE %[1]v
-		LEFT JOIN
-			%[2]v ON %[2]v.collection_id=%[1]v.collection_id
-		SET %[1]v.visibility=$3, %[1]v.name=$4
-		WHERE %[1]v.collection_id=$1 AND %[2]v.contributor_id=$2 AND %[2]v.role='%[3]v'
+		SET name=$3, visibility=$4
+		WHERE collection_id IN (
+			SELECT %[1]v.collection_id
+			FROM %[1]v
+			LEFT JOIN %[2]v ON %[2]v.collection_id=%[1]v.collection_id
+			WHERE %[1]v.collection_id=$1 AND %[2]v.contributor_id=$2 AND %[2]v.role='%[3]v'
+		)
 	`, collectionsTable, collectionContributorsTable, entity.RoleOwner)
 
-	result, err := r.db.Exec(query, collection.Id, collection.UserId, collection.Visibility, collection.Name)
+	result, err := r.db.Exec(query, collection.Id, collection.UserId, collection.Name, collection.Visibility)
 	if err != nil {
 		log.Errorf("unable to update collection %s: %s", collection.Id, err)
 		return fail.GrpcUnknown
 	}
 	if rows, err := result.RowsAffected(); err != nil || rows == 0 {
-		log.Errorf("user %s isn't owner of collection %s: %s", collection.UserId, collection.Id, err)
+		log.Warnf("user %s isn't owner of collection %s: %s", collection.UserId, collection.Id, err)
 		return fail.GrpcAccessDenied
 	}
 
@@ -206,14 +209,22 @@ func (r *Repository) UpdateCollection(collection entity.CollectionInput) error {
 func (r *Repository) DeleteCollection(collectionId, userId uuid.UUID) error {
 	query := fmt.Sprintf(`
 		DELETE FROM %[1]v
-		LEFT JOIN
-			%[2]v ON %[2]v.collection_id=%[1]v.collection_id
-		WHERE %[1]v.collection_id=$1 AND %[2]v.contributor_id=$2 AND %[2]v.role='%[3]v'
+		WHERE collection_id IN (
+			SELECT %[1]v.collection_id
+			FROM %[1]v
+			LEFT JOIN %[2]v ON %[2]v.collection_id=%[1]v.collection_id
+			WHERE %[1]v.collection_id=$1 AND %[2]v.contributor_id=$2 AND %[2]v.role='%[3]v'
+		)
 	`, collectionsTable, collectionContributorsTable, entity.RoleOwner)
 
-	if _, err := r.db.Exec(query, collectionId, userId); err != nil {
+	result, err := r.db.Exec(query, collectionId, userId)
+	if err != nil {
 		log.Errorf("unable to delete collection %s: %s", collectionId, err)
 		return fail.GrpcUnknown
+	}
+	if rows, err := result.RowsAffected(); err != nil || rows == 0 {
+		log.Warnf("user %s isn't owner of collection %s: %s", userId, collectionId, err)
+		return fail.GrpcAccessDenied
 	}
 
 	return nil

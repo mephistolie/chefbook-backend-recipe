@@ -57,6 +57,9 @@ type Collection interface {
 	GetCollection(collectionId uuid.UUID, userId uuid.UUID) (entity.DetailedCollection, error)
 	UpdateCollection(input entity.CollectionInput) error
 	DeleteCollection(collectionId, userId uuid.UUID) error
+
+	SaveCollectionToRecipeBook(collectionId, userId uuid.UUID) error
+	RemoveCollectionFromRecipeBook(collectionId, userId uuid.UUID) error
 }
 
 func New(
