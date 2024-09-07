@@ -164,16 +164,21 @@ func (r *Repository) getEditableCollections(tx *sql.Tx, userId uuid.UUID) ([]uui
 }
 
 func (r *Repository) checkCollectionAccessible(tx *sql.Tx, collectionId, userId uuid.UUID) bool {
+	var hasAccess bool
+
 	query := fmt.Sprintf(`
-		SELECT 1
-		FROM %[1]v
-		WHERE %[1]v.collection_id=$1 %[1]v.contributor_id=$2
+		SELECT EXISTS
+		(
+			SELECT 1
+			FROM %[1]v
+			WHERE %[1]v.collection_id=$1 AND %[1]v.contributor_id=$2
+		)
 	`, collectionContributorsTable)
 
-	result, err := tx.Exec(query, collectionId, userId)
-	if err != nil {
+	row := tx.QueryRow(query, collectionId, userId)
+	if err := row.Scan(&hasAccess); err != nil {
+		log.Errorf("unable to check is user %s has access to collection %s: %s", userId, collectionId, err)
 		return false
 	}
-	rows, err := result.RowsAffected()
-	return err == nil && rows > 0
+	return hasAccess
 }

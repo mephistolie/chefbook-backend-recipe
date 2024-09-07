@@ -55,7 +55,7 @@ func (s *Service) RemoveRecipeFromCollection(recipeId, collectionId, userId uuid
 	if err := s.checkRecipeAccessible(recipeId, userId); err != nil {
 		return err
 	}
-	return s.recipeRepo.AddRecipeToCollection(recipeId, collectionId, userId)
+	return s.recipeRepo.RemoveRecipeFromCollection(recipeId, collectionId, userId)
 }
 
 func (s *Service) SetRecipeCollections(recipeId, userId uuid.UUID, collections []uuid.UUID) error {
