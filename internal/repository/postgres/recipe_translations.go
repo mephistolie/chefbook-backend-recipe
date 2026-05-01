@@ -89,8 +89,8 @@ func (r *Repository) TranslateRecipe(recipeId uuid.UUID, translation entity.Reci
 	addTranslationQuery := fmt.Sprintf(`
 		INSERT INTO %s (recipe_id, language, author_id, name, description, ingredients, cooking)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		ON CONFLICT (recipe_id, author_id) DO UPDATE
-		SET author_id=$3, name=$4, description=$5, ingredients=$6, cooking=$7;
+		ON CONFLICT (recipe_id, language, author_id) DO UPDATE
+		SET name=$4, description=$5, ingredients=$6, cooking=$7;
 	`, translationsTable)
 
 	if _, err = tx.Exec(addTranslationQuery, recipeId, t.Language, translation.AuthorId, t.Name, t.Description, t.Ingredients, t.Cooking); err != nil {

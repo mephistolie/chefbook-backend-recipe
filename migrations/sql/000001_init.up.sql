@@ -53,7 +53,7 @@ CREATE TABLE translations
     description VARCHAR(1500)                                                  DEFAULT NULL,
     ingredients JSONB                                                 NOT NULL,
     cooking     JSONB                                                 NOT NULL,
-    UNIQUE (recipe_id, author_id)
+    UNIQUE (recipe_id, language, author_id)
 );
 
 CREATE TABLE recipe_pictures_uploads
