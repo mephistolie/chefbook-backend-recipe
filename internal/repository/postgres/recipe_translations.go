@@ -150,7 +150,7 @@ func (r *Repository) DeleteRecipeTranslation(recipeId uuid.UUID, userId uuid.UUI
 		SELECT COUNT(*)
 		FROM %s
 		WHERE recipe_id=$1 AND language=$2
-	`, recipesTable)
+	`, translationsTable)
 
 	var translationsCount int
 
