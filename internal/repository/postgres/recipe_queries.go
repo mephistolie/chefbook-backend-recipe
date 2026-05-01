@@ -113,8 +113,10 @@ func (r *Repository) getRecipesWhereStatementByParams(params entity.RecipesQuery
 		whereStatement += fmt.Sprintf(" %s.owner_id=$1", recipesTable)
 	} else if params.Saved {
 		if params.AuthorId != nil {
-			whereStatement += fmt.Sprintf(" %[1]v.user_id=$1 AND %[2]v.owner_id=%[3]v AND %[2]v.visibility<>'%[4]v'",
-				recipeBookTable, recipesTable, *params.AuthorId, model.VisibilityPrivate)
+			whereStatement += fmt.Sprintf(" %[1]v.user_id=$1 AND %[2]v.owner_id=$%[3]d AND %[2]v.visibility<>'%[4]v'",
+				recipeBookTable, recipesTable, argNumber, model.VisibilityPrivate)
+			args = append(args, *params.AuthorId)
+			argNumber += 1
 		} else {
 			whereStatement += fmt.Sprintf(" %[1]v.user_id=$1 AND (%[2]v.owner_id=$1 OR %[2]v.visibility<>'%[3]v')",
 				recipeBookTable, recipesTable, model.VisibilityPrivate)
