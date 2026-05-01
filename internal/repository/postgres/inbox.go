@@ -78,9 +78,12 @@ func (r *Repository) DeleteUserData(userId uuid.UUID, deleteSharedData bool, mes
 
 		deleteUserCollectionsQuery := fmt.Sprintf(`
 			DELETE FROM %[1]v
-			RIGHT JOIN
-				%[2]v ON %[2]v.recipe_id=%[1]v.recipe_id
-			WHERE %[2]v.user_id=$1 AND %[2]v.role='%[3]v'
+			WHERE collection_id IN
+			(
+				SELECT collection_id
+				FROM %[2]v
+				WHERE contributor_id=$1 AND role='%[3]v'
+			)
 		`, collectionsTable, collectionContributorsTable, entity.RoleOwner)
 
 		if _, err := tx.Exec(deleteUserCollectionsQuery, userId); err != nil {
@@ -108,19 +111,21 @@ func (r *Repository) DeleteUserData(userId uuid.UUID, deleteSharedData bool, mes
 
 		deleteNotUsedCollectionsQuery := fmt.Sprintf(`
 			DELETE FROM %[1]v
-			WHERE collection_id
+			WHERE collection_id IN
 			(
 				SELECT %[1]v.collection_id
 				FROM %[1]v
 				LEFT JOIN
 					%[2]v ON %[2]v.collection_id=%[1]v.collection_id
-				LEFT JOIN
-					%[3]v ON %[3]v.collection_id=%[1]v.collection_id
-				HAVING COUNT(%[2]v.user_id) > 0
 				WHERE
-					%[2]v.contributor_id=$1 AND %[2]v.role='%[4]v' AND %[1]v.visibility<>'%[4]v'
+					%[2]v.contributor_id=$1 AND %[2]v.role='%[4]v' AND NOT EXISTS
+					(
+						SELECT 1
+						FROM %[3]v
+						WHERE %[3]v.collection_id=%[1]v.collection_id AND %[3]v.user_id<>$1
+					)
 			)
-		`, collectionsTable, collectionContributorsTable, collectionUsersTable, entity.RoleOwner, model.VisibilityPrivate)
+			`, collectionsTable, collectionContributorsTable, collectionUsersTable, entity.RoleOwner)
 
 		if _, err := tx.Exec(deleteNotUsedCollectionsQuery, userId); err != nil {
 			log.Errorf("unable to delete not used user %s collections: %s", userId, err)
