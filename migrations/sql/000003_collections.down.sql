@@ -8,4 +8,6 @@ DROP TABLE collections_contributors;
 
 DROP TYPE contributor_role;
 
+DROP TABLE collections_keys;
+
 DROP TABLE collections;

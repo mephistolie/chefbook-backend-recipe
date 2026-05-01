@@ -2,7 +2,15 @@ DROP TABLE outbox;
 
 DROP TABLE inbox;
 
-DROP TABLE recipes_users;
+DROP TABLE scores;
+
+DROP TABLE favourites;
+
+DROP TABLE recipe_book;
+
+DROP TABLE recipe_pictures_uploads;
+
+DROP TABLE translations;
 
 DROP TABLE recipes;
 
