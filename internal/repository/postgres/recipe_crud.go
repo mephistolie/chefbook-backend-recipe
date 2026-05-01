@@ -146,7 +146,7 @@ func (r *Repository) GetRecipe(recipeId, userId uuid.UUID) (entity.Recipe, error
 		FROM
 			%[1]v
 		LEFT JOIN
-			%[4]v ON %[4]v.recipe_id=%[4]v.recipe_id AND %[4]v.user_id=$2
+			%[4]v ON %[4]v.recipe_id=%[1]v.recipe_id AND %[4]v.user_id=$2
 		WHERE %[1]v.recipe_id=$1
 	`, recipesTable, recipeBookTable, favouritesTable, scoresTable, translationsTable, getRecipeCollectionIdsSubquery)
 

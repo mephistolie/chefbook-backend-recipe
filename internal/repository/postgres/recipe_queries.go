@@ -88,7 +88,7 @@ func (r *Repository) getRecipesByParamsQuery(params entity.RecipesQuery, userId 
 		LEFT JOIN
 			%[2]v ON %[2]v.recipe_id=%[1]v.recipe_id AND %[2]v.user_id=$1
 		LEFT JOIN
-			%[4]v ON %[4]v.recipe_id=%[4]v.recipe_id AND %[4]v.user_id=$1
+			%[4]v ON %[4]v.recipe_id=%[1]v.recipe_id AND %[4]v.user_id=$1
 	`, recipesTable, recipeBookTable, favouritesTable, scoresTable, getRecipeCollectionIdsSubquery)
 	args = append(args, userId)
 
