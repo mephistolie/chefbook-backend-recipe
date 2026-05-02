@@ -133,7 +133,7 @@ func (r *Repository) DeleteUnusedRecipePictures(recipeId uuid.UUID, usedPictures
 
 		if exists, ok := usedPicturesMap[pictureId]; !ok || !exists {
 			if err = r.client.RemoveObject(context.Background(), r.bucket, object.Key, opts); err != nil {
-				log.Warn("unable to delete picture %s: %s", object.Key, err)
+				log.Warnf("unable to delete picture %s: %s", object.Key, err)
 			}
 		}
 	}
@@ -162,16 +162,16 @@ func (r *Repository) generatePictureUploadLink(recipeId uuid.UUID, pictureId uui
 	}
 	if !isEncrypted {
 		if err := policy.SetContentTypeStartsWith("image"); err != nil {
-			log.Errorf("unable to set content type in post policy: %s", objectName, err)
+			log.Errorf("unable to set content type in post policy for object %s: %s", objectName, err)
 			return entity.PictureUpload{}, fail.GrpcUnknown
 		}
 	}
 	if err := policy.SetContentLengthRange(0, maxSize); err != nil {
-		log.Errorf("unable to set content length in post policy: %s", objectName, err)
+		log.Errorf("unable to set content length in post policy for object %s: %s", objectName, err)
 		return entity.PictureUpload{}, fail.GrpcUnknown
 	}
 	if err := policy.SetExpires(time.Now().Add(1 * time.Hour)); err != nil {
-		log.Errorf("unable to set expiration in post policy: %s", objectName, err)
+		log.Errorf("unable to set expiration in post policy for object %s: %s", objectName, err)
 		return entity.PictureUpload{}, fail.GrpcUnknown
 	}
 

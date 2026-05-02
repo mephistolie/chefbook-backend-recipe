@@ -30,7 +30,7 @@ func (s *Service) getProfilesInfo(profileIds []string) map[string]entity.Profile
 			}
 		}
 	} else {
-		log.Warn("unable to get profiles info: %s", err)
+		log.Warnf("unable to get profiles info: %s", err)
 	}
 
 	return profilesInfo

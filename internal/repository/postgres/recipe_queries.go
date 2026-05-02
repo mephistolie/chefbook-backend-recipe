@@ -328,7 +328,7 @@ func (r *Repository) GetRandomRecipe(userId uuid.UUID, languages *[]string) (ent
 		&recipe.Calories, &recipe.Protein, &recipe.Fats, &recipe.Carbohydrates,
 		&recipe.CreationTimestamp, &recipe.UpdateTimestamp, &recipe.Version,
 	); err != nil {
-		log.Debug("unable to get random recipe for user %s: %s", userId, err)
+		log.Debugf("unable to get random recipe for user %s: %s", userId, err)
 		return entity.Recipe{}, fail.GrpcNotFound
 	}
 
@@ -354,7 +354,7 @@ func (r *Repository) GetRecipeNames(recipeIds []uuid.UUID, userId uuid.UUID) (ma
 		var id uuid.UUID
 		var name string
 		if err = rows.Scan(&id, &name); err != nil {
-			log.Warnf("unable to parse recipe name: ", err)
+			log.Warnf("unable to parse recipe name: %s", err)
 			continue
 		}
 		recipeNames[id] = name
