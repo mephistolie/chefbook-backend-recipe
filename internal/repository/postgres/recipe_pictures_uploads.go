@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"github.com/google/uuid"
@@ -11,18 +12,18 @@ import (
 	"github.com/mephistolie/chefbook-backend-recipe/internal/repository/postgres/dto"
 )
 
-func (r *Repository) GetRecipePictureIdsToUpload(recipeId uuid.UUID, picturesCount int) ([]uuid.UUID, error) {
-	tx, err := r.startTransaction()
+func (r *Repository) GetRecipePictureIdsToUpload(ctx context.Context, recipeId uuid.UUID, picturesCount int) ([]uuid.UUID, error) {
+	tx, err := r.startTransaction(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	pictures, hasRequest, err := r.getExistingRecipePicturesUploadsQuery(recipeId, tx)
+	pictures, hasRequest, err := r.getExistingRecipePicturesUploadsQuery(ctx, recipeId, tx)
 	if err != nil {
 		return nil, err
 	}
 	if !hasRequest {
-		return r.createRecipePicturesUploadRequest(recipeId, picturesCount, tx)
+		return r.createRecipePicturesUploadRequest(ctx, recipeId, picturesCount, tx)
 	}
 
 	existingUploadsSize := len(pictures)
@@ -34,7 +35,7 @@ func (r *Repository) GetRecipePictureIdsToUpload(recipeId uuid.UUID, picturesCou
 		for i := existingUploadsSize; i < picturesCount; i++ {
 			pictures = append(pictures, uuid.New())
 		}
-		if err = r.updateRecipePicturesUploadRequest(recipeId, pictures, tx); err != nil {
+		if err = r.updateRecipePicturesUploadRequest(ctx, recipeId, pictures, tx); err != nil {
 			return nil, err
 		}
 	}
@@ -42,7 +43,7 @@ func (r *Repository) GetRecipePictureIdsToUpload(recipeId uuid.UUID, picturesCou
 	return pictures, commitTransaction(tx)
 }
 
-func (r *Repository) getExistingRecipePicturesUploadsQuery(recipeId uuid.UUID, tx *sql.Tx) (dto.RecipePicturesUpload, bool, error) {
+func (r *Repository) getExistingRecipePicturesUploadsQuery(ctx context.Context, recipeId uuid.UUID, tx *sql.Tx) (dto.RecipePicturesUpload, bool, error) {
 	var pictures dto.RecipePicturesUpload
 	hasRequest := false
 
@@ -52,7 +53,7 @@ func (r *Repository) getExistingRecipePicturesUploadsQuery(recipeId uuid.UUID, t
 		WHERE recipe_id=$1
 	`, recipePicturesUploadsTable)
 
-	rows, err := tx.Query(getExistingPicturesQuery, recipeId)
+	rows, err := tx.QueryContext(ctx, getExistingPicturesQuery, recipeId)
 	if err != nil {
 		return nil, false, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
@@ -68,7 +69,7 @@ func (r *Repository) getExistingRecipePicturesUploadsQuery(recipeId uuid.UUID, t
 	return pictures, hasRequest, nil
 }
 
-func (r *Repository) createRecipePicturesUploadRequest(recipeId uuid.UUID, picturesCount int, tx *sql.Tx) ([]uuid.UUID, error) {
+func (r *Repository) createRecipePicturesUploadRequest(ctx context.Context, recipeId uuid.UUID, picturesCount int, tx *sql.Tx) ([]uuid.UUID, error) {
 	var pictures dto.RecipePicturesUpload
 
 	for i := 0; i < picturesCount; i++ {
@@ -80,14 +81,14 @@ func (r *Repository) createRecipePicturesUploadRequest(recipeId uuid.UUID, pictu
 		VALUES ($1, $2)
 	`, recipePicturesUploadsTable)
 
-	if _, err := tx.Exec(createRequestQuery, recipeId, pictures); err != nil {
+	if _, err := tx.ExecContext(ctx, createRequestQuery, recipeId, pictures); err != nil {
 		log.Errorf("unable to create recipe %s pictures uploading request: %s", recipeId, err)
 		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 	return pictures, commitTransaction(tx)
 }
 
-func (r *Repository) updateRecipePicturesUploadRequest(recipeId uuid.UUID, pictures dto.RecipePicturesUpload, tx *sql.Tx) error {
+func (r *Repository) updateRecipePicturesUploadRequest(ctx context.Context, recipeId uuid.UUID, pictures dto.RecipePicturesUpload, tx *sql.Tx) error {
 
 	updateRequestQuery := fmt.Sprintf(`
 		UPDATE %[1]v
@@ -95,25 +96,25 @@ func (r *Repository) updateRecipePicturesUploadRequest(recipeId uuid.UUID, pictu
 		WHERE recipe_id=$1
 	`, recipePicturesUploadsTable)
 
-	if _, err := tx.Exec(updateRequestQuery, recipeId, pictures); err != nil {
+	if _, err := tx.ExecContext(ctx, updateRequestQuery, recipeId, pictures); err != nil {
 		log.Errorf("unable to update recipe %s pictures uploading request: %s", recipeId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 	return nil
 }
 
-func (r *Repository) SetRecipePictures(
+func (r *Repository) SetRecipePictures(ctx context.Context,
 	recipeId uuid.UUID,
 	pictures entity.RecipePictures,
 	pictureIds []uuid.UUID,
 	version *int32,
 ) (int32, error) {
-	tx, err := r.startTransaction()
+	tx, err := r.startTransaction(ctx)
 	if err != nil {
 		return 0, err
 	}
 
-	if err = r.deleteUsedPictureIds(recipeId, pictureIds, tx); err != nil {
+	if err = r.deleteUsedPictureIds(ctx, recipeId, pictureIds, tx); err != nil {
 		return 0, err
 	}
 
@@ -132,7 +133,7 @@ func (r *Repository) SetRecipePictures(
 
 	updateRecipeQuery += " RETURNING version"
 
-	row := tx.QueryRow(updateRecipeQuery, recipeId, dtos)
+	row := tx.QueryRowContext(ctx, updateRecipeQuery, recipeId, dtos)
 	if err = row.Scan(&newVersion); err != nil {
 		if version != nil {
 			return 0, errorWithTransactionRollback(tx, recipeFail.GrpcOutdatedVersion)
@@ -144,8 +145,8 @@ func (r *Repository) SetRecipePictures(
 	return newVersion, commitTransaction(tx)
 }
 
-func (r *Repository) deleteUsedPictureIds(recipeId uuid.UUID, picturesIds []uuid.UUID, tx *sql.Tx) error {
-	picturesUploads, hasRequest, err := r.getExistingRecipePicturesUploadsQuery(recipeId, tx)
+func (r *Repository) deleteUsedPictureIds(ctx context.Context, recipeId uuid.UUID, picturesIds []uuid.UUID, tx *sql.Tx) error {
+	picturesUploads, hasRequest, err := r.getExistingRecipePicturesUploadsQuery(ctx, recipeId, tx)
 	if err != nil {
 		return err
 	}
@@ -166,11 +167,11 @@ func (r *Repository) deleteUsedPictureIds(recipeId uuid.UUID, picturesIds []uuid
 		}
 
 		if len(unusedPictures) > 0 {
-			if err = r.updateRecipePicturesUploadRequest(recipeId, unusedPictures, tx); err != nil {
+			if err = r.updateRecipePicturesUploadRequest(ctx, recipeId, unusedPictures, tx); err != nil {
 				return err
 			}
 		} else {
-			if err = r.deleteRecipePicturesUploadRequest(recipeId, tx); err != nil {
+			if err = r.deleteRecipePicturesUploadRequest(ctx, recipeId, tx); err != nil {
 				return err
 			}
 		}
@@ -179,14 +180,14 @@ func (r *Repository) deleteUsedPictureIds(recipeId uuid.UUID, picturesIds []uuid
 	return nil
 }
 
-func (r *Repository) deleteRecipePicturesUploadRequest(recipeId uuid.UUID, tx *sql.Tx) error {
+func (r *Repository) deleteRecipePicturesUploadRequest(ctx context.Context, recipeId uuid.UUID, tx *sql.Tx) error {
 
 	deleteRequestQuery := fmt.Sprintf(`
 		DELETE FROM %[1]v
 		WHERE recipe_id=$1
 	`, recipePicturesUploadsTable)
 
-	if _, err := tx.Exec(deleteRequestQuery, recipeId); err != nil {
+	if _, err := tx.ExecContext(ctx, deleteRequestQuery, recipeId); err != nil {
 		log.Errorf("unable to delete recipe %s pictures uploading request: %s", recipeId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}

@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"github.com/google/uuid"
@@ -10,8 +11,8 @@ import (
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
 )
 
-func (r *Repository) ConfirmFirebaseDataLoad(messageId uuid.UUID) error {
-	tx, err := r.handleMessageIdempotently(messageId)
+func (r *Repository) ConfirmFirebaseDataLoad(ctx context.Context, messageId uuid.UUID) error {
+	tx, err := r.handleMessageIdempotently(ctx, messageId)
 	if err != nil {
 		if isUniqueViolationError(err) {
 			return nil
@@ -22,8 +23,8 @@ func (r *Repository) ConfirmFirebaseDataLoad(messageId uuid.UUID) error {
 	return commitTransaction(tx)
 }
 
-func (r *Repository) DeleteUserEncryptedRecipes(userId uuid.UUID, messageId uuid.UUID) error {
-	tx, err := r.handleMessageIdempotently(messageId)
+func (r *Repository) DeleteUserEncryptedRecipes(ctx context.Context, userId uuid.UUID, messageId uuid.UUID) error {
+	tx, err := r.handleMessageIdempotently(ctx, messageId)
 	if err != nil {
 		if isUniqueViolationError(err) {
 			return nil
@@ -37,7 +38,7 @@ func (r *Repository) DeleteUserEncryptedRecipes(userId uuid.UUID, messageId uuid
 		WHERE owner_id=$1 AND encrypted=true
 	`, recipesTable)
 
-	if _, err := tx.Exec(deleteRecipesQuery, userId); err != nil {
+	if _, err := tx.ExecContext(ctx, deleteRecipesQuery, userId); err != nil {
 		log.Errorf("unable to delete user %s encrypted recipes: %s", userId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
@@ -45,8 +46,8 @@ func (r *Repository) DeleteUserEncryptedRecipes(userId uuid.UUID, messageId uuid
 	return commitTransaction(tx)
 }
 
-func (r *Repository) DeleteUserData(userId uuid.UUID, deleteSharedData bool, messageId uuid.UUID) error {
-	tx, err := r.handleMessageIdempotently(messageId)
+func (r *Repository) DeleteUserData(ctx context.Context, userId uuid.UUID, deleteSharedData bool, messageId uuid.UUID) error {
+	tx, err := r.handleMessageIdempotently(ctx, messageId)
 	if err != nil {
 		if isUniqueViolationError(err) {
 			return nil
@@ -60,7 +61,7 @@ func (r *Repository) DeleteUserData(userId uuid.UUID, deleteSharedData bool, mes
 		WHERE user_id=$1
 	`, recipeBookTable)
 
-	if _, err := tx.Exec(deleteRecipeBookQuery, userId); err != nil {
+	if _, err := tx.ExecContext(ctx, deleteRecipeBookQuery, userId); err != nil {
 		log.Errorf("unable to delete user %s recipe book: %s", userId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
@@ -71,7 +72,7 @@ func (r *Repository) DeleteUserData(userId uuid.UUID, deleteSharedData bool, mes
 			WHERE owner_id=$1
 		`, recipesTable)
 
-		if _, err := tx.Exec(deleteUserRecipesQuery, userId); err != nil {
+		if _, err := tx.ExecContext(ctx, deleteUserRecipesQuery, userId); err != nil {
 			log.Errorf("unable to delete user %s recipes: %s", userId, err)
 			return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 		}
@@ -86,7 +87,7 @@ func (r *Repository) DeleteUserData(userId uuid.UUID, deleteSharedData bool, mes
 			)
 		`, collectionsTable, collectionContributorsTable, entity.RoleOwner)
 
-		if _, err := tx.Exec(deleteUserCollectionsQuery, userId); err != nil {
+		if _, err := tx.ExecContext(ctx, deleteUserCollectionsQuery, userId); err != nil {
 			log.Errorf("unable to delete user %s collections: %s", userId, err)
 			return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 		}
@@ -104,7 +105,7 @@ func (r *Repository) DeleteUserData(userId uuid.UUID, deleteSharedData bool, mes
 			)
 		`, recipesTable, recipeBookTable, model.VisibilityPrivate)
 
-		if _, err := tx.Exec(deleteNotUsedRecipesQuery, userId); err != nil {
+		if _, err := tx.ExecContext(ctx, deleteNotUsedRecipesQuery, userId); err != nil {
 			log.Errorf("unable to delete not used user %s recipes: %s", userId, err)
 			return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 		}
@@ -127,7 +128,7 @@ func (r *Repository) DeleteUserData(userId uuid.UUID, deleteSharedData bool, mes
 			)
 			`, collectionsTable, collectionContributorsTable, collectionUsersTable, entity.RoleOwner)
 
-		if _, err := tx.Exec(deleteNotUsedCollectionsQuery, userId); err != nil {
+		if _, err := tx.ExecContext(ctx, deleteNotUsedCollectionsQuery, userId); err != nil {
 			log.Errorf("unable to delete not used user %s collections: %s", userId, err)
 			return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 		}
@@ -136,8 +137,8 @@ func (r *Repository) DeleteUserData(userId uuid.UUID, deleteSharedData bool, mes
 	return commitTransaction(tx)
 }
 
-func (r *Repository) handleMessageIdempotently(messageId uuid.UUID) (*sql.Tx, error) {
-	tx, err := r.startTransaction()
+func (r *Repository) handleMessageIdempotently(ctx context.Context, messageId uuid.UUID) (*sql.Tx, error) {
+	tx, err := r.startTransaction(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +148,7 @@ func (r *Repository) handleMessageIdempotently(messageId uuid.UUID) (*sql.Tx, er
 			VALUES ($1)
 		`, inboxTable)
 
-	if _, err = tx.Exec(addMessageQuery, messageId); err != nil {
+	if _, err = tx.ExecContext(ctx, addMessageQuery, messageId); err != nil {
 		if !isUniqueViolationError(err) {
 			log.Error("unable to add message to inbox: ", err)
 		}
@@ -165,7 +166,7 @@ func (r *Repository) handleMessageIdempotently(messageId uuid.UUID) (*sql.Tx, er
 			)
 		`, inboxTable)
 
-	if _, err = tx.Exec(deleteOutdatedMessagesQuery); err != nil {
+	if _, err = tx.ExecContext(ctx, deleteOutdatedMessagesQuery); err != nil {
 		return nil, errorWithTransactionRollback(tx, err)
 	}
 

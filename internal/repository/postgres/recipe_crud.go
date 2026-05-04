@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -15,7 +16,7 @@ import (
 	"github.com/mephistolie/chefbook-backend-recipe/internal/repository/postgres/dto"
 )
 
-func (r *Repository) CreateRecipe(input entity.RecipeInput) (uuid.UUID, int32, error) {
+func (r *Repository) CreateRecipe(ctx context.Context, input entity.RecipeInput) (uuid.UUID, int32, error) {
 	var id uuid.UUID
 	if input.RecipeId != nil {
 		id = *input.RecipeId
@@ -23,7 +24,7 @@ func (r *Repository) CreateRecipe(input entity.RecipeInput) (uuid.UUID, int32, e
 		id = uuid.New()
 	}
 
-	tx, err := r.startTransaction()
+	tx, err := r.startTransaction(ctx)
 	if err != nil {
 		return uuid.UUID{}, 0, err
 	}
@@ -58,7 +59,7 @@ func (r *Repository) CreateRecipe(input entity.RecipeInput) (uuid.UUID, int32, e
 		macronutrients = *input.Macronutrients
 	}
 
-	if _, err = tx.Exec(createRecipeQuery,
+	if _, err = tx.ExecContext(ctx, createRecipeQuery,
 		id, input.Name,
 		input.UserId,
 		input.Visibility, input.IsEncrypted,
@@ -82,7 +83,7 @@ func (r *Repository) CreateRecipe(input entity.RecipeInput) (uuid.UUID, int32, e
 			WHERE recipe_id=$1
 		`, recipesTable)
 
-		if _, err = tx.Exec(setCreationTimestampQuery, id, *input.CreationTimestamp); err != nil {
+		if _, err = tx.ExecContext(ctx, setCreationTimestampQuery, id, *input.CreationTimestamp); err != nil {
 			log.Error("unable to set recipe creation timestamp: ", err)
 			return uuid.UUID{}, 0, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 		}
@@ -93,7 +94,7 @@ func (r *Repository) CreateRecipe(input entity.RecipeInput) (uuid.UUID, int32, e
 			VALUES ($1, $2)
 		`, recipeBookTable)
 
-	if _, err = tx.Exec(addToRecipeBookQuery, id, input.UserId); err != nil {
+	if _, err = tx.ExecContext(ctx, addToRecipeBookQuery, id, input.UserId); err != nil {
 		log.Errorf("unable to add recipe to owner %s recipe book: %s", input.UserId, err)
 		return uuid.UUID{}, 0, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
@@ -101,7 +102,7 @@ func (r *Repository) CreateRecipe(input entity.RecipeInput) (uuid.UUID, int32, e
 	return id, 1, commitTransaction(tx)
 }
 
-func (r *Repository) GetRecipe(recipeId, userId uuid.UUID) (entity.Recipe, error) {
+func (r *Repository) GetRecipe(ctx context.Context, recipeId, userId uuid.UUID) (entity.Recipe, error) {
 	var recipe dto.Recipe
 
 	query := fmt.Sprintf(`
@@ -150,7 +151,7 @@ func (r *Repository) GetRecipe(recipeId, userId uuid.UUID) (entity.Recipe, error
 		WHERE %[1]v.recipe_id=$1
 	`, recipesTable, recipeBookTable, favouritesTable, scoresTable, translationsTable, getRecipeCollectionIdsSubquery)
 
-	row := r.db.QueryRow(query, recipeId, userId)
+	row := r.db.QueryRowContext(ctx, query, recipeId, userId)
 	m := pgtype.NewMap()
 	if err := row.Scan(
 		&recipe.Id, &recipe.Name,
@@ -171,7 +172,7 @@ func (r *Repository) GetRecipe(recipeId, userId uuid.UUID) (entity.Recipe, error
 	return recipe.Entity(userId), nil
 }
 
-func (r *Repository) UpdateRecipe(input entity.RecipeInput) (int32, error) {
+func (r *Repository) UpdateRecipe(ctx context.Context, input entity.RecipeInput) (int32, error) {
 	var version int32
 
 	query := fmt.Sprintf(`
@@ -211,7 +212,7 @@ func (r *Repository) UpdateRecipe(input entity.RecipeInput) (int32, error) {
 
 	query += fmt.Sprint(" RETURNING version")
 
-	if err := r.db.Get(&version, query, args...); err != nil {
+	if err := r.db.GetContext(ctx, &version, query, args...); err != nil {
 		if input.Version != nil {
 			log.Warnf("try to update recipe %s with outdated version %d: %s", *input.RecipeId, *input.Version, err)
 			return 0, recipeFail.GrpcOutdatedVersion
@@ -224,22 +225,22 @@ func (r *Repository) UpdateRecipe(input entity.RecipeInput) (int32, error) {
 	return version, nil
 }
 
-func (r *Repository) SetRecipeTags(recipeId uuid.UUID, tags []string) error {
+func (r *Repository) SetRecipeTags(ctx context.Context, recipeId uuid.UUID, tags []string) error {
 	query := fmt.Sprintf(`
 		UPDATE %s
 		SET tags=$2
 		WHERE recipe_id=$1
 	`, recipesTable)
 
-	if _, err := r.db.Exec(query, recipeId, tags); err != nil {
+	if _, err := r.db.ExecContext(ctx, query, recipeId, tags); err != nil {
 		log.Warnf("unable to set recipe %s tags: %s", recipeId, err)
 		return fail.GrpcNotFound
 	}
 	return nil
 }
 
-func (r *Repository) DeleteRecipe(recipeId uuid.UUID) (*model.MessageData, error) {
-	tx, err := r.startTransaction()
+func (r *Repository) DeleteRecipe(ctx context.Context, recipeId uuid.UUID) (*model.MessageData, error) {
+	tx, err := r.startTransaction(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -249,12 +250,12 @@ func (r *Repository) DeleteRecipe(recipeId uuid.UUID) (*model.MessageData, error
 		WHERE recipe_id=$1
 	`, recipesTable)
 
-	if _, err = tx.Exec(query, recipeId); err != nil {
+	if _, err = tx.ExecContext(ctx, query, recipeId); err != nil {
 		log.Errorf("unable to delete recipe %s: %s", recipeId, err)
 		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
-	msg, err := r.addRecipeDeletedMsg(recipeId, tx)
+	msg, err := r.addRecipeDeletedMsg(ctx, recipeId, tx)
 	if err != nil {
 		return nil, err
 	}
@@ -262,7 +263,7 @@ func (r *Repository) DeleteRecipe(recipeId uuid.UUID) (*model.MessageData, error
 	return msg, commitTransaction(tx)
 }
 
-func (r *Repository) addRecipeDeletedMsg(recipeId uuid.UUID, tx *sql.Tx) (*model.MessageData, error) {
+func (r *Repository) addRecipeDeletedMsg(ctx context.Context, recipeId uuid.UUID, tx *sql.Tx) (*model.MessageData, error) {
 	msgBody := api.MsgBodyRecipeDeleted{RecipeId: recipeId}
 	msgBodyBson, err := json.Marshal(msgBody)
 	if err != nil {
@@ -276,5 +277,5 @@ func (r *Repository) addRecipeDeletedMsg(recipeId uuid.UUID, tx *sql.Tx) (*model
 		Body:     msgBodyBson,
 	}
 
-	return &msgInfo, r.createOutboxMsg(&msgInfo, tx)
+	return &msgInfo, r.createOutboxMsg(ctx, &msgInfo, tx)
 }

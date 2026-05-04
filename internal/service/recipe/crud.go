@@ -12,7 +12,7 @@ import (
 )
 
 func (s *Service) CreateRecipe(ctx context.Context, input entity.RecipeInput) (uuid.UUID, int32, error) {
-	id, version, err := s.recipeRepo.CreateRecipe(input)
+	id, version, err := s.recipeRepo.CreateRecipe(ctx, input)
 	if err == nil {
 		go s.validateTags(context.WithoutCancel(ctx), input)
 	}
@@ -20,7 +20,7 @@ func (s *Service) CreateRecipe(ctx context.Context, input entity.RecipeInput) (u
 }
 
 func (s *Service) GetRecipe(ctx context.Context, recipeId, userId uuid.UUID, language string, translatorId *uuid.UUID) (entity.DetailedRecipe, error) {
-	baseRecipe, err := s.recipeRepo.GetRecipe(recipeId, userId)
+	baseRecipe, err := s.recipeRepo.GetRecipe(ctx, recipeId, userId)
 	if err != nil {
 		return entity.DetailedRecipe{}, err
 	}
@@ -31,7 +31,7 @@ func (s *Service) GetRecipe(ctx context.Context, recipeId, userId uuid.UUID, lan
 }
 
 func (s *Service) GetRandomRecipe(ctx context.Context, userId uuid.UUID, recipeLanguages *[]string, userLanguage string) (entity.DetailedRecipe, error) {
-	baseRecipe, err := s.recipeRepo.GetRandomRecipe(userId, recipeLanguages)
+	baseRecipe, err := s.recipeRepo.GetRandomRecipe(ctx, userId, recipeLanguages)
 	if err != nil {
 		return entity.DetailedRecipe{}, err
 	}
@@ -51,7 +51,7 @@ func (s *Service) fillBaseRecipe(ctx context.Context, recipe entity.Recipe, lang
 
 	var collections map[uuid.UUID]entity.CollectionInfo
 	go func() {
-		collections = s.getCollectionsMap(recipe.Collections)
+		collections = s.getCollectionsMap(ctx, recipe.Collections)
 		wg.Done()
 	}()
 
@@ -61,7 +61,7 @@ func (s *Service) fillBaseRecipe(ctx context.Context, recipe entity.Recipe, lang
 		wg.Done()
 	}()
 
-	s.fillRecipeTranslation(&recipe, language, translatorId)
+	s.fillRecipeTranslation(ctx, &recipe, language, translatorId)
 
 	wg.Wait()
 
@@ -74,7 +74,7 @@ func (s *Service) fillBaseRecipe(ctx context.Context, recipe entity.Recipe, lang
 	}
 }
 
-func (s *Service) fillRecipeTranslation(recipe *entity.Recipe, language string, translatorId *uuid.UUID) {
+func (s *Service) fillRecipeTranslation(ctx context.Context, recipe *entity.Recipe, language string, translatorId *uuid.UUID) {
 	if recipe.Language == language {
 		return
 	}
@@ -82,7 +82,7 @@ func (s *Service) fillRecipeTranslation(recipe *entity.Recipe, language string, 
 		return
 	}
 
-	translation := s.recipeRepo.GetRecipeTranslation(recipe.Id, language, translatorId)
+	translation := s.recipeRepo.GetRecipeTranslation(ctx, recipe.Id, language, translatorId)
 	if translation == nil {
 		return
 	}
@@ -107,7 +107,7 @@ func (s *Service) fillRecipeTranslation(recipe *entity.Recipe, language string, 
 }
 
 func (s *Service) UpdateRecipe(ctx context.Context, input entity.RecipeInput) (int32, error) {
-	policy, err := s.recipeRepo.GetRecipePolicy(*input.RecipeId)
+	policy, err := s.recipeRepo.GetRecipePolicy(ctx, *input.RecipeId)
 	if err != nil {
 		return 0, err
 	}
@@ -118,22 +118,22 @@ func (s *Service) UpdateRecipe(ctx context.Context, input entity.RecipeInput) (i
 		return 0, recipeFail.GrpcChangedEncryptionStatus
 	}
 
-	version, err := s.recipeRepo.UpdateRecipe(input)
+	version, err := s.recipeRepo.UpdateRecipe(ctx, input)
 	if err == nil {
 		go s.validateTags(context.WithoutCancel(ctx), input)
 	}
 	return version, err
 }
 
-func (s *Service) DeleteRecipe(recipeId, userId uuid.UUID) error {
-	policy, err := s.recipeRepo.GetRecipePolicy(recipeId)
+func (s *Service) DeleteRecipe(ctx context.Context, recipeId, userId uuid.UUID) error {
+	policy, err := s.recipeRepo.GetRecipePolicy(ctx, recipeId)
 	if err != nil {
 		return err
 	}
 	if policy.OwnerId != userId {
 		return fail.GrpcAccessDenied
 	}
-	msg, err := s.recipeRepo.DeleteRecipe(recipeId)
+	msg, err := s.recipeRepo.DeleteRecipe(ctx, recipeId)
 
 	if err == nil {
 		go s.mqPublisher.PublishMessage(msg)
@@ -160,7 +160,7 @@ func (s *Service) validateTags(ctx context.Context, input entity.RecipeInput) {
 			}
 		}
 		if len(usedTags) < len(input.Tags) {
-			_ = s.recipeRepo.SetRecipeTags(*input.RecipeId, usedTags)
+			_ = s.recipeRepo.SetRecipeTags(ctx, *input.RecipeId, usedTags)
 		}
 	}
 }

@@ -10,7 +10,7 @@ import (
 )
 
 func (s *Service) GetRecipes(ctx context.Context, params entity.RecipesQuery, userId uuid.UUID, language string) entity.RecipesInfo {
-	recipes := s.recipeRepo.GetRecipes(params, userId)
+	recipes := s.recipeRepo.GetRecipes(ctx, params, userId)
 
 	var tagIds []string
 	var collectionIds []uuid.UUID
@@ -33,7 +33,7 @@ func (s *Service) GetRecipes(ctx context.Context, params entity.RecipesQuery, us
 
 	var collections map[uuid.UUID]entity.CollectionInfo
 	go func() {
-		collections = s.getCollectionsMap(collectionIds)
+		collections = s.getCollectionsMap(ctx, collectionIds)
 		wg.Done()
 	}()
 
@@ -58,7 +58,7 @@ func (s *Service) GetRecipesBook(ctx context.Context, userId uuid.UUID, language
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
-	collections := s.collectionRepo.GetCollections(userId, userId)
+	collections := s.collectionRepo.GetCollections(ctx, userId, userId)
 
 	var hasEncryptedVault bool
 	go func() {
@@ -71,7 +71,7 @@ func (s *Service) GetRecipesBook(ctx context.Context, userId uuid.UUID, language
 		wg.Done()
 	}()
 
-	recipes, err := s.recipeRepo.GetRecipeBook(userId)
+	recipes, err := s.recipeRepo.GetRecipeBook(ctx, userId)
 	if err != nil {
 		return entity.RecipeBook{}, err
 	}
@@ -109,6 +109,6 @@ func (s *Service) GetRecipesBook(ctx context.Context, userId uuid.UUID, language
 	}, nil
 }
 
-func (s *Service) GetRecipeNames(recipeIds []uuid.UUID, userId uuid.UUID) (map[uuid.UUID]string, error) {
-	return s.recipeRepo.GetRecipeNames(recipeIds, userId)
+func (s *Service) GetRecipeNames(ctx context.Context, recipeIds []uuid.UUID, userId uuid.UUID) (map[uuid.UUID]string, error) {
+	return s.recipeRepo.GetRecipeNames(ctx, recipeIds, userId)
 }

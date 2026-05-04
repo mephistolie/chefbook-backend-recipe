@@ -8,7 +8,7 @@ import (
 	"github.com/mephistolie/chefbook-backend-recipe/internal/transport/grpc/dto"
 )
 
-func (s *RecipeServer) TranslateRecipe(_ context.Context, req *api.TranslateRecipeRequest) (*api.TranslateRecipeResponse, error) {
+func (s *RecipeServer) TranslateRecipe(ctx context.Context, req *api.TranslateRecipeRequest) (*api.TranslateRecipeResponse, error) {
 	recipeId, err := uuid.Parse(req.RecipeId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
@@ -18,13 +18,13 @@ func (s *RecipeServer) TranslateRecipe(_ context.Context, req *api.TranslateReci
 		return nil, err
 	}
 
-	if err = s.recipeService.TranslateRecipe(recipeId, translation); err != nil {
+	if err = s.recipeService.TranslateRecipe(ctx, recipeId, translation); err != nil {
 		return nil, err
 	}
 	return &api.TranslateRecipeResponse{Message: "recipe translation saved"}, nil
 }
 
-func (s *RecipeServer) DeleteRecipeTranslation(_ context.Context, req *api.DeleteRecipeTranslationRequest) (*api.DeleteRecipeTranslationResponse, error) {
+func (s *RecipeServer) DeleteRecipeTranslation(ctx context.Context, req *api.DeleteRecipeTranslationRequest) (*api.DeleteRecipeTranslationResponse, error) {
 	requesterId, err := uuid.Parse(req.RequesterId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
@@ -37,7 +37,7 @@ func (s *RecipeServer) DeleteRecipeTranslation(_ context.Context, req *api.Delet
 		return nil, fail.GrpcInvalidBody
 	}
 
-	if err = s.recipeService.DeleteRecipeTranslation(recipeId, requesterId, req.Language); err != nil {
+	if err = s.recipeService.DeleteRecipeTranslation(ctx, recipeId, requesterId, req.Language); err != nil {
 		return nil, err
 	}
 	return &api.DeleteRecipeTranslationResponse{Message: "recipe translation deleted"}, nil

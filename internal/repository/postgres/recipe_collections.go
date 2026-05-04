@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"github.com/google/uuid"
@@ -28,13 +29,13 @@ var getRecipeCollectionIdsSubquery = fmt.Sprintf(`
 `, recipesTable, recipesCollectionsTable, collectionsTable, collectionContributorsTable, collectionUsersTable,
 	model.VisibilityPrivate, entity.RoleOwner)
 
-func (r *Repository) AddRecipeToCollection(recipeId, collectionId, userId uuid.UUID) error {
-	tx, err := r.startTransaction()
+func (r *Repository) AddRecipeToCollection(ctx context.Context, recipeId, collectionId, userId uuid.UUID) error {
+	tx, err := r.startTransaction(ctx)
 	if err != nil {
 		return err
 	}
 
-	if !r.checkCollectionAccessible(tx, collectionId, userId) {
+	if !r.checkCollectionAccessible(ctx, tx, collectionId, userId) {
 		return errorWithTransactionRollback(tx, fail.GrpcAccessDenied)
 	}
 
@@ -44,7 +45,7 @@ func (r *Repository) AddRecipeToCollection(recipeId, collectionId, userId uuid.U
 		ON CONFLICT (recipe_id, collection_id) DO NOTHING
 	`, recipesCollectionsTable)
 
-	if _, err := r.db.Exec(query, recipeId, collectionId); err != nil {
+	if _, err := r.db.ExecContext(ctx, query, recipeId, collectionId); err != nil {
 		log.Errorf("unable to add recipe %s to collection %s: %s", recipeId, collectionId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
@@ -52,13 +53,13 @@ func (r *Repository) AddRecipeToCollection(recipeId, collectionId, userId uuid.U
 	return commitTransaction(tx)
 }
 
-func (r *Repository) RemoveRecipeFromCollection(recipeId, collectionId, userId uuid.UUID) error {
-	tx, err := r.startTransaction()
+func (r *Repository) RemoveRecipeFromCollection(ctx context.Context, recipeId, collectionId, userId uuid.UUID) error {
+	tx, err := r.startTransaction(ctx)
 	if err != nil {
 		return err
 	}
 
-	if !r.checkCollectionAccessible(tx, collectionId, userId) {
+	if !r.checkCollectionAccessible(ctx, tx, collectionId, userId) {
 		return errorWithTransactionRollback(tx, fail.GrpcAccessDenied)
 	}
 
@@ -67,7 +68,7 @@ func (r *Repository) RemoveRecipeFromCollection(recipeId, collectionId, userId u
 		WHERE recipe_id=$1 AND collection_id=$2
 	`, recipesCollectionsTable)
 
-	if _, err := r.db.Exec(query, recipeId, collectionId); err != nil {
+	if _, err := r.db.ExecContext(ctx, query, recipeId, collectionId); err != nil {
 		log.Errorf("unable to remove recipe %s from collection %s: %s", recipeId, collectionId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
@@ -75,13 +76,13 @@ func (r *Repository) RemoveRecipeFromCollection(recipeId, collectionId, userId u
 	return commitTransaction(tx)
 }
 
-func (r *Repository) SetRecipeCollections(recipeId, userId uuid.UUID, collections []uuid.UUID) error {
-	tx, err := r.startTransaction()
+func (r *Repository) SetRecipeCollections(ctx context.Context, recipeId, userId uuid.UUID, collections []uuid.UUID) error {
+	tx, err := r.startTransaction(ctx)
 	if err != nil {
 		return err
 	}
 
-	editableCollections, err := r.getEditableCollections(tx, userId)
+	editableCollections, err := r.getEditableCollections(ctx, tx, userId)
 	if err != nil {
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
@@ -96,7 +97,7 @@ func (r *Repository) SetRecipeCollections(recipeId, userId uuid.UUID, collection
 		WHERE recipe_id=$1 AND collection_id=ANY($2)
 	`, recipesCollectionsTable)
 
-	if _, err := tx.Exec(clearCollectionsQuery, recipeId, editableCollections); err != nil {
+	if _, err := tx.ExecContext(ctx, clearCollectionsQuery, recipeId, editableCollections); err != nil {
 		log.Errorf("unable to clear recipe %s collections for user %s: %s", recipeId, userId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
@@ -127,7 +128,7 @@ func (r *Repository) SetRecipeCollections(recipeId, userId uuid.UUID, collection
 	setRecipeCollectionsQuery = setRecipeCollectionsQuery[0 : len(setRecipeCollectionsQuery)-1]
 	setRecipeCollectionsQuery += fmt.Sprint(" ON CONFLICT (recipe_id, collection_id) DO NOTHING")
 
-	if _, err = tx.Exec(setRecipeCollectionsQuery, args...); err != nil {
+	if _, err = tx.ExecContext(ctx, setRecipeCollectionsQuery, args...); err != nil {
 		log.Errorf("unable to set recipe %s collections for user %s: %s", recipeId, userId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
@@ -135,7 +136,7 @@ func (r *Repository) SetRecipeCollections(recipeId, userId uuid.UUID, collection
 	return commitTransaction(tx)
 }
 
-func (r *Repository) getEditableCollections(tx *sql.Tx, userId uuid.UUID) ([]uuid.UUID, error) {
+func (r *Repository) getEditableCollections(ctx context.Context, tx *sql.Tx, userId uuid.UUID) ([]uuid.UUID, error) {
 	query := fmt.Sprintf(`
 		SELECT %[1]v.collection_id
 		FROM %[1]v
@@ -144,7 +145,7 @@ func (r *Repository) getEditableCollections(tx *sql.Tx, userId uuid.UUID) ([]uui
 		WHERE %[1]v.contributor_id=$1 AND %[2]v.user_id=$1
 	`, collectionContributorsTable, collectionUsersTable)
 
-	rows, err := tx.Query(query, userId)
+	rows, err := tx.QueryContext(ctx, query, userId)
 	if err != nil {
 		log.Errorf("unable to get editable collections for user %s: %s", userId, err)
 		return []uuid.UUID{}, fail.GrpcUnknown
@@ -163,7 +164,7 @@ func (r *Repository) getEditableCollections(tx *sql.Tx, userId uuid.UUID) ([]uui
 	return editableCollectionIds, nil
 }
 
-func (r *Repository) checkCollectionAccessible(tx *sql.Tx, collectionId, userId uuid.UUID) bool {
+func (r *Repository) checkCollectionAccessible(ctx context.Context, tx *sql.Tx, collectionId, userId uuid.UUID) bool {
 	var hasAccess bool
 
 	query := fmt.Sprintf(`
@@ -175,7 +176,7 @@ func (r *Repository) checkCollectionAccessible(tx *sql.Tx, collectionId, userId 
 		)
 	`, collectionContributorsTable)
 
-	row := tx.QueryRow(query, collectionId, userId)
+	row := tx.QueryRowContext(ctx, query, collectionId, userId)
 	if err := row.Scan(&hasAccess); err != nil {
 		log.Errorf("unable to check is user %s has access to collection %s: %s", userId, collectionId, err)
 		return false

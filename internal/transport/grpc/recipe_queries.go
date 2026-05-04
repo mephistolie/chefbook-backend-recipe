@@ -51,7 +51,7 @@ func (s *RecipeServer) GetRecipeBook(ctx context.Context, req *api.GetRecipeBook
 	return dto.NewGetRecipeBookResponse(recipeBook), nil
 }
 
-func (s *RecipeServer) GetRecipeNames(_ context.Context, req *api.GetRecipeNamesRequest) (*api.GetRecipeNamesResponse, error) {
+func (s *RecipeServer) GetRecipeNames(ctx context.Context, req *api.GetRecipeNamesRequest) (*api.GetRecipeNamesResponse, error) {
 	userId, err := uuid.Parse(req.UserId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
@@ -64,7 +64,7 @@ func (s *RecipeServer) GetRecipeNames(_ context.Context, req *api.GetRecipeNames
 		}
 	}
 
-	recipeNames, err := s.recipeService.GetRecipeNames(recipeIds, userId)
+	recipeNames, err := s.recipeService.GetRecipeNames(ctx, recipeIds, userId)
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -11,7 +12,7 @@ import (
 	"github.com/mephistolie/chefbook-backend-recipe/internal/repository/postgres/dto"
 )
 
-func (r *Repository) GetCollections(userId, requesterId uuid.UUID) []entity.Collection {
+func (r *Repository) GetCollections(ctx context.Context, userId, requesterId uuid.UUID) []entity.Collection {
 	query := fmt.Sprintf(`
 		SELECT
 			%[1]v.collection_id,
@@ -40,7 +41,7 @@ func (r *Repository) GetCollections(userId, requesterId uuid.UUID) []entity.Coll
 			%[3]v.user_id=$1 AND (%[1]v.visibility<>'%[5]v' OR %[2]v.contributor_id=$2)
 	`, collectionsTable, collectionContributorsTable, collectionUsersTable, recipesCollectionsTable, model.VisibilityPrivate)
 
-	rows, err := r.db.Query(query, userId, requesterId)
+	rows, err := r.db.QueryContext(ctx, query, userId, requesterId)
 	if err != nil {
 		log.Errorf("unable to get user %s collections: %s", userId, err)
 		return []entity.Collection{}
@@ -65,7 +66,7 @@ func (r *Repository) GetCollections(userId, requesterId uuid.UUID) []entity.Coll
 	return collections
 }
 
-func (r *Repository) GetCollectionsMap(collectionIds []uuid.UUID) map[uuid.UUID]entity.CollectionInfo {
+func (r *Repository) GetCollectionsMap(ctx context.Context, collectionIds []uuid.UUID) map[uuid.UUID]entity.CollectionInfo {
 	query := fmt.Sprintf(`
 		SELECT
 			%[1]v.collection_id,
@@ -74,7 +75,7 @@ func (r *Repository) GetCollectionsMap(collectionIds []uuid.UUID) map[uuid.UUID]
 		WHERE collection_id=ANY($1)
 	`, collectionsTable, collectionContributorsTable, model.VisibilityPrivate)
 
-	rows, err := r.db.Query(query, collectionIds)
+	rows, err := r.db.QueryContext(ctx, query, collectionIds)
 	if err != nil {
 		log.Errorf("unable to get collections: %s", err)
 		return map[uuid.UUID]entity.CollectionInfo{}
@@ -95,8 +96,8 @@ func (r *Repository) GetCollectionsMap(collectionIds []uuid.UUID) map[uuid.UUID]
 	return collections
 }
 
-func (r *Repository) CreateCollection(input entity.CollectionInput) (uuid.UUID, error) {
-	tx, err := r.startTransaction()
+func (r *Repository) CreateCollection(ctx context.Context, input entity.CollectionInput) (uuid.UUID, error) {
+	tx, err := r.startTransaction(ctx)
 	if err != nil {
 		return uuid.UUID{}, err
 	}
@@ -107,7 +108,7 @@ func (r *Repository) CreateCollection(input entity.CollectionInput) (uuid.UUID, 
 		RETURNING collection_id
 	`, collectionsTable)
 
-	if _, err = tx.Exec(createCollectionQuery, input.Id, input.Visibility, input.Name); err != nil {
+	if _, err = tx.ExecContext(ctx, createCollectionQuery, input.Id, input.Visibility, input.Name); err != nil {
 		log.Errorf("unable to add collection %s: %s", input.Id, err)
 		return uuid.UUID{}, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
@@ -117,7 +118,7 @@ func (r *Repository) CreateCollection(input entity.CollectionInput) (uuid.UUID, 
 		VALUES ($1, $2, $3)
 	`, collectionContributorsTable)
 
-	if _, err = tx.Exec(addOwnerQuery, input.Id, input.UserId, entity.RoleOwner); err != nil {
+	if _, err = tx.ExecContext(ctx, addOwnerQuery, input.Id, input.UserId, entity.RoleOwner); err != nil {
 		log.Errorf("unable to add owner for collection %s: %s", input.Id, err)
 		return uuid.UUID{}, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
@@ -127,7 +128,7 @@ func (r *Repository) CreateCollection(input entity.CollectionInput) (uuid.UUID, 
 		VALUES ($1, $2)
 	`, collectionUsersTable)
 
-	if _, err = tx.Exec(saveCollectionForOwnerQuery, input.Id, input.UserId); err != nil {
+	if _, err = tx.ExecContext(ctx, saveCollectionForOwnerQuery, input.Id, input.UserId); err != nil {
 		log.Errorf("unable to save collection %s for owner %s: %s", input.Id, input.UserId, err)
 		return uuid.UUID{}, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
@@ -135,7 +136,7 @@ func (r *Repository) CreateCollection(input entity.CollectionInput) (uuid.UUID, 
 	return input.Id, commitTransaction(tx)
 }
 
-func (r *Repository) GetCollection(collectionId, userId uuid.UUID) (entity.Collection, error) {
+func (r *Repository) GetCollection(ctx context.Context, collectionId, userId uuid.UUID) (entity.Collection, error) {
 	var collection dto.Collection
 
 	query := fmt.Sprintf(`
@@ -166,7 +167,7 @@ func (r *Repository) GetCollection(collectionId, userId uuid.UUID) (entity.Colle
 			%[1]v.collection_id=$1 AND (%[1]v.visibility<>'%[5]v' OR %[2]v.contributor_id=$2)
 	`, collectionsTable, collectionContributorsTable, collectionUsersTable, recipesCollectionsTable, model.VisibilityPrivate)
 
-	row := r.db.QueryRow(query, collectionId, userId)
+	row := r.db.QueryRowContext(ctx, query, collectionId, userId)
 	m := pgtype.NewMap()
 
 	if err := row.Scan(
@@ -181,7 +182,7 @@ func (r *Repository) GetCollection(collectionId, userId uuid.UUID) (entity.Colle
 	return collection.Entity(), nil
 }
 
-func (r *Repository) UpdateCollection(collection entity.CollectionInput) error {
+func (r *Repository) UpdateCollection(ctx context.Context, collection entity.CollectionInput) error {
 	query := fmt.Sprintf(`
 		UPDATE %[1]v
 		SET name=$3, visibility=$4
@@ -193,7 +194,7 @@ func (r *Repository) UpdateCollection(collection entity.CollectionInput) error {
 		)
 	`, collectionsTable, collectionContributorsTable, entity.RoleOwner)
 
-	result, err := r.db.Exec(query, collection.Id, collection.UserId, collection.Name, collection.Visibility)
+	result, err := r.db.ExecContext(ctx, query, collection.Id, collection.UserId, collection.Name, collection.Visibility)
 	if err != nil {
 		log.Errorf("unable to update collection %s: %s", collection.Id, err)
 		return fail.GrpcUnknown
@@ -206,7 +207,7 @@ func (r *Repository) UpdateCollection(collection entity.CollectionInput) error {
 	return nil
 }
 
-func (r *Repository) DeleteCollection(collectionId, userId uuid.UUID) error {
+func (r *Repository) DeleteCollection(ctx context.Context, collectionId, userId uuid.UUID) error {
 	query := fmt.Sprintf(`
 		DELETE FROM %[1]v
 		WHERE collection_id IN (
@@ -217,7 +218,7 @@ func (r *Repository) DeleteCollection(collectionId, userId uuid.UUID) error {
 		)
 	`, collectionsTable, collectionContributorsTable, entity.RoleOwner)
 
-	result, err := r.db.Exec(query, collectionId, userId)
+	result, err := r.db.ExecContext(ctx, query, collectionId, userId)
 	if err != nil {
 		log.Errorf("unable to delete collection %s: %s", collectionId, err)
 		return fail.GrpcUnknown

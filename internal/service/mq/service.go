@@ -41,9 +41,9 @@ func (s *Service) HandleMessage(msg model.MessageData) error {
 	case auth.MsgTypeProfileFirebaseImport:
 		return s.handleFirebaseImportMsg(ctx, msg.Id, msg.Body)
 	case auth.MsgTypeProfileDeleted:
-		return s.handleProfileDeletedMsg(msg.Id, msg.Body)
+		return s.handleProfileDeletedMsg(ctx, msg.Id, msg.Body)
 	case encryption.MsgTypeVaultDeleted:
-		return s.handleVaultDeletedMsg(msg.Id, msg.Body)
+		return s.handleVaultDeletedMsg(ctx, msg.Id, msg.Body)
 	default:
 		log.Warnf("got unsupported message type %s for message %s", msg.Type, msg.Id)
 		return errors.New("not implemented")
@@ -65,7 +65,7 @@ func (s *Service) handleFirebaseImportMsg(ctx context.Context, messageId uuid.UU
 	return s.ImportFirebaseRecipes(ctx, userId, body.FirebaseId, messageId)
 }
 
-func (s *Service) handleProfileDeletedMsg(messageId uuid.UUID, data []byte) error {
+func (s *Service) handleProfileDeletedMsg(ctx context.Context, messageId uuid.UUID, data []byte) error {
 	var body auth.MsgBodyProfileDeleted
 	if err := json.Unmarshal(data, &body); err != nil {
 		return err
@@ -77,15 +77,15 @@ func (s *Service) handleProfileDeletedMsg(messageId uuid.UUID, data []byte) erro
 	}
 
 	log.Infof("deleting user %s...", body.UserId)
-	return s.mqRepo.DeleteUserData(userId, body.DeleteSharedData, messageId)
+	return s.mqRepo.DeleteUserData(ctx, userId, body.DeleteSharedData, messageId)
 }
 
-func (s *Service) handleVaultDeletedMsg(messageId uuid.UUID, data []byte) error {
+func (s *Service) handleVaultDeletedMsg(ctx context.Context, messageId uuid.UUID, data []byte) error {
 	var body encryption.MsgBodyVaultDeleted
 	if err := json.Unmarshal(data, &body); err != nil {
 		return err
 	}
 
 	log.Infof("deleting encrypted recipes for user %s...", body.UserId)
-	return s.mqRepo.DeleteUserEncryptedRecipes(body.UserId, messageId)
+	return s.mqRepo.DeleteUserEncryptedRecipes(ctx, body.UserId, messageId)
 }

@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -12,7 +13,7 @@ import (
 	api "github.com/mephistolie/chefbook-backend-recipe/api/mq"
 )
 
-func (r *Repository) GetRecipeRatingAndVotes(recipeId uuid.UUID) (float32, int, error) {
+func (r *Repository) GetRecipeRatingAndVotes(ctx context.Context, recipeId uuid.UUID) (float32, int, error) {
 	var rating float32
 	var votes int
 
@@ -22,7 +23,7 @@ func (r *Repository) GetRecipeRatingAndVotes(recipeId uuid.UUID) (float32, int, 
 		WHERE recipe_id=$1
 	`, recipesTable)
 
-	row := r.db.QueryRow(query, recipeId)
+	row := r.db.QueryRowContext(ctx, query, recipeId)
 	if err := row.Scan(&rating, &votes); err != nil {
 		log.Warnf("unable to parse rating and votes for recipe %s: %s", recipeId, err)
 		return 0, 0, fail.GrpcNotFound
@@ -31,7 +32,7 @@ func (r *Repository) GetRecipeRatingAndVotes(recipeId uuid.UUID) (float32, int, 
 	return rating, votes, nil
 }
 
-func (r *Repository) GetUserRecipeScore(recipeId, userId uuid.UUID, tx *sql.Tx) (int, error) {
+func (r *Repository) GetUserRecipeScore(ctx context.Context, recipeId, userId uuid.UUID, tx *sql.Tx) (int, error) {
 	var score = 0
 
 	query := fmt.Sprintf(`
@@ -40,7 +41,7 @@ func (r *Repository) GetUserRecipeScore(recipeId, userId uuid.UUID, tx *sql.Tx) 
 		WHERE recipe_id=$1 AND user_id=$2
 	`, scoresTable)
 
-	row := tx.QueryRow(query, recipeId, userId)
+	row := tx.QueryRowContext(ctx, query, recipeId, userId)
 	if err := row.Scan(&score); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return 0, nil
@@ -52,13 +53,13 @@ func (r *Repository) GetUserRecipeScore(recipeId, userId uuid.UUID, tx *sql.Tx) 
 	return score, nil
 }
 
-func (r *Repository) RateRecipe(recipeId, userId uuid.UUID, score int) (*model.MessageData, error) {
-	tx, err := r.startTransaction()
+func (r *Repository) RateRecipe(ctx context.Context, recipeId, userId uuid.UUID, score int) (*model.MessageData, error) {
+	tx, err := r.startTransaction(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	previousScore, err := r.GetUserRecipeScore(recipeId, userId, tx)
+	previousScore, err := r.GetUserRecipeScore(ctx, recipeId, userId, tx)
 	if err != nil {
 		return nil, err
 	}
@@ -69,17 +70,17 @@ func (r *Repository) RateRecipe(recipeId, userId uuid.UUID, score int) (*model.M
 	}
 
 	if previousScore == 0 && score != 0 {
-		err = r.addUserScore(tx, recipeId, userId, scoreDiff)
+		err = r.addUserScore(ctx, tx, recipeId, userId, scoreDiff)
 	} else if score == 0 {
-		err = r.deleteUserScore(tx, recipeId, userId, scoreDiff)
+		err = r.deleteUserScore(ctx, tx, recipeId, userId, scoreDiff)
 	} else {
-		err = r.changeUserScore(tx, recipeId, userId, scoreDiff)
+		err = r.changeUserScore(ctx, tx, recipeId, userId, scoreDiff)
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	msg, err := r.addRecipeRatingChangedMsg(recipeId, userId, scoreDiff, tx)
+	msg, err := r.addRecipeRatingChangedMsg(ctx, recipeId, userId, scoreDiff, tx)
 	if err != nil {
 		return nil, err
 	}
@@ -87,13 +88,13 @@ func (r *Repository) RateRecipe(recipeId, userId uuid.UUID, score int) (*model.M
 	return msg, commitTransaction(tx)
 }
 
-func (r *Repository) addUserScore(tx *sql.Tx, recipeId, userId uuid.UUID, score int) error {
+func (r *Repository) addUserScore(ctx context.Context, tx *sql.Tx, recipeId, userId uuid.UUID, score int) error {
 	addScoreQuery := fmt.Sprintf(`
 		INSERT INTO %s (recipe_id, user_id, score)
 		VALUES ($1, $2, $3)
 	`, scoresTable)
 
-	if _, err := tx.Query(addScoreQuery, recipeId, userId, score); err != nil {
+	if _, err := tx.QueryContext(ctx, addScoreQuery, recipeId, userId, score); err != nil {
 		log.Errorf("unable to add user %s score for recipe %s: %s", userId, recipeId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
@@ -106,7 +107,7 @@ func (r *Repository) addUserScore(tx *sql.Tx, recipeId, userId uuid.UUID, score 
 		WHERE recipe_id=$2
 	`, recipesTable)
 
-	if _, err := tx.Query(updateRatingQuery, score, recipeId); err != nil {
+	if _, err := tx.QueryContext(ctx, updateRatingQuery, score, recipeId); err != nil {
 		log.Errorf("unable to update rating for recipe %s: %s", recipeId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
@@ -114,14 +115,14 @@ func (r *Repository) addUserScore(tx *sql.Tx, recipeId, userId uuid.UUID, score 
 	return nil
 }
 
-func (r *Repository) changeUserScore(tx *sql.Tx, recipeId, userId uuid.UUID, scoreDiff int) error {
+func (r *Repository) changeUserScore(ctx context.Context, tx *sql.Tx, recipeId, userId uuid.UUID, scoreDiff int) error {
 	changeScoreQuery := fmt.Sprintf(`
 		UPDATE %s
 		SET score=score+$1
 		WHERE recipe_id=$2 AND user_id=$3
 	`, scoresTable)
 
-	if _, err := tx.Query(changeScoreQuery, scoreDiff, recipeId, userId); err != nil {
+	if _, err := tx.QueryContext(ctx, changeScoreQuery, scoreDiff, recipeId, userId); err != nil {
 		log.Errorf("unable to change user %s score for recipe %s: %s", userId, recipeId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
@@ -132,7 +133,7 @@ func (r *Repository) changeUserScore(tx *sql.Tx, recipeId, userId uuid.UUID, sco
 		WHERE recipe_id=$2
 	`, recipesTable)
 
-	if _, err := tx.Query(updateRatingQuery, scoreDiff, recipeId); err != nil {
+	if _, err := tx.QueryContext(ctx, updateRatingQuery, scoreDiff, recipeId); err != nil {
 		log.Errorf("unable to update rating for recipe %s: %s", recipeId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
@@ -140,13 +141,13 @@ func (r *Repository) changeUserScore(tx *sql.Tx, recipeId, userId uuid.UUID, sco
 	return nil
 }
 
-func (r *Repository) deleteUserScore(tx *sql.Tx, recipeId, userId uuid.UUID, scoreDiff int) error {
+func (r *Repository) deleteUserScore(ctx context.Context, tx *sql.Tx, recipeId, userId uuid.UUID, scoreDiff int) error {
 	changeScoreQuery := fmt.Sprintf(`
 		DELETE FROM %s
 		WHERE recipe_id=$1 AND user_id=$2
 	`, scoresTable)
 
-	if _, err := tx.Query(changeScoreQuery, recipeId, userId); err != nil {
+	if _, err := tx.QueryContext(ctx, changeScoreQuery, recipeId, userId); err != nil {
 		log.Errorf("unable to delete user %s score for recipe %s: %s", userId, recipeId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
@@ -159,7 +160,7 @@ func (r *Repository) deleteUserScore(tx *sql.Tx, recipeId, userId uuid.UUID, sco
 		WHERE recipe_id=$2
 	`, recipesTable)
 
-	if _, err := tx.Query(updateRatingQuery, scoreDiff, recipeId); err != nil {
+	if _, err := tx.QueryContext(ctx, updateRatingQuery, scoreDiff, recipeId); err != nil {
 		log.Errorf("unable to update rating for recipe %s: %s", recipeId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
@@ -167,7 +168,7 @@ func (r *Repository) deleteUserScore(tx *sql.Tx, recipeId, userId uuid.UUID, sco
 	return nil
 }
 
-func (r *Repository) addRecipeRatingChangedMsg(recipeId, userId uuid.UUID, scoreDiff int, tx *sql.Tx) (*model.MessageData, error) {
+func (r *Repository) addRecipeRatingChangedMsg(ctx context.Context, recipeId, userId uuid.UUID, scoreDiff int, tx *sql.Tx) (*model.MessageData, error) {
 	var ownerId uuid.UUID
 
 	getOwnerIdQuery := fmt.Sprintf(`
@@ -176,7 +177,7 @@ func (r *Repository) addRecipeRatingChangedMsg(recipeId, userId uuid.UUID, score
 		WHERE recipe_id=$1
 	`, recipesTable)
 
-	row := tx.QueryRow(getOwnerIdQuery, recipeId)
+	row := tx.QueryRowContext(ctx, getOwnerIdQuery, recipeId)
 	if err := row.Scan(&ownerId); err != nil {
 		log.Warnf("unable to get recipe %s owner: %s", recipeId, err)
 		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
@@ -200,5 +201,5 @@ func (r *Repository) addRecipeRatingChangedMsg(recipeId, userId uuid.UUID, score
 		Body:     msgBodyBson,
 	}
 
-	return &msgInfo, r.createOutboxMsg(&msgInfo, tx)
+	return &msgInfo, r.createOutboxMsg(ctx, &msgInfo, tx)
 }

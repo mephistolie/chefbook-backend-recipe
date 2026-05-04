@@ -1,9 +1,13 @@
 package repository
 
-import "github.com/google/uuid"
+import (
+	"context"
+
+	"github.com/google/uuid"
+)
 
 type MQ interface {
-	ConfirmFirebaseDataLoad(messageId uuid.UUID) error
-	DeleteUserEncryptedRecipes(userId uuid.UUID, messageId uuid.UUID) error
-	DeleteUserData(userId uuid.UUID, deleteSharedData bool, messageId uuid.UUID) error
+	ConfirmFirebaseDataLoad(ctx context.Context, messageId uuid.UUID) error
+	DeleteUserEncryptedRecipes(ctx context.Context, userId uuid.UUID, messageId uuid.UUID) error
+	DeleteUserData(ctx context.Context, userId uuid.UUID, deleteSharedData bool, messageId uuid.UUID) error
 }

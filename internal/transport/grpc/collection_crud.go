@@ -27,13 +27,13 @@ func (s *RecipeServer) GetCollections(ctx context.Context, req *api.GetCollectio
 	return dto.NewGetCollectionsResponse(collections), nil
 }
 
-func (s *RecipeServer) CreateCollection(_ context.Context, req *api.CreateCollectionRequest) (*api.CreateCollectionResponse, error) {
+func (s *RecipeServer) CreateCollection(ctx context.Context, req *api.CreateCollectionRequest) (*api.CreateCollectionResponse, error) {
 	input, err := dto.NewCreateCollectionInput(req)
 	if err != nil {
 		return nil, err
 	}
 
-	id, err := s.collectionService.CreateCollection(input)
+	id, err := s.collectionService.CreateCollection(ctx, input)
 	if err != nil {
 		return nil, err
 	}
@@ -59,20 +59,20 @@ func (s *RecipeServer) GetCollection(ctx context.Context, req *api.GetCollection
 	return dto.NewGetCollectionResponse(collection), nil
 }
 
-func (s *RecipeServer) UpdateCollection(_ context.Context, req *api.UpdateCollectionRequest) (*api.UpdateCollectionResponse, error) {
+func (s *RecipeServer) UpdateCollection(ctx context.Context, req *api.UpdateCollectionRequest) (*api.UpdateCollectionResponse, error) {
 	input, err := dto.NewUpdateCollectionInput(req)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = s.collectionService.UpdateCollection(input); err != nil {
+	if err = s.collectionService.UpdateCollection(ctx, input); err != nil {
 		return nil, err
 	}
 
 	return &api.UpdateCollectionResponse{Message: "collection updated"}, nil
 }
 
-func (s *RecipeServer) DeleteCollection(_ context.Context, req *api.DeleteCollectionRequest) (*api.DeleteCollectionResponse, error) {
+func (s *RecipeServer) DeleteCollection(ctx context.Context, req *api.DeleteCollectionRequest) (*api.DeleteCollectionResponse, error) {
 	userId, err := uuid.Parse(req.UserId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
@@ -82,7 +82,7 @@ func (s *RecipeServer) DeleteCollection(_ context.Context, req *api.DeleteCollec
 		return nil, fail.GrpcInvalidBody
 	}
 
-	if err = s.collectionService.DeleteCollection(collectionId, userId); err != nil {
+	if err = s.collectionService.DeleteCollection(ctx, collectionId, userId); err != nil {
 		return nil, err
 	}
 

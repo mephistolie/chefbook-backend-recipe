@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -11,7 +12,7 @@ import (
 	"github.com/mephistolie/chefbook-backend-recipe/internal/repository/postgres/dto"
 )
 
-func (r *Repository) GetRecipeBook(userId uuid.UUID) ([]entity.RecipeState, error) {
+func (r *Repository) GetRecipeBook(ctx context.Context, userId uuid.UUID) ([]entity.RecipeState, error) {
 	var recipes []entity.RecipeState
 
 	query := fmt.Sprintf(`
@@ -50,7 +51,7 @@ func (r *Repository) GetRecipeBook(userId uuid.UUID) ([]entity.RecipeState, erro
 	`, recipesTable, recipeBookTable, favouritesTable, scoresTable, translationsTable,
 		getRecipeCollectionIdsSubquery, model.VisibilityPrivate)
 
-	rows, err := r.db.Query(query, userId)
+	rows, err := r.db.QueryContext(ctx, query, userId)
 	if err != nil {
 		log.Errorf("unable to get recipes: %s", err)
 		return []entity.RecipeState{}, fail.GrpcUnknown
@@ -76,14 +77,14 @@ func (r *Repository) GetRecipeBook(userId uuid.UUID) ([]entity.RecipeState, erro
 	return recipes, nil
 }
 
-func (r *Repository) SaveRecipeToRecipeBook(recipeId, userId uuid.UUID) error {
+func (r *Repository) SaveRecipeToRecipeBook(ctx context.Context, recipeId, userId uuid.UUID) error {
 	query := fmt.Sprintf(`
 		INSERT INTO %s (recipe_id, user_id)
 		VALUES ($1, $2)
 		ON CONFLICT (recipe_id, user_id) DO NOTHING
 	`, recipeBookTable)
 
-	if _, err := r.db.Exec(query, recipeId, userId); err != nil {
+	if _, err := r.db.ExecContext(ctx, query, recipeId, userId); err != nil {
 		log.Errorf("unable to add recipe %s to user %s recipe book: %s", recipeId, userId, err)
 		return fail.GrpcUnknown
 	}
@@ -91,13 +92,13 @@ func (r *Repository) SaveRecipeToRecipeBook(recipeId, userId uuid.UUID) error {
 	return nil
 }
 
-func (r *Repository) RemoveRecipeFromRecipeBook(recipeId, userId uuid.UUID) error {
+func (r *Repository) RemoveRecipeFromRecipeBook(ctx context.Context, recipeId, userId uuid.UUID) error {
 	query := fmt.Sprintf(`
 		DELETE FROM %s
 		WHERE recipe_id=$1 AND user_id=$2
 	`, recipeBookTable)
 
-	if _, err := r.db.Exec(query, recipeId, userId); err != nil {
+	if _, err := r.db.ExecContext(ctx, query, recipeId, userId); err != nil {
 		log.Errorf("unable to remove recipe %s from user %s recipe book: %s", recipeId, userId, err)
 		return fail.GrpcUnknown
 	}
@@ -105,14 +106,14 @@ func (r *Repository) RemoveRecipeFromRecipeBook(recipeId, userId uuid.UUID) erro
 	return nil
 }
 
-func (r *Repository) SaveRecipeToFavourites(recipeId, userId uuid.UUID) error {
+func (r *Repository) SaveRecipeToFavourites(ctx context.Context, recipeId, userId uuid.UUID) error {
 	query := fmt.Sprintf(`
 		INSERT INTO %s (recipe_id, user_id)
 		VALUES ($1, $2)
 		ON CONFLICT (recipe_id, user_id) DO NOTHING
 	`, favouritesTable)
 
-	if _, err := r.db.Exec(query, recipeId, userId); err != nil {
+	if _, err := r.db.ExecContext(ctx, query, recipeId, userId); err != nil {
 		log.Errorf("unable to add recipe %s to user %s favourites: %s", recipeId, userId, err)
 		return fail.GrpcUnknown
 	}
@@ -120,13 +121,13 @@ func (r *Repository) SaveRecipeToFavourites(recipeId, userId uuid.UUID) error {
 	return nil
 }
 
-func (r *Repository) RemoveRecipeFromFavourites(recipeId, userId uuid.UUID) error {
+func (r *Repository) RemoveRecipeFromFavourites(ctx context.Context, recipeId, userId uuid.UUID) error {
 	query := fmt.Sprintf(`
 		DELETE FROM %s
 		WHERE recipe_id=$1 AND user_id=$2
 	`, favouritesTable)
 
-	if _, err := r.db.Exec(query, recipeId, userId); err != nil {
+	if _, err := r.db.ExecContext(ctx, query, recipeId, userId); err != nil {
 		log.Errorf("unable to remove recipe %s from user %s favourites: %s", recipeId, userId, err)
 		return fail.GrpcUnknown
 	}

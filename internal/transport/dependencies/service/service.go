@@ -28,39 +28,39 @@ type Recipe interface {
 	GetRecipes(ctx context.Context, params entity.RecipesQuery, userId uuid.UUID, language string) entity.RecipesInfo
 	GetRandomRecipe(ctx context.Context, userId uuid.UUID, recipeLanguages *[]string, userLanguage string) (entity.DetailedRecipe, error)
 	GetRecipesBook(ctx context.Context, userId uuid.UUID, language string) (entity.RecipeBook, error)
-	GetRecipeNames(recipeIds []uuid.UUID, userId uuid.UUID) (map[uuid.UUID]string, error)
+	GetRecipeNames(ctx context.Context, recipeIds []uuid.UUID, userId uuid.UUID) (map[uuid.UUID]string, error)
 	CreateRecipe(ctx context.Context, input entity.RecipeInput) (uuid.UUID, int32, error)
 	GetRecipe(ctx context.Context, recipeId, userId uuid.UUID, language string, translatorId *uuid.UUID) (entity.DetailedRecipe, error)
 	UpdateRecipe(ctx context.Context, input entity.RecipeInput) (int32, error)
-	DeleteRecipe(recipeId, userId uuid.UUID) error
+	DeleteRecipe(ctx context.Context, recipeId, userId uuid.UUID) error
 
 	GenerateRecipePicturesUploadLinks(ctx context.Context, recipeId, userId uuid.UUID, picturesCount int, subscriptionPlan string) ([]entity.PictureUpload, error)
 	SetRecipePictures(ctx context.Context, recipeId, userId uuid.UUID, pictures entity.RecipePictures, version *int32, subscriptionPlan string) (int32, entity.RecipePictures, error)
 
-	RateRecipe(recipeId, userId uuid.UUID, score int) error
-	SaveRecipeToRecipeBook(recipeId, userId uuid.UUID) error
-	RemoveRecipeFromRecipeBook(recipeId, userId uuid.UUID) error
-	SaveRecipeToFavourites(recipeId, userId uuid.UUID) error
-	RemoveRecipeFromFavourites(recipeId, userId uuid.UUID) error
-	AddRecipeToCollection(recipeId, collectionId, userId uuid.UUID) error
-	RemoveRecipeFromCollection(recipeId, collectionId, userId uuid.UUID) error
-	SetRecipeCollections(recipeId, userId uuid.UUID, collections []uuid.UUID) error
+	RateRecipe(ctx context.Context, recipeId, userId uuid.UUID, score int) error
+	SaveRecipeToRecipeBook(ctx context.Context, recipeId, userId uuid.UUID) error
+	RemoveRecipeFromRecipeBook(ctx context.Context, recipeId, userId uuid.UUID) error
+	SaveRecipeToFavourites(ctx context.Context, recipeId, userId uuid.UUID) error
+	RemoveRecipeFromFavourites(ctx context.Context, recipeId, userId uuid.UUID) error
+	AddRecipeToCollection(ctx context.Context, recipeId, collectionId, userId uuid.UUID) error
+	RemoveRecipeFromCollection(ctx context.Context, recipeId, collectionId, userId uuid.UUID) error
+	SetRecipeCollections(ctx context.Context, recipeId, userId uuid.UUID, collections []uuid.UUID) error
 
-	TranslateRecipe(recipeId uuid.UUID, translation entity.RecipeTranslation) error
-	DeleteRecipeTranslation(recipeId, userId uuid.UUID, language string) error
+	TranslateRecipe(ctx context.Context, recipeId uuid.UUID, translation entity.RecipeTranslation) error
+	DeleteRecipeTranslation(ctx context.Context, recipeId, userId uuid.UUID, language string) error
 
-	GetRecipePolicy(userId uuid.UUID) (entity.RecipePolicy, error)
+	GetRecipePolicy(ctx context.Context, userId uuid.UUID) (entity.RecipePolicy, error)
 }
 
 type Collection interface {
 	GetCollections(ctx context.Context, userId uuid.UUID, requesterId uuid.UUID) entity.DetailedCollections
-	CreateCollection(input entity.CollectionInput) (uuid.UUID, error)
+	CreateCollection(ctx context.Context, input entity.CollectionInput) (uuid.UUID, error)
 	GetCollection(ctx context.Context, collectionId uuid.UUID, userId uuid.UUID) (entity.DetailedCollection, error)
-	UpdateCollection(input entity.CollectionInput) error
-	DeleteCollection(collectionId, userId uuid.UUID) error
+	UpdateCollection(ctx context.Context, input entity.CollectionInput) error
+	DeleteCollection(ctx context.Context, collectionId, userId uuid.UUID) error
 
-	SaveCollectionToRecipeBook(collectionId, userId uuid.UUID) error
-	RemoveCollectionFromRecipeBook(collectionId, userId uuid.UUID) error
+	SaveCollectionToRecipeBook(ctx context.Context, collectionId, userId uuid.UUID) error
+	RemoveCollectionFromRecipeBook(ctx context.Context, collectionId, userId uuid.UUID) error
 }
 
 func New(

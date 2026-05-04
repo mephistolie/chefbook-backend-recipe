@@ -7,13 +7,13 @@ import (
 	api "github.com/mephistolie/chefbook-backend-recipe/api/proto/implementation/v1"
 )
 
-func (s *RecipeServer) GetRecipePolicy(_ context.Context, req *api.GetRecipePolicyRequest) (*api.GetRecipePolicyResponse, error) {
+func (s *RecipeServer) GetRecipePolicy(ctx context.Context, req *api.GetRecipePolicyRequest) (*api.GetRecipePolicyResponse, error) {
 	recipeId, err := uuid.Parse(req.RecipeId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
 	}
 
-	policy, err := s.recipeService.GetRecipePolicy(recipeId)
+	policy, err := s.recipeService.GetRecipePolicy(ctx, recipeId)
 	if err != nil {
 		return nil, err
 	}

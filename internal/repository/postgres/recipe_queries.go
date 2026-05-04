@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -15,13 +16,13 @@ import (
 
 var ascendingSortings = []string{entity.SortingTime, entity.SortingCalories}
 
-func (r *Repository) GetRecipes(params entity.RecipesQuery, userId uuid.UUID) []entity.RecipeInfo {
+func (r *Repository) GetRecipes(ctx context.Context, params entity.RecipesQuery, userId uuid.UUID) []entity.RecipeInfo {
 	var recipes []entity.RecipeInfo
 
 	query, args := r.getRecipesByParamsQuery(params, userId)
 	log.Debug("Get recipes query generated:\n", query, "\nArgs: ", args)
 
-	rows, err := r.db.Query(query, args...)
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		log.Errorf("unable to get recipes: %s", err)
 		return []entity.RecipeInfo{}
@@ -263,7 +264,7 @@ func (r *Repository) getPagingStatement(params entity.RecipesQuery, initArg int)
 	return pagingStatement, args
 }
 
-func (r *Repository) GetRandomRecipe(userId uuid.UUID, languages *[]string) (entity.Recipe, error) {
+func (r *Repository) GetRandomRecipe(ctx context.Context, userId uuid.UUID, languages *[]string) (entity.Recipe, error) {
 	var recipe dto.Recipe
 
 	query := fmt.Sprintf(`
@@ -314,7 +315,7 @@ func (r *Repository) GetRandomRecipe(userId uuid.UUID, languages *[]string) (ent
 
 	query += fmt.Sprint(" ORDER BY RANDOM() LIMIT 1")
 
-	row := r.db.QueryRow(query, args...)
+	row := r.db.QueryRowContext(ctx, query, args...)
 	m := pgtype.NewMap()
 	if err := row.Scan(
 		&recipe.Id, &recipe.Name,
@@ -335,7 +336,7 @@ func (r *Repository) GetRandomRecipe(userId uuid.UUID, languages *[]string) (ent
 	return recipe.Entity(userId), nil
 }
 
-func (r *Repository) GetRecipeNames(recipeIds []uuid.UUID, userId uuid.UUID) (map[uuid.UUID]string, error) {
+func (r *Repository) GetRecipeNames(ctx context.Context, recipeIds []uuid.UUID, userId uuid.UUID) (map[uuid.UUID]string, error) {
 	recipeNames := make(map[uuid.UUID]string)
 
 	query := fmt.Sprintf(`
@@ -344,7 +345,7 @@ func (r *Repository) GetRecipeNames(recipeIds []uuid.UUID, userId uuid.UUID) (ma
 		WHERE recipe_id=ANY($1) AND (owner_id=$2 OR visibility<>'%[2]v')
 	`, recipesTable, model.VisibilityPrivate)
 
-	rows, err := r.db.Query(query, recipeIds, userId)
+	rows, err := r.db.QueryContext(ctx, query, recipeIds, userId)
 	if err != nil {
 		log.Errorf("unable to get recipe names: %s", err)
 		return map[uuid.UUID]string{}, fail.GrpcUnknown

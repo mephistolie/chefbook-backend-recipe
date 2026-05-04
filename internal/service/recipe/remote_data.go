@@ -93,6 +93,7 @@ func (s *Service) getTags(
 }
 
 func (s *Service) getCollectionsMap(
+	ctx context.Context,
 	collectionIds []uuid.UUID,
 ) map[uuid.UUID]entity.CollectionInfo {
 	collections := make(map[uuid.UUID]entity.CollectionInfo)
@@ -107,7 +108,7 @@ func (s *Service) getCollectionsMap(
 	}
 
 	if len(uniqueCollectionIds) > 0 {
-		collections = s.collectionRepo.GetCollectionsMap(collectionIds)
+		collections = s.collectionRepo.GetCollectionsMap(ctx, collectionIds)
 	}
 
 	return collections

@@ -9,12 +9,12 @@ import (
 )
 
 func (s *Service) GenerateRecipePicturesUploadLinks(ctx context.Context, recipeId, userId uuid.UUID, picturesCount int, subscriptionPlan string) ([]entity.PictureUpload, error) {
-	policy, err := s.recipeRepo.GetRecipePolicy(recipeId)
+	policy, err := s.recipeRepo.GetRecipePolicy(ctx, recipeId)
 	if err != nil || policy.OwnerId != userId || policy.IsEncrypted && !s.subscriptionLimiter.IsEncryptionAllowed(subscriptionPlan) {
 		return nil, fail.GrpcAccessDenied
 	}
 
-	pictureIds, err := s.recipeRepo.GetRecipePictureIdsToUpload(recipeId, picturesCount)
+	pictureIds, err := s.recipeRepo.GetRecipePictureIdsToUpload(ctx, recipeId, picturesCount)
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +37,7 @@ func (s *Service) SetRecipePictures(
 	version *int32,
 	subscriptionPlan string,
 ) (int32, entity.RecipePictures, error) {
-	if policy, err := s.recipeRepo.GetRecipePolicy(recipeId); err != nil || policy.OwnerId != userId {
+	if policy, err := s.recipeRepo.GetRecipePolicy(ctx, recipeId); err != nil || policy.OwnerId != userId {
 		return 0, entity.RecipePictures{}, fail.GrpcAccessDenied
 	}
 
@@ -52,7 +52,7 @@ func (s *Service) SetRecipePictures(
 		return 0, entity.RecipePictures{}, recipeFail.GrpcRecipePictureNotFound
 	}
 
-	newVersion, err := s.recipeRepo.SetRecipePictures(recipeId, validatedPictures, pictureIds, version)
+	newVersion, err := s.recipeRepo.SetRecipePictures(ctx, recipeId, validatedPictures, pictureIds, version)
 	if err != nil {
 		return 0, entity.RecipePictures{}, err
 	}

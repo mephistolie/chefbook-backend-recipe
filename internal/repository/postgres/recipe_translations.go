@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -11,14 +12,14 @@ import (
 	"k8s.io/utils/strings/slices"
 )
 
-func (r *Repository) GetRecipeTranslations(recipeId uuid.UUID) (map[string][]uuid.UUID, error) {
+func (r *Repository) GetRecipeTranslations(ctx context.Context, recipeId uuid.UUID) (map[string][]uuid.UUID, error) {
 	query := fmt.Sprintf(`
 		SELECT language, author_id
 		FROM %s
 		WHERE recipe_id=$1
 	`, translationsTable)
 
-	rows, err := r.db.Query(query, recipeId)
+	rows, err := r.db.QueryContext(ctx, query, recipeId)
 	if err != nil {
 		log.Warnf("unable to get recipe %s translations: %s", recipeId, err)
 		return nil, fail.GrpcNotFound
@@ -34,7 +35,7 @@ func (r *Repository) GetRecipeTranslations(recipeId uuid.UUID) (map[string][]uui
 	return dto.TranslationsEntity(translations), nil
 }
 
-func (r *Repository) GetRecipeTranslation(recipeId uuid.UUID, language string, authorId *uuid.UUID) *entity.RecipeTranslation {
+func (r *Repository) GetRecipeTranslation(ctx context.Context, recipeId uuid.UUID, language string, authorId *uuid.UUID) *entity.RecipeTranslation {
 	var translations []dto.RecipeTranslation
 
 	query := fmt.Sprintf(`
@@ -49,7 +50,7 @@ func (r *Repository) GetRecipeTranslation(recipeId uuid.UUID, language string, a
 		args = append(args, *authorId)
 	}
 
-	rows, err := r.db.Query(query, args...)
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		log.Warnf("unable to get recipe %s translation to %s: %s", recipeId, language, err)
 		return nil
@@ -78,10 +79,10 @@ func (r *Repository) GetRecipeTranslation(recipeId uuid.UUID, language string, a
 	return &t
 }
 
-func (r *Repository) TranslateRecipe(recipeId uuid.UUID, translation entity.RecipeTranslation) error {
+func (r *Repository) TranslateRecipe(ctx context.Context, recipeId uuid.UUID, translation entity.RecipeTranslation) error {
 	t := dto.NewRecipeTranslation(translation)
 
-	tx, err := r.startTransaction()
+	tx, err := r.startTransaction(ctx)
 	if err != nil {
 		return err
 	}
@@ -93,7 +94,7 @@ func (r *Repository) TranslateRecipe(recipeId uuid.UUID, translation entity.Reci
 		SET name=$4, description=$5, ingredients=$6, cooking=$7;
 	`, translationsTable)
 
-	if _, err = tx.Exec(addTranslationQuery, recipeId, t.Language, translation.AuthorId, t.Name, t.Description, t.Ingredients, t.Cooking); err != nil {
+	if _, err = tx.ExecContext(ctx, addTranslationQuery, recipeId, t.Language, translation.AuthorId, t.Name, t.Description, t.Ingredients, t.Cooking); err != nil {
 		log.Errorf("unable to add recipe %s translation to %s: %s", recipeId, translation.Language, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
@@ -106,7 +107,7 @@ func (r *Repository) TranslateRecipe(recipeId uuid.UUID, translation entity.Reci
 
 	var languages []string
 
-	row := tx.QueryRow(getCurrentRecipeTranslationsQuery, recipeId)
+	row := tx.QueryRowContext(ctx, getCurrentRecipeTranslationsQuery, recipeId)
 	m := pgtype.NewMap()
 	if err = row.Scan(m.SQLScanner(&languages)); err != nil {
 		log.Warnf("unable to get recipe %s languages: %s", recipeId, err)
@@ -121,7 +122,7 @@ func (r *Repository) TranslateRecipe(recipeId uuid.UUID, translation entity.Reci
 			WHERE recipe_id=$1
 		`, recipesTable)
 
-		if _, err = tx.Exec(updateRecipeTranslationsQuery, recipeId, languages); err != nil {
+		if _, err = tx.ExecContext(ctx, updateRecipeTranslationsQuery, recipeId, languages); err != nil {
 			log.Errorf("unable to update recipe %s translations: %s", recipeId, err)
 			return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 		}
@@ -130,8 +131,8 @@ func (r *Repository) TranslateRecipe(recipeId uuid.UUID, translation entity.Reci
 	return commitTransaction(tx)
 }
 
-func (r *Repository) DeleteRecipeTranslation(recipeId uuid.UUID, userId uuid.UUID, language string) error {
-	tx, err := r.startTransaction()
+func (r *Repository) DeleteRecipeTranslation(ctx context.Context, recipeId uuid.UUID, userId uuid.UUID, language string) error {
+	tx, err := r.startTransaction(ctx)
 	if err != nil {
 		return err
 	}
@@ -141,7 +142,7 @@ func (r *Repository) DeleteRecipeTranslation(recipeId uuid.UUID, userId uuid.UUI
 		WHERE recipe_id=$1 AND author_id=$2 and language=$3
 	`, translationsTable)
 
-	if _, err = tx.Exec(deleteTranslationQuery, recipeId, userId, language); err != nil {
+	if _, err = tx.ExecContext(ctx, deleteTranslationQuery, recipeId, userId, language); err != nil {
 		log.Errorf("unable to delete recipe %s translation to %s: %s", recipeId, language, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
@@ -154,7 +155,7 @@ func (r *Repository) DeleteRecipeTranslation(recipeId uuid.UUID, userId uuid.UUI
 
 	var translationsCount int
 
-	row := tx.QueryRow(getRecipeTranslationsCountQuery, recipeId, language)
+	row := tx.QueryRowContext(ctx, getRecipeTranslationsCountQuery, recipeId, language)
 	if err = row.Scan(&translationsCount); err != nil {
 		log.Warnf("unable to get recipe %s translations count: %s", recipeId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
@@ -167,7 +168,7 @@ func (r *Repository) DeleteRecipeTranslation(recipeId uuid.UUID, userId uuid.UUI
 			WHERE recipe_id=$1
 		`, recipesTable)
 
-		if _, err = tx.Exec(updateRecipeTranslationsQuery, recipeId, language); err != nil {
+		if _, err = tx.ExecContext(ctx, updateRecipeTranslationsQuery, recipeId, language); err != nil {
 			log.Errorf("unable to update recipe %s translations: %s", recipeId, err)
 			return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 		}

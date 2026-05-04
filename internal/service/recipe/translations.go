@@ -1,6 +1,7 @@
 package recipe
 
 import (
+	"context"
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 	"github.com/mephistolie/chefbook-backend-recipe/api/model"
@@ -8,16 +9,16 @@ import (
 	recipeFail "github.com/mephistolie/chefbook-backend-recipe/internal/entity/fail"
 )
 
-func (s *Service) TranslateRecipe(recipeId uuid.UUID, translation entity.RecipeTranslation) error {
-	if err := s.validateTranslation(recipeId, translation); err != nil {
+func (s *Service) TranslateRecipe(ctx context.Context, recipeId uuid.UUID, translation entity.RecipeTranslation) error {
+	if err := s.validateTranslation(ctx, recipeId, translation); err != nil {
 		return err
 	}
 
-	return s.recipeRepo.TranslateRecipe(recipeId, translation)
+	return s.recipeRepo.TranslateRecipe(ctx, recipeId, translation)
 }
 
-func (s *Service) validateTranslation(recipeId uuid.UUID, translation entity.RecipeTranslation) error {
-	recipe, err := s.recipeRepo.GetRecipe(recipeId, translation.AuthorId)
+func (s *Service) validateTranslation(ctx context.Context, recipeId uuid.UUID, translation entity.RecipeTranslation) error {
+	recipe, err := s.recipeRepo.GetRecipe(ctx, recipeId, translation.AuthorId)
 	if err != nil {
 		return err
 	}
@@ -54,6 +55,6 @@ func (s *Service) validateTranslation(recipeId uuid.UUID, translation entity.Rec
 	return nil
 }
 
-func (s *Service) DeleteRecipeTranslation(recipeId, userId uuid.UUID, language string) error {
-	return s.recipeRepo.DeleteRecipeTranslation(recipeId, userId, language)
+func (s *Service) DeleteRecipeTranslation(ctx context.Context, recipeId, userId uuid.UUID, language string) error {
+	return s.recipeRepo.DeleteRecipeTranslation(ctx, recipeId, userId, language)
 }

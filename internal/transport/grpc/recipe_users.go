@@ -12,7 +12,7 @@ const (
 	maxRecipeCategoriesCount = 20
 )
 
-func (s *RecipeServer) RateRecipe(_ context.Context, req *api.RateRecipeRequest) (*api.RateRecipeResponse, error) {
+func (s *RecipeServer) RateRecipe(ctx context.Context, req *api.RateRecipeRequest) (*api.RateRecipeResponse, error) {
 	userId, err := uuid.Parse(req.UserId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
@@ -25,14 +25,14 @@ func (s *RecipeServer) RateRecipe(_ context.Context, req *api.RateRecipeRequest)
 		return nil, fail.GrpcInvalidBody
 	}
 
-	if err = s.recipeService.RateRecipe(recipeId, userId, int(req.Score)); err != nil {
+	if err = s.recipeService.RateRecipe(ctx, recipeId, userId, int(req.Score)); err != nil {
 		return nil, err
 	}
 
 	return &api.RateRecipeResponse{Message: "score set"}, nil
 }
 
-func (s *RecipeServer) SaveRecipeToRecipeBook(_ context.Context, req *api.SaveRecipeToRecipeBookRequest) (*api.SaveRecipeToRecipeBookResponse, error) {
+func (s *RecipeServer) SaveRecipeToRecipeBook(ctx context.Context, req *api.SaveRecipeToRecipeBookRequest) (*api.SaveRecipeToRecipeBookResponse, error) {
 	userId, err := uuid.Parse(req.UserId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
@@ -42,14 +42,14 @@ func (s *RecipeServer) SaveRecipeToRecipeBook(_ context.Context, req *api.SaveRe
 		return nil, fail.GrpcInvalidBody
 	}
 
-	if err = s.recipeService.SaveRecipeToRecipeBook(recipeId, userId); err != nil {
+	if err = s.recipeService.SaveRecipeToRecipeBook(ctx, recipeId, userId); err != nil {
 		return nil, err
 	}
 
 	return &api.SaveRecipeToRecipeBookResponse{Message: "recipe saved to recipe book"}, nil
 }
 
-func (s *RecipeServer) RemoveRecipeFromRecipeBook(_ context.Context, req *api.RemoveRecipeFromRecipeBookRequest) (*api.RemoveRecipeFromRecipeBookResponse, error) {
+func (s *RecipeServer) RemoveRecipeFromRecipeBook(ctx context.Context, req *api.RemoveRecipeFromRecipeBookRequest) (*api.RemoveRecipeFromRecipeBookResponse, error) {
 	userId, err := uuid.Parse(req.UserId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
@@ -59,14 +59,14 @@ func (s *RecipeServer) RemoveRecipeFromRecipeBook(_ context.Context, req *api.Re
 		return nil, fail.GrpcInvalidBody
 	}
 
-	if err = s.recipeService.RemoveRecipeFromRecipeBook(recipeId, userId); err != nil {
+	if err = s.recipeService.RemoveRecipeFromRecipeBook(ctx, recipeId, userId); err != nil {
 		return nil, err
 	}
 
 	return &api.RemoveRecipeFromRecipeBookResponse{Message: "recipe removed from recipe book"}, nil
 }
 
-func (s *RecipeServer) SaveRecipeToFavourites(_ context.Context, req *api.SaveRecipeToFavouritesRequest) (*api.SaveRecipeToFavouritesResponse, error) {
+func (s *RecipeServer) SaveRecipeToFavourites(ctx context.Context, req *api.SaveRecipeToFavouritesRequest) (*api.SaveRecipeToFavouritesResponse, error) {
 	userId, err := uuid.Parse(req.UserId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
@@ -76,14 +76,14 @@ func (s *RecipeServer) SaveRecipeToFavourites(_ context.Context, req *api.SaveRe
 		return nil, fail.GrpcInvalidBody
 	}
 
-	if err = s.recipeService.SaveRecipeToFavourites(recipeId, userId); err != nil {
+	if err = s.recipeService.SaveRecipeToFavourites(ctx, recipeId, userId); err != nil {
 		return nil, err
 	}
 
 	return &api.SaveRecipeToFavouritesResponse{Message: "recipe saved to favourites"}, nil
 }
 
-func (s *RecipeServer) RemoveRecipeFromFavourites(_ context.Context, req *api.RemoveRecipeFromFavouritesRequest) (*api.RemoveRecipeFromFavouritesResponse, error) {
+func (s *RecipeServer) RemoveRecipeFromFavourites(ctx context.Context, req *api.RemoveRecipeFromFavouritesRequest) (*api.RemoveRecipeFromFavouritesResponse, error) {
 	userId, err := uuid.Parse(req.UserId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
@@ -93,14 +93,14 @@ func (s *RecipeServer) RemoveRecipeFromFavourites(_ context.Context, req *api.Re
 		return nil, fail.GrpcInvalidBody
 	}
 
-	if err = s.recipeService.RemoveRecipeFromFavourites(recipeId, userId); err != nil {
+	if err = s.recipeService.RemoveRecipeFromFavourites(ctx, recipeId, userId); err != nil {
 		return nil, err
 	}
 
 	return &api.RemoveRecipeFromFavouritesResponse{Message: "recipe removed from favourites"}, nil
 }
 
-func (s *RecipeServer) AddRecipeToCollection(_ context.Context, req *api.AddRecipeToCollectionRequest) (*api.AddRecipeToCollectionResponse, error) {
+func (s *RecipeServer) AddRecipeToCollection(ctx context.Context, req *api.AddRecipeToCollectionRequest) (*api.AddRecipeToCollectionResponse, error) {
 	userId, err := uuid.Parse(req.UserId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
@@ -114,14 +114,14 @@ func (s *RecipeServer) AddRecipeToCollection(_ context.Context, req *api.AddReci
 		return nil, fail.GrpcInvalidBody
 	}
 
-	if err = s.recipeService.AddRecipeToCollection(recipeId, collectionId, userId); err != nil {
+	if err = s.recipeService.AddRecipeToCollection(ctx, recipeId, collectionId, userId); err != nil {
 		return nil, err
 	}
 
 	return &api.AddRecipeToCollectionResponse{Message: "recipe saved to collection"}, nil
 }
 
-func (s *RecipeServer) RemoveRecipeFromCollection(_ context.Context, req *api.RemoveRecipeFromCollectionRequest) (*api.RemoveRecipeFromCollectionResponse, error) {
+func (s *RecipeServer) RemoveRecipeFromCollection(ctx context.Context, req *api.RemoveRecipeFromCollectionRequest) (*api.RemoveRecipeFromCollectionResponse, error) {
 	userId, err := uuid.Parse(req.UserId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
@@ -135,14 +135,14 @@ func (s *RecipeServer) RemoveRecipeFromCollection(_ context.Context, req *api.Re
 		return nil, fail.GrpcInvalidBody
 	}
 
-	if err = s.recipeService.RemoveRecipeFromCollection(recipeId, collectionId, userId); err != nil {
+	if err = s.recipeService.RemoveRecipeFromCollection(ctx, recipeId, collectionId, userId); err != nil {
 		return nil, err
 	}
 
 	return &api.RemoveRecipeFromCollectionResponse{Message: "recipe removed from collection"}, nil
 }
 
-func (s *RecipeServer) SetRecipeCollections(_ context.Context, req *api.SetRecipeCollectionsRequest) (*api.SetRecipeCollectionsResponse, error) {
+func (s *RecipeServer) SetRecipeCollections(ctx context.Context, req *api.SetRecipeCollectionsRequest) (*api.SetRecipeCollectionsResponse, error) {
 	userId, err := uuid.Parse(req.UserId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
@@ -163,7 +163,7 @@ func (s *RecipeServer) SetRecipeCollections(_ context.Context, req *api.SetRecip
 		}
 	}
 
-	if err = s.recipeService.SetRecipeCollections(recipeId, userId, collectionIds); err != nil {
+	if err = s.recipeService.SetRecipeCollections(ctx, recipeId, userId, collectionIds); err != nil {
 		return nil, err
 	}
 

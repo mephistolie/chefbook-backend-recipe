@@ -25,19 +25,19 @@ func (s *Service) ImportFirebaseRecipes(ctx context.Context, userId uuid.UUID, f
 	}
 
 	log.Infof("found %d Firebase recipes for user %s...", len(firebaseRecipes), userId)
-	if err := s.mqRepo.ConfirmFirebaseDataLoad(messageId); err != nil {
+	if err := s.mqRepo.ConfirmFirebaseDataLoad(ctx, messageId); err != nil {
 		return err
 	}
 
 	collections := make(map[string]uuid.UUID)
 	for _, firebaseRecipe := range firebaseRecipes {
-		s.importFirebaseRecipe(firebaseRecipe, userId, &collections)
+		s.importFirebaseRecipe(ctx, firebaseRecipe, userId, &collections)
 	}
 
 	return nil
 }
 
-func (s *Service) importFirebaseRecipe(firebaseRecipe firebase.Recipe, userId uuid.UUID, collections *map[string]uuid.UUID) {
+func (s *Service) importFirebaseRecipe(ctx context.Context, firebaseRecipe firebase.Recipe, userId uuid.UUID, collections *map[string]uuid.UUID) {
 	var servingsPtr *int32
 	if firebaseRecipe.Servings != nil {
 		servings := int32(*firebaseRecipe.Servings)
@@ -68,7 +68,7 @@ func (s *Service) importFirebaseRecipe(firebaseRecipe firebase.Recipe, userId uu
 		if collectionId, ok := (*collections)[category]; ok {
 			recipeCollections = append(recipeCollections, collectionId)
 		} else {
-			if res, err := s.collectionRepo.CreateCollection(entity.CollectionInput{
+			if res, err := s.collectionRepo.CreateCollection(ctx, entity.CollectionInput{
 				Id:         uuid.New(),
 				UserId:     userId,
 				Name:       category,
@@ -80,12 +80,12 @@ func (s *Service) importFirebaseRecipe(firebaseRecipe firebase.Recipe, userId uu
 		}
 	}
 
-	if recipeId, _, err := s.recipeRepo.CreateRecipe(recipe); err == nil {
+	if recipeId, _, err := s.recipeRepo.CreateRecipe(ctx, recipe); err == nil {
 		if firebaseRecipe.IsFavourite {
-			_ = s.recipeRepo.SaveRecipeToFavourites(recipeId, userId)
+			_ = s.recipeRepo.SaveRecipeToFavourites(ctx, recipeId, userId)
 		}
 		if len(recipeCollections) > 0 {
-			_ = s.recipeRepo.SetRecipeCollections(recipeId, userId, recipeCollections)
+			_ = s.recipeRepo.SetRecipeCollections(ctx, recipeId, userId, recipeCollections)
 		}
 	}
 }

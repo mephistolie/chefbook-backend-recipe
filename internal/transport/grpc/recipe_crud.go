@@ -66,7 +66,7 @@ func (s *RecipeServer) UpdateRecipe(ctx context.Context, req *api.RecipeInput) (
 	return &api.UpdateRecipeResponse{Version: version}, nil
 }
 
-func (s *RecipeServer) DeleteRecipe(_ context.Context, req *api.DeleteRecipeRequest) (*api.DeleteRecipeResponse, error) {
+func (s *RecipeServer) DeleteRecipe(ctx context.Context, req *api.DeleteRecipeRequest) (*api.DeleteRecipeResponse, error) {
 	userId, err := uuid.Parse(req.UserId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
@@ -76,7 +76,7 @@ func (s *RecipeServer) DeleteRecipe(_ context.Context, req *api.DeleteRecipeRequ
 		return nil, fail.GrpcInvalidBody
 	}
 
-	if err = s.recipeService.DeleteRecipe(recipeId, userId); err != nil {
+	if err = s.recipeService.DeleteRecipe(ctx, recipeId, userId); err != nil {
 		return nil, err
 	}
 

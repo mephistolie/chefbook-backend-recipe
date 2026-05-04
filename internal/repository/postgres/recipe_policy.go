@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-common/log"
@@ -8,7 +9,7 @@ import (
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
 )
 
-func (r *Repository) GetRecipePolicy(recipeId uuid.UUID) (entity.RecipePolicy, error) {
+func (r *Repository) GetRecipePolicy(ctx context.Context, recipeId uuid.UUID) (entity.RecipePolicy, error) {
 	var policy entity.RecipePolicy
 
 	query := fmt.Sprintf(`
@@ -17,7 +18,7 @@ func (r *Repository) GetRecipePolicy(recipeId uuid.UUID) (entity.RecipePolicy, e
 		WHERE recipe_id=$1
 	`, recipesTable)
 
-	row := r.db.QueryRow(query, recipeId)
+	row := r.db.QueryRowContext(ctx, query, recipeId)
 	if err := row.Scan(&policy.Id, &policy.OwnerId, &policy.Visibility, &policy.IsEncrypted); err != nil {
 		log.Warnf("unable to get recipe %s policy: %s", recipeId, err)
 		return entity.RecipePolicy{}, fail.GrpcNotFound
