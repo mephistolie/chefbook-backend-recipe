@@ -9,17 +9,17 @@ import (
 	"github.com/mephistolie/chefbook-backend-recipe/internal/transport/grpc/dto"
 )
 
-func (s *RecipeServer) GetRecipes(_ context.Context, req *api.GetRecipesRequest) (*api.GetRecipesResponse, error) {
+func (s *RecipeServer) GetRecipes(ctx context.Context, req *api.GetRecipesRequest) (*api.GetRecipesResponse, error) {
 	userId, err := uuid.Parse(req.UserId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
 	}
 
-	recipes := s.recipeService.GetRecipes(dto.NewRecipesQuery(req), userId, entity.ValidatedLanguage(req.UserLanguage))
+	recipes := s.recipeService.GetRecipes(ctx, dto.NewRecipesQuery(req), userId, entity.ValidatedLanguage(req.UserLanguage))
 	return dto.NewGetRecipesResponse(recipes), nil
 }
 
-func (s *RecipeServer) GetRandomRecipe(_ context.Context, req *api.GetRandomRecipeRequest) (*api.GetRecipeResponse, error) {
+func (s *RecipeServer) GetRandomRecipe(ctx context.Context, req *api.GetRandomRecipeRequest) (*api.GetRecipeResponse, error) {
 	userId, err := uuid.Parse(req.UserId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
@@ -29,7 +29,7 @@ func (s *RecipeServer) GetRandomRecipe(_ context.Context, req *api.GetRandomReci
 		languages = &req.RecipeLanguages
 	}
 
-	recipe, err := s.recipeService.GetRandomRecipe(userId, languages, entity.ValidatedLanguage(req.UserLanguage))
+	recipe, err := s.recipeService.GetRandomRecipe(ctx, userId, languages, entity.ValidatedLanguage(req.UserLanguage))
 	if err != nil {
 		return nil, err
 	}
@@ -37,13 +37,13 @@ func (s *RecipeServer) GetRandomRecipe(_ context.Context, req *api.GetRandomReci
 	return dto.NewGetRecipeResponse(recipe), nil
 }
 
-func (s *RecipeServer) GetRecipeBook(_ context.Context, req *api.GetRecipeBookRequest) (*api.GetRecipeBookResponse, error) {
+func (s *RecipeServer) GetRecipeBook(ctx context.Context, req *api.GetRecipeBookRequest) (*api.GetRecipeBookResponse, error) {
 	userId, err := uuid.Parse(req.UserId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
 	}
 
-	recipeBook, err := s.recipeService.GetRecipesBook(userId, entity.ValidatedLanguage(req.UserLanguage))
+	recipeBook, err := s.recipeService.GetRecipesBook(ctx, userId, entity.ValidatedLanguage(req.UserLanguage))
 	if err != nil {
 		return nil, err
 	}

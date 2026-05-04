@@ -1,6 +1,7 @@
 package mq
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"github.com/google/uuid"
@@ -35,9 +36,10 @@ func NewService(
 
 func (s *Service) HandleMessage(msg model.MessageData) error {
 	log.Infof("processing message %s with type %s", msg.Id, msg.Type)
+	ctx := context.Background()
 	switch msg.Type {
 	case auth.MsgTypeProfileFirebaseImport:
-		return s.handleFirebaseImportMsg(msg.Id, msg.Body)
+		return s.handleFirebaseImportMsg(ctx, msg.Id, msg.Body)
 	case auth.MsgTypeProfileDeleted:
 		return s.handleProfileDeletedMsg(msg.Id, msg.Body)
 	case encryption.MsgTypeVaultDeleted:
@@ -48,7 +50,7 @@ func (s *Service) HandleMessage(msg model.MessageData) error {
 	}
 }
 
-func (s *Service) handleFirebaseImportMsg(messageId uuid.UUID, data []byte) error {
+func (s *Service) handleFirebaseImportMsg(ctx context.Context, messageId uuid.UUID, data []byte) error {
 	var body auth.MsgBodyProfileFirebaseImport
 	if err := json.Unmarshal(data, &body); err != nil {
 		return err
@@ -60,7 +62,7 @@ func (s *Service) handleFirebaseImportMsg(messageId uuid.UUID, data []byte) erro
 	}
 
 	log.Infof("import firebase profile %s for user %s...", body.FirebaseId, body.UserId)
-	return s.ImportFirebaseRecipes(userId, body.FirebaseId, messageId)
+	return s.ImportFirebaseRecipes(ctx, userId, body.FirebaseId, messageId)
 }
 
 func (s *Service) handleProfileDeletedMsg(messageId uuid.UUID, data []byte) error {

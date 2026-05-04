@@ -1,6 +1,7 @@
 package mq
 
 import (
+	"context"
 	"errors"
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-common/firebase"
@@ -11,7 +12,7 @@ import (
 	"strconv"
 )
 
-func (s *Service) ImportFirebaseRecipes(userId uuid.UUID, firebaseId string, messageId uuid.UUID) error {
+func (s *Service) ImportFirebaseRecipes(ctx context.Context, userId uuid.UUID, firebaseId string, messageId uuid.UUID) error {
 	if s.firebase == nil {
 		log.Warnf("try to import firebase profile with firebase import disabled")
 		return errors.New("firebase import disabled")

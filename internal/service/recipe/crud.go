@@ -11,15 +11,15 @@ import (
 	"sync"
 )
 
-func (s *Service) CreateRecipe(input entity.RecipeInput) (uuid.UUID, int32, error) {
+func (s *Service) CreateRecipe(ctx context.Context, input entity.RecipeInput) (uuid.UUID, int32, error) {
 	id, version, err := s.recipeRepo.CreateRecipe(input)
 	if err == nil {
-		go s.validateTags(input)
+		go s.validateTags(context.WithoutCancel(ctx), input)
 	}
 	return id, version, err
 }
 
-func (s *Service) GetRecipe(recipeId, userId uuid.UUID, language string, translatorId *uuid.UUID) (entity.DetailedRecipe, error) {
+func (s *Service) GetRecipe(ctx context.Context, recipeId, userId uuid.UUID, language string, translatorId *uuid.UUID) (entity.DetailedRecipe, error) {
 	baseRecipe, err := s.recipeRepo.GetRecipe(recipeId, userId)
 	if err != nil {
 		return entity.DetailedRecipe{}, err
@@ -27,25 +27,25 @@ func (s *Service) GetRecipe(recipeId, userId uuid.UUID, language string, transla
 	if baseRecipe.OwnerId != userId && baseRecipe.Visibility == model.VisibilityPrivate {
 		return entity.DetailedRecipe{}, fail.GrpcAccessDenied
 	}
-	return s.fillBaseRecipe(baseRecipe, language, translatorId), nil
+	return s.fillBaseRecipe(ctx, baseRecipe, language, translatorId), nil
 }
 
-func (s *Service) GetRandomRecipe(userId uuid.UUID, recipeLanguages *[]string, userLanguage string) (entity.DetailedRecipe, error) {
+func (s *Service) GetRandomRecipe(ctx context.Context, userId uuid.UUID, recipeLanguages *[]string, userLanguage string) (entity.DetailedRecipe, error) {
 	baseRecipe, err := s.recipeRepo.GetRandomRecipe(userId, recipeLanguages)
 	if err != nil {
 		return entity.DetailedRecipe{}, err
 	}
-	return s.fillBaseRecipe(baseRecipe, userLanguage, nil), nil
+	return s.fillBaseRecipe(ctx, baseRecipe, userLanguage, nil), nil
 }
 
-func (s *Service) fillBaseRecipe(recipe entity.Recipe, language string, translatorId *uuid.UUID) entity.DetailedRecipe {
+func (s *Service) fillBaseRecipe(ctx context.Context, recipe entity.Recipe, language string, translatorId *uuid.UUID) entity.DetailedRecipe {
 	wg := sync.WaitGroup{}
 	wg.Add(3)
 
 	var tags map[string]entity.Tag
 	var tagGroups map[string]string
 	go func() {
-		tags, tagGroups = s.getTags(recipe.Tags, language)
+		tags, tagGroups = s.getTags(ctx, recipe.Tags, language)
 		wg.Done()
 	}()
 
@@ -57,7 +57,7 @@ func (s *Service) fillBaseRecipe(recipe entity.Recipe, language string, translat
 
 	var profilesInfo map[string]entity.ProfileInfo
 	go func() {
-		profilesInfo = s.getRecipeProfilesInfo(recipe)
+		profilesInfo = s.getRecipeProfilesInfo(ctx, recipe)
 		wg.Done()
 	}()
 
@@ -106,7 +106,7 @@ func (s *Service) fillRecipeTranslation(recipe *entity.Recipe, language string, 
 	}
 }
 
-func (s *Service) UpdateRecipe(input entity.RecipeInput) (int32, error) {
+func (s *Service) UpdateRecipe(ctx context.Context, input entity.RecipeInput) (int32, error) {
 	policy, err := s.recipeRepo.GetRecipePolicy(*input.RecipeId)
 	if err != nil {
 		return 0, err
@@ -120,7 +120,7 @@ func (s *Service) UpdateRecipe(input entity.RecipeInput) (int32, error) {
 
 	version, err := s.recipeRepo.UpdateRecipe(input)
 	if err == nil {
-		go s.validateTags(input)
+		go s.validateTags(context.WithoutCancel(ctx), input)
 	}
 	return version, err
 }
@@ -142,12 +142,12 @@ func (s *Service) DeleteRecipe(recipeId, userId uuid.UUID) error {
 	return err
 }
 
-func (s *Service) validateTags(input entity.RecipeInput) {
+func (s *Service) validateTags(ctx context.Context, input entity.RecipeInput) {
 	if len(input.Tags) == 0 {
 		return
 	}
 
-	if res, err := s.grpc.Tag.GetTags(context.Background(), &api.GetTagsRequest{}); err == nil {
+	if res, err := s.grpc.Tag.GetTags(ctx, &api.GetTagsRequest{}); err == nil {
 		var existingTags map[string]bool
 		for _, tag := range res.Tags {
 			existingTags[tag.TagId] = true

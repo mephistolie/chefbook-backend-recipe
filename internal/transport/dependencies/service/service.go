@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-common/firebase"
 	"github.com/mephistolie/chefbook-backend-common/log"
@@ -24,17 +25,17 @@ type Service struct {
 }
 
 type Recipe interface {
-	GetRecipes(params entity.RecipesQuery, userId uuid.UUID, language string) entity.RecipesInfo
-	GetRandomRecipe(userId uuid.UUID, recipeLanguages *[]string, userLanguage string) (entity.DetailedRecipe, error)
-	GetRecipesBook(userId uuid.UUID, language string) (entity.RecipeBook, error)
+	GetRecipes(ctx context.Context, params entity.RecipesQuery, userId uuid.UUID, language string) entity.RecipesInfo
+	GetRandomRecipe(ctx context.Context, userId uuid.UUID, recipeLanguages *[]string, userLanguage string) (entity.DetailedRecipe, error)
+	GetRecipesBook(ctx context.Context, userId uuid.UUID, language string) (entity.RecipeBook, error)
 	GetRecipeNames(recipeIds []uuid.UUID, userId uuid.UUID) (map[uuid.UUID]string, error)
-	CreateRecipe(input entity.RecipeInput) (uuid.UUID, int32, error)
-	GetRecipe(recipeId, userId uuid.UUID, language string, translatorId *uuid.UUID) (entity.DetailedRecipe, error)
-	UpdateRecipe(input entity.RecipeInput) (int32, error)
+	CreateRecipe(ctx context.Context, input entity.RecipeInput) (uuid.UUID, int32, error)
+	GetRecipe(ctx context.Context, recipeId, userId uuid.UUID, language string, translatorId *uuid.UUID) (entity.DetailedRecipe, error)
+	UpdateRecipe(ctx context.Context, input entity.RecipeInput) (int32, error)
 	DeleteRecipe(recipeId, userId uuid.UUID) error
 
-	GenerateRecipePicturesUploadLinks(recipeId, userId uuid.UUID, picturesCount int, subscriptionPlan string) ([]entity.PictureUpload, error)
-	SetRecipePictures(recipeId, userId uuid.UUID, pictures entity.RecipePictures, version *int32, subscriptionPlan string) (int32, entity.RecipePictures, error)
+	GenerateRecipePicturesUploadLinks(ctx context.Context, recipeId, userId uuid.UUID, picturesCount int, subscriptionPlan string) ([]entity.PictureUpload, error)
+	SetRecipePictures(ctx context.Context, recipeId, userId uuid.UUID, pictures entity.RecipePictures, version *int32, subscriptionPlan string) (int32, entity.RecipePictures, error)
 
 	RateRecipe(recipeId, userId uuid.UUID, score int) error
 	SaveRecipeToRecipeBook(recipeId, userId uuid.UUID) error
@@ -52,9 +53,9 @@ type Recipe interface {
 }
 
 type Collection interface {
-	GetCollections(userId uuid.UUID, requesterId uuid.UUID) entity.DetailedCollections
+	GetCollections(ctx context.Context, userId uuid.UUID, requesterId uuid.UUID) entity.DetailedCollections
 	CreateCollection(input entity.CollectionInput) (uuid.UUID, error)
-	GetCollection(collectionId uuid.UUID, userId uuid.UUID) (entity.DetailedCollection, error)
+	GetCollection(ctx context.Context, collectionId uuid.UUID, userId uuid.UUID) (entity.DetailedCollection, error)
 	UpdateCollection(input entity.CollectionInput) error
 	DeleteCollection(collectionId, userId uuid.UUID) error
 
@@ -63,6 +64,7 @@ type Collection interface {
 }
 
 func New(
+	ctx context.Context,
 	cfg *config.Config,
 	recipeRepo repository.Recipe,
 	collectionRepo repository.Collection,

@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func (s *Service) GetRecipes(params entity.RecipesQuery, userId uuid.UUID, language string) entity.RecipesInfo {
+func (s *Service) GetRecipes(ctx context.Context, params entity.RecipesQuery, userId uuid.UUID, language string) entity.RecipesInfo {
 	recipes := s.recipeRepo.GetRecipes(params, userId)
 
 	var tagIds []string
@@ -27,7 +27,7 @@ func (s *Service) GetRecipes(params entity.RecipesQuery, userId uuid.UUID, langu
 	var tags map[string]entity.Tag
 	var tagGroups map[string]string
 	go func() {
-		tags, tagGroups = s.getTags(tagIds, language)
+		tags, tagGroups = s.getTags(ctx, tagIds, language)
 		wg.Done()
 	}()
 
@@ -39,7 +39,7 @@ func (s *Service) GetRecipes(params entity.RecipesQuery, userId uuid.UUID, langu
 
 	var profilesInfo map[string]entity.ProfileInfo
 	go func() {
-		profilesInfo = s.getProfilesInfo(profileIds)
+		profilesInfo = s.getProfilesInfo(ctx, profileIds)
 		wg.Done()
 	}()
 
@@ -54,7 +54,7 @@ func (s *Service) GetRecipes(params entity.RecipesQuery, userId uuid.UUID, langu
 	}
 }
 
-func (s *Service) GetRecipesBook(userId uuid.UUID, language string) (entity.RecipeBook, error) {
+func (s *Service) GetRecipesBook(ctx context.Context, userId uuid.UUID, language string) (entity.RecipeBook, error) {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
@@ -62,7 +62,7 @@ func (s *Service) GetRecipesBook(userId uuid.UUID, language string) (entity.Reci
 
 	var hasEncryptedVault bool
 	go func() {
-		ctx, cancelCtx := context.WithTimeout(context.Background(), 3*time.Second)
+		ctx, cancelCtx := context.WithTimeout(ctx, 3*time.Second)
 		res, err := s.grpc.Encryption.HasEncryptedVault(ctx, &encryptionApi.HasEncryptedVaultRequest{UserId: userId.String()})
 		cancelCtx()
 		if err == nil {
@@ -91,11 +91,11 @@ func (s *Service) GetRecipesBook(userId uuid.UUID, language string) (entity.Reci
 	var tags map[string]entity.Tag
 	var tagGroups map[string]string
 	go func() {
-		tags, tagGroups = s.getTags(tagIds, language)
+		tags, tagGroups = s.getTags(ctx, tagIds, language)
 		wg.Done()
 	}()
 
-	profilesInfo := s.getProfilesInfo(profiles)
+	profilesInfo := s.getProfilesInfo(ctx, profiles)
 
 	wg.Wait()
 

@@ -1,13 +1,14 @@
 package recipe
 
 import (
+	"context"
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
 	recipeFail "github.com/mephistolie/chefbook-backend-recipe/internal/entity/fail"
 )
 
-func (s *Service) GenerateRecipePicturesUploadLinks(recipeId, userId uuid.UUID, picturesCount int, subscriptionPlan string) ([]entity.PictureUpload, error) {
+func (s *Service) GenerateRecipePicturesUploadLinks(ctx context.Context, recipeId, userId uuid.UUID, picturesCount int, subscriptionPlan string) ([]entity.PictureUpload, error) {
 	policy, err := s.recipeRepo.GetRecipePolicy(recipeId)
 	if err != nil || policy.OwnerId != userId || policy.IsEncrypted && !s.subscriptionLimiter.IsEncryptionAllowed(subscriptionPlan) {
 		return nil, fail.GrpcAccessDenied
@@ -20,7 +21,7 @@ func (s *Service) GenerateRecipePicturesUploadLinks(recipeId, userId uuid.UUID, 
 
 	var uploads []entity.PictureUpload
 	for _, pictureId := range pictureIds {
-		if upload, err := s.s3.GenerateRecipePictureUploadLink(recipeId, pictureId, subscriptionPlan, policy.IsEncrypted); err == nil {
+		if upload, err := s.s3.GenerateRecipePictureUploadLink(ctx, recipeId, pictureId, subscriptionPlan, policy.IsEncrypted); err == nil {
 			uploads = append(uploads, upload)
 		}
 	}
@@ -29,6 +30,7 @@ func (s *Service) GenerateRecipePicturesUploadLinks(recipeId, userId uuid.UUID, 
 }
 
 func (s *Service) SetRecipePictures(
+	ctx context.Context,
 	recipeId,
 	userId uuid.UUID,
 	pictures entity.RecipePictures,
@@ -46,7 +48,7 @@ func (s *Service) SetRecipePictures(
 		return 0, entity.RecipePictures{}, recipeFail.GrpcRecipePicturesCountLimit
 	}
 
-	if !s.s3.CheckRecipePicturesExist(recipeId, pictureIds) {
+	if !s.s3.CheckRecipePicturesExist(ctx, recipeId, pictureIds) {
 		return 0, entity.RecipePictures{}, recipeFail.GrpcRecipePictureNotFound
 	}
 
@@ -56,7 +58,7 @@ func (s *Service) SetRecipePictures(
 	}
 
 	go func() {
-		s.s3.DeleteUnusedRecipePictures(recipeId, pictureIds)
+		s.s3.DeleteUnusedRecipePictures(context.WithoutCancel(ctx), recipeId, pictureIds)
 	}()
 
 	return newVersion, validatedPictures, nil

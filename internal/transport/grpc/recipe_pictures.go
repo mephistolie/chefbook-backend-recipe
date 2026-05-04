@@ -10,7 +10,7 @@ import (
 	"github.com/mephistolie/chefbook-backend-recipe/internal/transport/grpc/dto"
 )
 
-func (s *RecipeServer) GenerateRecipePicturesUploadLinks(_ context.Context, req *api.GenerateRecipePicturesUploadLinksRequest) (*api.GenerateRecipePicturesUploadLinksResponse, error) {
+func (s *RecipeServer) GenerateRecipePicturesUploadLinks(ctx context.Context, req *api.GenerateRecipePicturesUploadLinksRequest) (*api.GenerateRecipePicturesUploadLinksResponse, error) {
 	recipeId, err := uuid.Parse(req.RecipeId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
@@ -30,7 +30,7 @@ func (s *RecipeServer) GenerateRecipePicturesUploadLinks(_ context.Context, req 
 		picturesCount = maxPictures
 	}
 
-	uploads, err := s.recipeService.GenerateRecipePicturesUploadLinks(recipeId, userId, picturesCount, req.Subscription)
+	uploads, err := s.recipeService.GenerateRecipePicturesUploadLinks(ctx, recipeId, userId, picturesCount, req.Subscription)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func (s *RecipeServer) GenerateRecipePicturesUploadLinks(_ context.Context, req 
 	return &api.GenerateRecipePicturesUploadLinksResponse{Links: dtos}, nil
 }
 
-func (s *RecipeServer) SetRecipePictures(_ context.Context, req *api.SetRecipePicturesRequest) (*api.SetRecipePicturesResponse, error) {
+func (s *RecipeServer) SetRecipePictures(ctx context.Context, req *api.SetRecipePicturesRequest) (*api.SetRecipePicturesResponse, error) {
 	recipeId, err := uuid.Parse(req.RecipeId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
@@ -63,7 +63,7 @@ func (s *RecipeServer) SetRecipePictures(_ context.Context, req *api.SetRecipePi
 		return nil, recipeFail.GrpcDuplicatePictures
 	}
 
-	version, validatedPictures, err := s.recipeService.SetRecipePictures(recipeId, userId, pictures, req.Version, req.Subscription)
+	version, validatedPictures, err := s.recipeService.SetRecipePictures(ctx, recipeId, userId, pictures, req.Version, req.Subscription)
 	if err != nil {
 		return nil, err
 	}

@@ -9,14 +9,14 @@ import (
 	"time"
 )
 
-func (s *Service) getProfilesInfo(profileIds []string) map[string]entity.ProfileInfo {
+func (s *Service) getProfilesInfo(ctx context.Context, profileIds []string) map[string]entity.ProfileInfo {
 	uniqueProfileIds := slices.RemoveDuplicates(profileIds)
 	profilesInfo := make(map[string]entity.ProfileInfo)
 	if len(uniqueProfileIds) == 0 {
 		return profilesInfo
 	}
 
-	ctx, cancelCtx := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancelCtx := context.WithTimeout(ctx, 3*time.Second)
 	res, err := s.grpc.Profile.GetProfilesMinInfo(ctx, &profileApi.GetProfilesMinInfoRequest{ProfileIds: uniqueProfileIds})
 	cancelCtx()
 

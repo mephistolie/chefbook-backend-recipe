@@ -8,7 +8,7 @@ import (
 	"github.com/mephistolie/chefbook-backend-recipe/internal/transport/grpc/dto"
 )
 
-func (s *RecipeServer) GetCollections(_ context.Context, req *api.GetCollectionsRequest) (*api.GetCollectionsResponse, error) {
+func (s *RecipeServer) GetCollections(ctx context.Context, req *api.GetCollectionsRequest) (*api.GetCollectionsResponse, error) {
 	userId, err := uuid.Parse(req.UserId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
@@ -19,7 +19,7 @@ func (s *RecipeServer) GetCollections(_ context.Context, req *api.GetCollections
 		return nil, fail.GrpcInvalidBody
 	}
 
-	collections := s.collectionService.GetCollections(userId, requesterId)
+	collections := s.collectionService.GetCollections(ctx, userId, requesterId)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (s *RecipeServer) CreateCollection(_ context.Context, req *api.CreateCollec
 	return &api.CreateCollectionResponse{CollectionId: id.String()}, nil
 }
 
-func (s *RecipeServer) GetCollection(_ context.Context, req *api.GetCollectionRequest) (*api.GetCollectionResponse, error) {
+func (s *RecipeServer) GetCollection(ctx context.Context, req *api.GetCollectionRequest) (*api.GetCollectionResponse, error) {
 	userId, err := uuid.Parse(req.UserId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
@@ -51,7 +51,7 @@ func (s *RecipeServer) GetCollection(_ context.Context, req *api.GetCollectionRe
 		return nil, fail.GrpcInvalidBody
 	}
 
-	collection, err := s.collectionService.GetCollection(collectionId, userId)
+	collection, err := s.collectionService.GetCollection(ctx, collectionId, userId)
 	if err != nil {
 		return nil, err
 	}

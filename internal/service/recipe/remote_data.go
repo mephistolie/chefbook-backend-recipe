@@ -12,6 +12,7 @@ import (
 )
 
 func (s *Service) getRecipeProfilesInfo(
+	ctx context.Context,
 	recipe entity.Recipe,
 ) map[string]entity.ProfileInfo {
 	profiles := []string{recipe.OwnerId.String()}
@@ -22,17 +23,17 @@ func (s *Service) getRecipeProfilesInfo(
 		}
 	}
 
-	return s.getProfilesInfo(profiles)
+	return s.getProfilesInfo(ctx, profiles)
 }
 
-func (s *Service) getProfilesInfo(profileIds []string) map[string]entity.ProfileInfo {
+func (s *Service) getProfilesInfo(ctx context.Context, profileIds []string) map[string]entity.ProfileInfo {
 	uniqueProfileIds := slices.RemoveDuplicates(profileIds)
 	profilesInfo := make(map[string]entity.ProfileInfo)
 	if len(uniqueProfileIds) == 0 {
 		return profilesInfo
 	}
 
-	ctx, cancelCtx := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancelCtx := context.WithTimeout(ctx, 3*time.Second)
 	res, err := s.grpc.Profile.GetProfilesMinInfo(ctx, &profileApi.GetProfilesMinInfoRequest{ProfileIds: uniqueProfileIds})
 	cancelCtx()
 
@@ -53,6 +54,7 @@ func (s *Service) getProfilesInfo(profileIds []string) map[string]entity.Profile
 }
 
 func (s *Service) getTags(
+	ctx context.Context,
 	tagIds []string,
 	languageCode string,
 ) (map[string]entity.Tag, map[string]string) {
@@ -64,7 +66,7 @@ func (s *Service) getTags(
 		return tags, groups
 	}
 
-	ctx, cancelCtx := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancelCtx := context.WithTimeout(ctx, 3*time.Second)
 	res, err := s.grpc.Tag.GetTagsMap(ctx, &tagApi.GetTagsMapRequest{
 		TagIds:       uniqueTagIds,
 		LanguageCode: languageCode,

@@ -78,16 +78,16 @@ func (r *Repository) GetRecipePictureIdByLink(recipeId uuid.UUID, link string) *
 	return &pictureId
 }
 
-func (r *Repository) GenerateRecipePictureUploadLink(recipeId, pictureId uuid.UUID, subscriptionPlan string, isEncrypted bool) (entity.PictureUpload, error) {
+func (r *Repository) GenerateRecipePictureUploadLink(ctx context.Context, recipeId, pictureId uuid.UUID, subscriptionPlan string, isEncrypted bool) (entity.PictureUpload, error) {
 	maxPictureSize := r.subscriptionLimiter.GetPictureMaxSize(subscriptionPlan)
-	return r.generatePictureUploadLink(recipeId, pictureId, maxPictureSize, isEncrypted)
+	return r.generatePictureUploadLink(ctx, recipeId, pictureId, maxPictureSize, isEncrypted)
 }
 
-func (r *Repository) CheckRecipePicturesExist(recipeId uuid.UUID, pictures []uuid.UUID) bool {
+func (r *Repository) CheckRecipePicturesExist(ctx context.Context, recipeId uuid.UUID, pictures []uuid.UUID) bool {
 	picturesPath := r.getRecipePicturesPath(recipeId)
 	existingPictures := make(map[uuid.UUID]bool)
 
-	for object := range r.client.ListObjects(context.Background(), r.bucket, minio.ListObjectsOptions{
+	for object := range r.client.ListObjects(ctx, r.bucket, minio.ListObjectsOptions{
 		Prefix:    picturesPath,
 		Recursive: true,
 	}) {
@@ -110,7 +110,7 @@ func (r *Repository) CheckRecipePicturesExist(recipeId uuid.UUID, pictures []uui
 	return true
 }
 
-func (r *Repository) DeleteUnusedRecipePictures(recipeId uuid.UUID, usedPictures []uuid.UUID) {
+func (r *Repository) DeleteUnusedRecipePictures(ctx context.Context, recipeId uuid.UUID, usedPictures []uuid.UUID) {
 	picturesPath := fmt.Sprintf("%s/%s/%s", recipesDir, recipeId, picturesDir)
 	opts := minio.RemoveObjectOptions{ForceDelete: true}
 
@@ -119,7 +119,7 @@ func (r *Repository) DeleteUnusedRecipePictures(recipeId uuid.UUID, usedPictures
 		usedPicturesMap[usedPicture] = true
 	}
 
-	for object := range r.client.ListObjects(context.Background(), r.bucket, minio.ListObjectsOptions{
+	for object := range r.client.ListObjects(ctx, r.bucket, minio.ListObjectsOptions{
 		Prefix:    picturesPath,
 		Recursive: true,
 	}) {
@@ -132,7 +132,7 @@ func (r *Repository) DeleteUnusedRecipePictures(recipeId uuid.UUID, usedPictures
 		}
 
 		if exists, ok := usedPicturesMap[pictureId]; !ok || !exists {
-			if err = r.client.RemoveObject(context.Background(), r.bucket, object.Key, opts); err != nil {
+			if err = r.client.RemoveObject(ctx, r.bucket, object.Key, opts); err != nil {
 				log.Warnf("unable to delete picture %s: %s", object.Key, err)
 			}
 		}
@@ -147,7 +147,7 @@ func (r *Repository) getRecipePicturesPath(recipeId uuid.UUID) string {
 	return fmt.Sprintf("%s/%s/%s", recipesDir, recipeId, picturesDir)
 }
 
-func (r *Repository) generatePictureUploadLink(recipeId uuid.UUID, pictureId uuid.UUID, maxSize int64, isEncrypted bool) (entity.PictureUpload, error) {
+func (r *Repository) generatePictureUploadLink(ctx context.Context, recipeId uuid.UUID, pictureId uuid.UUID, maxSize int64, isEncrypted bool) (entity.PictureUpload, error) {
 	objectName := r.getRecipePicturePath(recipeId, pictureId)
 
 	policy := minio.NewPostPolicy()
@@ -175,7 +175,7 @@ func (r *Repository) generatePictureUploadLink(recipeId uuid.UUID, pictureId uui
 		return entity.PictureUpload{}, fail.GrpcUnknown
 	}
 
-	uploadUrl, formData, err := r.client.PresignedPostPolicy(context.Background(), policy)
+	uploadUrl, formData, err := r.client.PresignedPostPolicy(ctx, policy)
 	if err != nil {
 		log.Errorf("unable to generate presigned link for uploading object %s: %s", objectName, err)
 		return entity.PictureUpload{}, fail.GrpcUnknown

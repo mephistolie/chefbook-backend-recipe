@@ -9,14 +9,14 @@ import (
 	"github.com/mephistolie/chefbook-backend-recipe/internal/transport/grpc/dto"
 )
 
-func (s *RecipeServer) CreateRecipe(_ context.Context, req *api.RecipeInput) (*api.CreateRecipeResponse, error) {
+func (s *RecipeServer) CreateRecipe(ctx context.Context, req *api.RecipeInput) (*api.CreateRecipeResponse, error) {
 	isEncryptedRecipeAllowed := s.subscriptionLimiter.IsEncryptionAllowed(req.UserSubscription)
 	input, err := dto.NewRecipeInput(req, false, isEncryptedRecipeAllowed)
 	if err != nil {
 		return nil, err
 	}
 
-	id, version, err := s.recipeService.CreateRecipe(input)
+	id, version, err := s.recipeService.CreateRecipe(ctx, input)
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +27,7 @@ func (s *RecipeServer) CreateRecipe(_ context.Context, req *api.RecipeInput) (*a
 	}, nil
 }
 
-func (s *RecipeServer) GetRecipe(_ context.Context, req *api.GetRecipeRequest) (*api.GetRecipeResponse, error) {
+func (s *RecipeServer) GetRecipe(ctx context.Context, req *api.GetRecipeRequest) (*api.GetRecipeResponse, error) {
 	userId, err := uuid.Parse(req.UserId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
@@ -43,7 +43,7 @@ func (s *RecipeServer) GetRecipe(_ context.Context, req *api.GetRecipeRequest) (
 		}
 	}
 
-	recipe, err := s.recipeService.GetRecipe(recipeId, userId, entity.ValidatedLanguage(req.Language), translatorIdPtr)
+	recipe, err := s.recipeService.GetRecipe(ctx, recipeId, userId, entity.ValidatedLanguage(req.Language), translatorIdPtr)
 	if err != nil {
 		return nil, err
 	}
@@ -51,14 +51,14 @@ func (s *RecipeServer) GetRecipe(_ context.Context, req *api.GetRecipeRequest) (
 	return dto.NewGetRecipeResponse(recipe), nil
 }
 
-func (s *RecipeServer) UpdateRecipe(_ context.Context, req *api.RecipeInput) (*api.UpdateRecipeResponse, error) {
+func (s *RecipeServer) UpdateRecipe(ctx context.Context, req *api.RecipeInput) (*api.UpdateRecipeResponse, error) {
 	isEncryptedRecipeAllowed := s.subscriptionLimiter.IsEncryptionAllowed(req.UserSubscription)
 	input, err := dto.NewRecipeInput(req, true, isEncryptedRecipeAllowed)
 	if err != nil {
 		return nil, err
 	}
 
-	version, err := s.recipeService.UpdateRecipe(input)
+	version, err := s.recipeService.UpdateRecipe(ctx, input)
 	if err != nil {
 		return nil, err
 	}

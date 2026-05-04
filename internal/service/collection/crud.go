@@ -1,11 +1,12 @@
 package collection
 
 import (
+	"context"
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-recipe/internal/entity"
 )
 
-func (s *Service) GetCollections(userId uuid.UUID, requesterId uuid.UUID) entity.DetailedCollections {
+func (s *Service) GetCollections(ctx context.Context, userId uuid.UUID, requesterId uuid.UUID) entity.DetailedCollections {
 	collections := s.repo.GetCollections(userId, requesterId)
 
 	var profileIds []string
@@ -14,7 +15,7 @@ func (s *Service) GetCollections(userId uuid.UUID, requesterId uuid.UUID) entity
 			profileIds = append(profileIds, contributor.Id.String())
 		}
 	}
-	profilesInfo := s.getProfilesInfo(profileIds)
+	profilesInfo := s.getProfilesInfo(ctx, profileIds)
 
 	return entity.DetailedCollections{
 		Collections:  collections,
@@ -26,7 +27,7 @@ func (s *Service) CreateCollection(collection entity.CollectionInput) (uuid.UUID
 	return s.repo.CreateCollection(collection)
 }
 
-func (s *Service) GetCollection(collectionId uuid.UUID, userId uuid.UUID) (entity.DetailedCollection, error) {
+func (s *Service) GetCollection(ctx context.Context, collectionId uuid.UUID, userId uuid.UUID) (entity.DetailedCollection, error) {
 	collection, err := s.repo.GetCollection(collectionId, userId)
 	if err != nil {
 		return entity.DetailedCollection{}, err
@@ -36,7 +37,7 @@ func (s *Service) GetCollection(collectionId uuid.UUID, userId uuid.UUID) (entit
 	for _, contributor := range collection.Contributors {
 		profileIds = append(profileIds, contributor.Id.String())
 	}
-	profilesInfo := s.getProfilesInfo(profileIds)
+	profilesInfo := s.getProfilesInfo(ctx, profileIds)
 
 	return entity.DetailedCollection{
 		Collection:   collection,

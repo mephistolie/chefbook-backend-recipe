@@ -52,7 +52,7 @@ func Run(cfg *config.Config) {
 		return
 	}
 
-	recipeService, err := service.New(cfg, repository, repository, repository, grpcRepository, s3Repository, mqPublisher, subscriptionLimiter)
+	recipeService, err := service.New(context.Background(), cfg, repository, repository, repository, grpcRepository, s3Repository, mqPublisher, subscriptionLimiter)
 	if err != nil {
 		log.Fatal(err)
 		return
