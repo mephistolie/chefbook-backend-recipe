@@ -21,7 +21,7 @@ import (
 )
 
 func Run(cfg *config.Config) {
-	log.Init(*cfg.LogsPath, *cfg.Environment == config.EnvDev)
+	log.InitWithService("recipe", *cfg.LogsPath, *cfg.Environment == config.EnvDev)
 	cfg.Print()
 
 	subscriptionLimiter := helpers.NewSubscriptionLimiter(cfg.Subscription)
