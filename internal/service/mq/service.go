@@ -35,8 +35,16 @@ func NewService(
 }
 
 func (s *Service) HandleMessage(msg model.MessageData) error {
-	log.Infof("processing message %s with type %s", msg.Id, msg.Type)
 	ctx := context.Background()
+	log.Log(ctx, log.Event{
+		Event:     "mq.message.processing",
+		Message:   "processing message",
+		Component: log.ComponentAMQP,
+		MessageID: msg.Id.String(),
+		Payload: map[string]any{
+			"message_type": msg.Type,
+		},
+	})
 	switch msg.Type {
 	case auth.MsgTypeProfileFirebaseImport:
 		return s.handleFirebaseImportMsg(ctx, msg.Id, msg.Body)
@@ -45,7 +53,15 @@ func (s *Service) HandleMessage(msg model.MessageData) error {
 	case encryption.MsgTypeVaultDeleted:
 		return s.handleVaultDeletedMsg(ctx, msg.Id, msg.Body)
 	default:
-		log.Warnf("got unsupported message type %s for message %s", msg.Type, msg.Id)
+		log.LogWarn(ctx, log.Event{
+			Event:     "mq.message.unsupported_type",
+			Message:   "got unsupported message type",
+			Component: log.ComponentAMQP,
+			MessageID: msg.Id.String(),
+			Payload: map[string]any{
+				"message_type": msg.Type,
+			},
+		})
 		return errors.New("not implemented")
 	}
 }
@@ -61,7 +77,16 @@ func (s *Service) handleFirebaseImportMsg(ctx context.Context, messageId uuid.UU
 		return err
 	}
 
-	log.Infof("import firebase profile %s for user %s...", body.FirebaseId, body.UserId)
+	log.Log(ctx, log.Event{
+		Event:     "profile.firebase_import.message.processing",
+		Message:   "processing firebase profile import message",
+		Component: log.ComponentAMQP,
+		MessageID: messageId.String(),
+		UserID:    body.UserId,
+		Payload: map[string]any{
+			"firebase_id": body.FirebaseId,
+		},
+	})
 	return s.ImportFirebaseRecipes(ctx, userId, body.FirebaseId, messageId)
 }
 
@@ -76,7 +101,13 @@ func (s *Service) handleProfileDeletedMsg(ctx context.Context, messageId uuid.UU
 		return err
 	}
 
-	log.Infof("deleting user %s...", body.UserId)
+	log.Log(ctx, log.Event{
+		Event:     "profile.deleted.message.processing",
+		Message:   "processing profile deleted message",
+		Component: log.ComponentAMQP,
+		MessageID: messageId.String(),
+		UserID:    body.UserId,
+	})
 	return s.mqRepo.DeleteUserData(ctx, userId, body.DeleteSharedData, messageId)
 }
 
@@ -86,6 +117,12 @@ func (s *Service) handleVaultDeletedMsg(ctx context.Context, messageId uuid.UUID
 		return err
 	}
 
-	log.Infof("deleting encrypted recipes for user %s...", body.UserId)
+	log.Log(ctx, log.Event{
+		Event:     "vault.deleted.message.processing",
+		Message:   "processing vault deleted message",
+		Component: log.ComponentAMQP,
+		MessageID: messageId.String(),
+		UserID:    body.UserId.String(),
+	})
 	return s.mqRepo.DeleteUserEncryptedRecipes(ctx, body.UserId, messageId)
 }

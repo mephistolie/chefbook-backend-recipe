@@ -14,17 +14,35 @@ import (
 
 func (s *Service) ImportFirebaseRecipes(ctx context.Context, userId uuid.UUID, firebaseId string, messageId uuid.UUID) error {
 	if s.firebase == nil {
-		log.Warnf("try to import firebase profile with firebase import disabled")
+		log.LogWarn(ctx, log.Event{
+			Event:     "firebase.import.disabled",
+			Message:   "try to import firebase profile with firebase import disabled",
+			Component: log.ComponentFirebase,
+			UserID:    userId.String(),
+		})
 		return errors.New("firebase import disabled")
 	}
 
 	firebaseRecipes, err := s.firebase.GetRecipes(firebaseId)
 	if err != nil {
-		log.Warnf("unable to get firebase recipes for user %s: %s", userId, err)
+		log.LogWarnError(ctx, log.Event{
+			Event:     "firebase.recipes.load_failed",
+			Message:   "unable to get firebase recipes",
+			Component: log.ComponentFirebase,
+			UserID:    userId.String(),
+		}, err)
 		return err
 	}
 
-	log.Infof("found %d Firebase recipes for user %s...", len(firebaseRecipes), userId)
+	log.Log(ctx, log.Event{
+		Event:     "firebase.recipes.loaded",
+		Message:   "firebase recipes loaded",
+		Component: log.ComponentFirebase,
+		UserID:    userId.String(),
+		Payload: map[string]any{
+			"recipes_count": len(firebaseRecipes),
+		},
+	})
 	if err := s.mqRepo.ConfirmFirebaseDataLoad(ctx, messageId); err != nil {
 		return err
 	}
