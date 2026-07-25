@@ -30,7 +30,7 @@ func (s *Service) getProfilesInfo(ctx context.Context, profileIds []string) map[
 			}
 		}
 	} else {
-		log.Warnf("unable to get profiles info: %s", err)
+		log.AutoWarnf("unable to get profiles info: %s", err)
 	}
 
 	return profilesInfo

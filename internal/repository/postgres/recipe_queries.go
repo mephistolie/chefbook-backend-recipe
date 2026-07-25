@@ -20,11 +20,11 @@ func (r *Repository) GetRecipes(ctx context.Context, params entity.RecipesQuery,
 	var recipes []entity.RecipeInfo
 
 	query, args := r.getRecipesByParamsQuery(params, userId)
-	log.Debug("Get recipes query generated:\n", query, "\nArgs: ", args)
+	log.AutoDebug("Get recipes query generated:\n", query, "\nArgs: ", args)
 
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		log.Errorf("unable to get recipes: %s", err)
+		log.AutoErrorf("unable to get recipes: %s", err)
 		return []entity.RecipeInfo{}
 	}
 
@@ -43,7 +43,7 @@ func (r *Repository) GetRecipes(ctx context.Context, params entity.RecipesQuery,
 			&recipe.Calories,
 			&recipe.CreationTimestamp, &recipe.UpdateTimestamp, &recipe.Version,
 		); err != nil {
-			log.Warnf("unable to parse recipe info: %s", err)
+			log.AutoWarnf("unable to parse recipe info: %s", err)
 			continue
 		}
 		recipes = append(recipes, recipe.Entity(userId))
@@ -329,7 +329,7 @@ func (r *Repository) GetRandomRecipe(ctx context.Context, userId uuid.UUID, lang
 		&recipe.Calories, &recipe.Protein, &recipe.Fats, &recipe.Carbohydrates,
 		&recipe.CreationTimestamp, &recipe.UpdateTimestamp, &recipe.Version,
 	); err != nil {
-		log.Debugf("unable to get random recipe for user %s: %s", userId, err)
+		log.AutoDebugf("unable to get random recipe for user %s: %s", userId, err)
 		return entity.Recipe{}, fail.GrpcNotFound
 	}
 
@@ -347,7 +347,7 @@ func (r *Repository) GetRecipeNames(ctx context.Context, recipeIds []uuid.UUID, 
 
 	rows, err := r.db.QueryContext(ctx, query, recipeIds, userId)
 	if err != nil {
-		log.Errorf("unable to get recipe names: %s", err)
+		log.AutoErrorf("unable to get recipe names: %s", err)
 		return map[uuid.UUID]string{}, fail.GrpcUnknown
 	}
 
@@ -355,7 +355,7 @@ func (r *Repository) GetRecipeNames(ctx context.Context, recipeIds []uuid.UUID, 
 		var id uuid.UUID
 		var name string
 		if err = rows.Scan(&id, &name); err != nil {
-			log.Warnf("unable to parse recipe name: %s", err)
+			log.AutoWarnf("unable to parse recipe name: %s", err)
 			continue
 		}
 		recipeNames[id] = name

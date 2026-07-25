@@ -18,7 +18,7 @@ func (r *Repository) SaveCollectionToRecipeBook(ctx context.Context, collectionI
 		if isUniqueViolationError(err) {
 			return nil
 		}
-		log.Errorf("unable to add collection %s to user %s recipe book: %s", collectionId, userId, err)
+		log.AutoErrorf("unable to add collection %s to user %s recipe book: %s", collectionId, userId, err)
 		return fail.GrpcUnknown
 	}
 
@@ -32,7 +32,7 @@ func (r *Repository) RemoveCollectionFromRecipeBook(ctx context.Context, collect
 	`, collectionUsersTable)
 
 	if _, err := r.db.ExecContext(ctx, query, collectionId, userId); err != nil {
-		log.Errorf("unable to remove collection %s from user %s recipe book: %s", collectionId, userId, err)
+		log.AutoErrorf("unable to remove collection %s from user %s recipe book: %s", collectionId, userId, err)
 		return fail.GrpcUnknown
 	}
 

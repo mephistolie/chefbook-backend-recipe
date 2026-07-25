@@ -20,7 +20,7 @@ func (r *Repository) GetRecipePolicy(ctx context.Context, recipeId uuid.UUID) (e
 
 	row := r.db.QueryRowContext(ctx, query, recipeId)
 	if err := row.Scan(&policy.Id, &policy.OwnerId, &policy.Visibility, &policy.IsEncrypted); err != nil {
-		log.Warnf("unable to get recipe %s policy: %s", recipeId, err)
+		log.AutoWarnf("unable to get recipe %s policy: %s", recipeId, err)
 		return entity.RecipePolicy{}, fail.GrpcNotFound
 	}
 

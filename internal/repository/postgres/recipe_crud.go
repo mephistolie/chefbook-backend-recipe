@@ -72,7 +72,7 @@ func (r *Repository) CreateRecipe(ctx context.Context, input entity.RecipeInput)
 		if isUniqueViolationError(err) {
 			return uuid.UUID{}, 0, recipeFail.GrpcRecipeExists
 		}
-		log.Errorf("unable to create recipe: %s", err)
+		log.AutoErrorf("unable to create recipe: %s", err)
 		return uuid.UUID{}, 0, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -84,7 +84,7 @@ func (r *Repository) CreateRecipe(ctx context.Context, input entity.RecipeInput)
 		`, recipesTable)
 
 		if _, err = tx.ExecContext(ctx, setCreationTimestampQuery, id, *input.CreationTimestamp); err != nil {
-			log.Error("unable to set recipe creation timestamp: ", err)
+			log.AutoError("unable to set recipe creation timestamp: ", err)
 			return uuid.UUID{}, 0, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 		}
 	}
@@ -95,7 +95,7 @@ func (r *Repository) CreateRecipe(ctx context.Context, input entity.RecipeInput)
 		`, recipeBookTable)
 
 	if _, err = tx.ExecContext(ctx, addToRecipeBookQuery, id, input.UserId); err != nil {
-		log.Errorf("unable to add recipe to owner %s recipe book: %s", input.UserId, err)
+		log.AutoErrorf("unable to add recipe to owner %s recipe book: %s", input.UserId, err)
 		return uuid.UUID{}, 0, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -165,7 +165,7 @@ func (r *Repository) GetRecipe(ctx context.Context, recipeId, userId uuid.UUID) 
 		&recipe.Calories, &recipe.Protein, &recipe.Fats, &recipe.Carbohydrates,
 		&recipe.CreationTimestamp, &recipe.UpdateTimestamp, &recipe.Version,
 	); err != nil {
-		log.Warnf("unable to get recipe %s for user %s: %s", recipeId, userId, err)
+		log.AutoWarnf("unable to get recipe %s for user %s: %s", recipeId, userId, err)
 		return entity.Recipe{}, fail.GrpcNotFound
 	}
 
@@ -214,10 +214,10 @@ func (r *Repository) UpdateRecipe(ctx context.Context, input entity.RecipeInput)
 
 	if err := r.db.GetContext(ctx, &version, query, args...); err != nil {
 		if input.Version != nil {
-			log.Warnf("try to update recipe %s with outdated version %d: %s", *input.RecipeId, *input.Version, err)
+			log.AutoWarnf("try to update recipe %s with outdated version %d: %s", *input.RecipeId, *input.Version, err)
 			return 0, recipeFail.GrpcOutdatedVersion
 		} else {
-			log.Errorf("unable to update recipe %s: %s", *input.RecipeId, err)
+			log.AutoErrorf("unable to update recipe %s: %s", *input.RecipeId, err)
 			return 0, fail.GrpcUnknown
 		}
 	}
@@ -233,7 +233,7 @@ func (r *Repository) SetRecipeTags(ctx context.Context, recipeId uuid.UUID, tags
 	`, recipesTable)
 
 	if _, err := r.db.ExecContext(ctx, query, recipeId, tags); err != nil {
-		log.Warnf("unable to set recipe %s tags: %s", recipeId, err)
+		log.AutoWarnf("unable to set recipe %s tags: %s", recipeId, err)
 		return fail.GrpcNotFound
 	}
 	return nil
@@ -251,7 +251,7 @@ func (r *Repository) DeleteRecipe(ctx context.Context, recipeId uuid.UUID) (*mod
 	`, recipesTable)
 
 	if _, err = tx.ExecContext(ctx, query, recipeId); err != nil {
-		log.Errorf("unable to delete recipe %s: %s", recipeId, err)
+		log.AutoErrorf("unable to delete recipe %s: %s", recipeId, err)
 		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -267,7 +267,7 @@ func (r *Repository) addRecipeDeletedMsg(ctx context.Context, recipeId uuid.UUID
 	msgBody := api.MsgBodyRecipeDeleted{RecipeId: recipeId}
 	msgBodyBson, err := json.Marshal(msgBody)
 	if err != nil {
-		log.Error("unable to marshal recipe deleted message body: ", err)
+		log.AutoError("unable to marshal recipe deleted message body: ", err)
 		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 	msgInfo := model.MessageData{

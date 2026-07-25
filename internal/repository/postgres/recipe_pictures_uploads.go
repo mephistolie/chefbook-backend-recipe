@@ -82,7 +82,7 @@ func (r *Repository) createRecipePicturesUploadRequest(ctx context.Context, reci
 	`, recipePicturesUploadsTable)
 
 	if _, err := tx.ExecContext(ctx, createRequestQuery, recipeId, pictures); err != nil {
-		log.Errorf("unable to create recipe %s pictures uploading request: %s", recipeId, err)
+		log.AutoErrorf("unable to create recipe %s pictures uploading request: %s", recipeId, err)
 		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 	return pictures, commitTransaction(tx)
@@ -97,7 +97,7 @@ func (r *Repository) updateRecipePicturesUploadRequest(ctx context.Context, reci
 	`, recipePicturesUploadsTable)
 
 	if _, err := tx.ExecContext(ctx, updateRequestQuery, recipeId, pictures); err != nil {
-		log.Errorf("unable to update recipe %s pictures uploading request: %s", recipeId, err)
+		log.AutoErrorf("unable to update recipe %s pictures uploading request: %s", recipeId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 	return nil
@@ -138,7 +138,7 @@ func (r *Repository) SetRecipePictures(ctx context.Context,
 		if version != nil {
 			return 0, errorWithTransactionRollback(tx, recipeFail.GrpcOutdatedVersion)
 		}
-		log.Errorf("unable to set recipe %s pictures: %s", recipeId, err)
+		log.AutoErrorf("unable to set recipe %s pictures: %s", recipeId, err)
 		return 0, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -188,7 +188,7 @@ func (r *Repository) deleteRecipePicturesUploadRequest(ctx context.Context, reci
 	`, recipePicturesUploadsTable)
 
 	if _, err := tx.ExecContext(ctx, deleteRequestQuery, recipeId); err != nil {
-		log.Errorf("unable to delete recipe %s pictures uploading request: %s", recipeId, err)
+		log.AutoErrorf("unable to delete recipe %s pictures uploading request: %s", recipeId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 	return nil

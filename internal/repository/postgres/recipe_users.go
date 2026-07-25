@@ -53,7 +53,7 @@ func (r *Repository) GetRecipeBook(ctx context.Context, userId uuid.UUID) ([]ent
 
 	rows, err := r.db.QueryContext(ctx, query, userId)
 	if err != nil {
-		log.Errorf("unable to get recipes: %s", err)
+		log.AutoErrorf("unable to get recipes: %s", err)
 		return []entity.RecipeState{}, fail.GrpcUnknown
 	}
 
@@ -68,7 +68,7 @@ func (r *Repository) GetRecipeBook(ctx context.Context, userId uuid.UUID) ([]ent
 			m.SQLScanner(&recipe.Tags), m.SQLScanner(&recipe.Collections), &recipe.IsFavourite,
 			&recipe.Version,
 		); err != nil {
-			log.Warnf("unable to parse recipe info: %s", err)
+			log.AutoWarnf("unable to parse recipe info: %s", err)
 			continue
 		}
 		recipes = append(recipes, recipe.Entity())
@@ -85,7 +85,7 @@ func (r *Repository) SaveRecipeToRecipeBook(ctx context.Context, recipeId, userI
 	`, recipeBookTable)
 
 	if _, err := r.db.ExecContext(ctx, query, recipeId, userId); err != nil {
-		log.Errorf("unable to add recipe %s to user %s recipe book: %s", recipeId, userId, err)
+		log.AutoErrorf("unable to add recipe %s to user %s recipe book: %s", recipeId, userId, err)
 		return fail.GrpcUnknown
 	}
 
@@ -99,7 +99,7 @@ func (r *Repository) RemoveRecipeFromRecipeBook(ctx context.Context, recipeId, u
 	`, recipeBookTable)
 
 	if _, err := r.db.ExecContext(ctx, query, recipeId, userId); err != nil {
-		log.Errorf("unable to remove recipe %s from user %s recipe book: %s", recipeId, userId, err)
+		log.AutoErrorf("unable to remove recipe %s from user %s recipe book: %s", recipeId, userId, err)
 		return fail.GrpcUnknown
 	}
 
@@ -114,7 +114,7 @@ func (r *Repository) SaveRecipeToFavourites(ctx context.Context, recipeId, userI
 	`, favouritesTable)
 
 	if _, err := r.db.ExecContext(ctx, query, recipeId, userId); err != nil {
-		log.Errorf("unable to add recipe %s to user %s favourites: %s", recipeId, userId, err)
+		log.AutoErrorf("unable to add recipe %s to user %s favourites: %s", recipeId, userId, err)
 		return fail.GrpcUnknown
 	}
 
@@ -128,7 +128,7 @@ func (r *Repository) RemoveRecipeFromFavourites(ctx context.Context, recipeId, u
 	`, favouritesTable)
 
 	if _, err := r.db.ExecContext(ctx, query, recipeId, userId); err != nil {
-		log.Errorf("unable to remove recipe %s from user %s favourites: %s", recipeId, userId, err)
+		log.AutoErrorf("unable to remove recipe %s from user %s favourites: %s", recipeId, userId, err)
 		return fail.GrpcUnknown
 	}
 

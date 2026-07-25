@@ -53,10 +53,10 @@ func (r *Repository) GetRecipePictureLink(recipeId, pictureId uuid.UUID) string 
 }
 
 func (r *Repository) GetRecipePictureIdByLink(recipeId uuid.UUID, link string) *uuid.UUID {
-	log.Debugf("Parsing picture link %s", link)
+	log.AutoDebugf("Parsing picture link %s", link)
 	pictureUrl, err := url.Parse(link)
 	if err != nil || pictureUrl.Host != r.bucket {
-		log.Debugf("Invalid host while parsing picture link %s", link)
+		log.AutoDebugf("Invalid host while parsing picture link %s", link)
 		return nil
 	}
 	fragments := strings.Split(pictureUrl.Path, "/")
@@ -67,12 +67,12 @@ func (r *Repository) GetRecipePictureIdByLink(recipeId uuid.UUID, link string) *
 		fragments[0] != recipesDir ||
 		fragments[1] != recipeId.String() ||
 		fragments[2] != picturesDir {
-		log.Debugf("Invalid fragments while parsing picture link %s", fragments)
+		log.AutoDebugf("Invalid fragments while parsing picture link %s", fragments)
 		return nil
 	}
 	pictureId, err := uuid.Parse(fragments[3])
 	if err != nil {
-		log.Debugf("Invalid picture ID while parsing picture link %s", link)
+		log.AutoDebugf("Invalid picture ID while parsing picture link %s", link)
 		return nil
 	}
 	return &pictureId
@@ -95,7 +95,7 @@ func (r *Repository) CheckRecipePicturesExist(ctx context.Context, recipeId uuid
 		rawPicureId := object.Key[keyLength-idLength : keyLength]
 		pictureId, err := uuid.Parse(rawPicureId)
 		if err != nil {
-			log.Debugf("unable to parse picture id by key %s: %s", object.Key, err)
+			log.AutoDebugf("unable to parse picture id by key %s: %s", object.Key, err)
 			continue
 		}
 		existingPictures[pictureId] = true
@@ -127,13 +127,13 @@ func (r *Repository) DeleteUnusedRecipePictures(ctx context.Context, recipeId uu
 		rawPictureId := object.Key[keyLength-idLength : keyLength]
 		pictureId, err := uuid.Parse(rawPictureId)
 		if err != nil {
-			log.Debugf("unable to parse picture id by key %s: %s", object.Key, err)
+			log.AutoDebugf("unable to parse picture id by key %s: %s", object.Key, err)
 			continue
 		}
 
 		if exists, ok := usedPicturesMap[pictureId]; !ok || !exists {
 			if err = r.client.RemoveObject(ctx, r.bucket, object.Key, opts); err != nil {
-				log.Warnf("unable to delete picture %s: %s", object.Key, err)
+				log.AutoWarnf("unable to delete picture %s: %s", object.Key, err)
 			}
 		}
 	}
@@ -153,31 +153,31 @@ func (r *Repository) generatePictureUploadLink(ctx context.Context, recipeId uui
 	policy := minio.NewPostPolicy()
 
 	if err := policy.SetBucket(r.bucket); err != nil {
-		log.Error("unable to set bucket in post policy: ", err)
+		log.AutoError("unable to set bucket in post policy: ", err)
 		return entity.PictureUpload{}, fail.GrpcUnknown
 	}
 	if err := policy.SetKey(objectName); err != nil {
-		log.Errorf("unable to set object %s in post policy: %s", objectName, err)
+		log.AutoErrorf("unable to set object %s in post policy: %s", objectName, err)
 		return entity.PictureUpload{}, fail.GrpcUnknown
 	}
 	if !isEncrypted {
 		if err := policy.SetContentTypeStartsWith("image"); err != nil {
-			log.Errorf("unable to set content type in post policy for object %s: %s", objectName, err)
+			log.AutoErrorf("unable to set content type in post policy for object %s: %s", objectName, err)
 			return entity.PictureUpload{}, fail.GrpcUnknown
 		}
 	}
 	if err := policy.SetContentLengthRange(0, maxSize); err != nil {
-		log.Errorf("unable to set content length in post policy for object %s: %s", objectName, err)
+		log.AutoErrorf("unable to set content length in post policy for object %s: %s", objectName, err)
 		return entity.PictureUpload{}, fail.GrpcUnknown
 	}
 	if err := policy.SetExpires(time.Now().Add(1 * time.Hour)); err != nil {
-		log.Errorf("unable to set expiration in post policy for object %s: %s", objectName, err)
+		log.AutoErrorf("unable to set expiration in post policy for object %s: %s", objectName, err)
 		return entity.PictureUpload{}, fail.GrpcUnknown
 	}
 
 	uploadUrl, formData, err := r.client.PresignedPostPolicy(ctx, policy)
 	if err != nil {
-		log.Errorf("unable to generate presigned link for uploading object %s: %s", objectName, err)
+		log.AutoErrorf("unable to generate presigned link for uploading object %s: %s", objectName, err)
 		return entity.PictureUpload{}, fail.GrpcUnknown
 	}
 

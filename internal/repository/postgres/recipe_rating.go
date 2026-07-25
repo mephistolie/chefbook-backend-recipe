@@ -25,7 +25,7 @@ func (r *Repository) GetRecipeRatingAndVotes(ctx context.Context, recipeId uuid.
 
 	row := r.db.QueryRowContext(ctx, query, recipeId)
 	if err := row.Scan(&rating, &votes); err != nil {
-		log.Warnf("unable to parse rating and votes for recipe %s: %s", recipeId, err)
+		log.AutoWarnf("unable to parse rating and votes for recipe %s: %s", recipeId, err)
 		return 0, 0, fail.GrpcNotFound
 	}
 
@@ -95,7 +95,7 @@ func (r *Repository) addUserScore(ctx context.Context, tx *sql.Tx, recipeId, use
 	`, scoresTable)
 
 	if _, err := tx.QueryContext(ctx, addScoreQuery, recipeId, userId, score); err != nil {
-		log.Errorf("unable to add user %s score for recipe %s: %s", userId, recipeId, err)
+		log.AutoErrorf("unable to add user %s score for recipe %s: %s", userId, recipeId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -108,7 +108,7 @@ func (r *Repository) addUserScore(ctx context.Context, tx *sql.Tx, recipeId, use
 	`, recipesTable)
 
 	if _, err := tx.QueryContext(ctx, updateRatingQuery, score, recipeId); err != nil {
-		log.Errorf("unable to update rating for recipe %s: %s", recipeId, err)
+		log.AutoErrorf("unable to update rating for recipe %s: %s", recipeId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -123,7 +123,7 @@ func (r *Repository) changeUserScore(ctx context.Context, tx *sql.Tx, recipeId, 
 	`, scoresTable)
 
 	if _, err := tx.QueryContext(ctx, changeScoreQuery, scoreDiff, recipeId, userId); err != nil {
-		log.Errorf("unable to change user %s score for recipe %s: %s", userId, recipeId, err)
+		log.AutoErrorf("unable to change user %s score for recipe %s: %s", userId, recipeId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -134,7 +134,7 @@ func (r *Repository) changeUserScore(ctx context.Context, tx *sql.Tx, recipeId, 
 	`, recipesTable)
 
 	if _, err := tx.QueryContext(ctx, updateRatingQuery, scoreDiff, recipeId); err != nil {
-		log.Errorf("unable to update rating for recipe %s: %s", recipeId, err)
+		log.AutoErrorf("unable to update rating for recipe %s: %s", recipeId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -148,7 +148,7 @@ func (r *Repository) deleteUserScore(ctx context.Context, tx *sql.Tx, recipeId, 
 	`, scoresTable)
 
 	if _, err := tx.QueryContext(ctx, changeScoreQuery, recipeId, userId); err != nil {
-		log.Errorf("unable to delete user %s score for recipe %s: %s", userId, recipeId, err)
+		log.AutoErrorf("unable to delete user %s score for recipe %s: %s", userId, recipeId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -161,7 +161,7 @@ func (r *Repository) deleteUserScore(ctx context.Context, tx *sql.Tx, recipeId, 
 	`, recipesTable)
 
 	if _, err := tx.QueryContext(ctx, updateRatingQuery, scoreDiff, recipeId); err != nil {
-		log.Errorf("unable to update rating for recipe %s: %s", recipeId, err)
+		log.AutoErrorf("unable to update rating for recipe %s: %s", recipeId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -179,7 +179,7 @@ func (r *Repository) addRecipeRatingChangedMsg(ctx context.Context, recipeId, us
 
 	row := tx.QueryRowContext(ctx, getOwnerIdQuery, recipeId)
 	if err := row.Scan(&ownerId); err != nil {
-		log.Warnf("unable to get recipe %s owner: %s", recipeId, err)
+		log.AutoWarnf("unable to get recipe %s owner: %s", recipeId, err)
 		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -191,7 +191,7 @@ func (r *Repository) addRecipeRatingChangedMsg(ctx context.Context, recipeId, us
 	}
 	msgBodyBson, err := json.Marshal(msgBody)
 	if err != nil {
-		log.Error("unable to marshal recipe rating changed message body: ", err)
+		log.AutoError("unable to marshal recipe rating changed message body: ", err)
 		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 	msgInfo := model.MessageData{

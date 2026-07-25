@@ -47,7 +47,7 @@ func (s *Service) getProfilesInfo(ctx context.Context, profileIds []string) map[
 			}
 		}
 	} else {
-		log.Warnf("unable to get profiles info: %s", err)
+		log.AutoWarnf("unable to get profiles info: %s", err)
 	}
 
 	return profilesInfo
@@ -86,7 +86,7 @@ func (s *Service) getTags(
 			groups[groupId] = groupName
 		}
 	} else {
-		log.Warn("unable to get recipe tags: ", err)
+		log.AutoWarn("unable to get recipe tags: ", err)
 	}
 
 	return tags, groups

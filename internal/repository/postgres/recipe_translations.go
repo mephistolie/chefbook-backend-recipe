@@ -21,7 +21,7 @@ func (r *Repository) GetRecipeTranslations(ctx context.Context, recipeId uuid.UU
 
 	rows, err := r.db.QueryContext(ctx, query, recipeId)
 	if err != nil {
-		log.Warnf("unable to get recipe %s translations: %s", recipeId, err)
+		log.AutoWarnf("unable to get recipe %s translations: %s", recipeId, err)
 		return nil, fail.GrpcNotFound
 	}
 	var translations []dto.RecipeTranslationInfo
@@ -52,14 +52,14 @@ func (r *Repository) GetRecipeTranslation(ctx context.Context, recipeId uuid.UUI
 
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		log.Warnf("unable to get recipe %s translation to %s: %s", recipeId, language, err)
+		log.AutoWarnf("unable to get recipe %s translation to %s: %s", recipeId, language, err)
 		return nil
 	}
 	for rows.Next() {
 		translation := dto.RecipeTranslation{Language: language}
 		if err = rows.Scan(&translation.AuthorId, &translation.Name, &translation.Description, &translation.Ingredients,
 			&translation.Cooking); err != nil {
-			log.Errorf("unable to parse recipe %s translation to %s; %s", recipeId, language, err)
+			log.AutoErrorf("unable to parse recipe %s translation to %s; %s", recipeId, language, err)
 			continue
 		}
 		if authorId != nil && *authorId == translation.AuthorId {
@@ -95,7 +95,7 @@ func (r *Repository) TranslateRecipe(ctx context.Context, recipeId uuid.UUID, tr
 	`, translationsTable)
 
 	if _, err = tx.ExecContext(ctx, addTranslationQuery, recipeId, t.Language, translation.AuthorId, t.Name, t.Description, t.Ingredients, t.Cooking); err != nil {
-		log.Errorf("unable to add recipe %s translation to %s: %s", recipeId, translation.Language, err)
+		log.AutoErrorf("unable to add recipe %s translation to %s: %s", recipeId, translation.Language, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -110,7 +110,7 @@ func (r *Repository) TranslateRecipe(ctx context.Context, recipeId uuid.UUID, tr
 	row := tx.QueryRowContext(ctx, getCurrentRecipeTranslationsQuery, recipeId)
 	m := pgtype.NewMap()
 	if err = row.Scan(m.SQLScanner(&languages)); err != nil {
-		log.Warnf("unable to get recipe %s languages: %s", recipeId, err)
+		log.AutoWarnf("unable to get recipe %s languages: %s", recipeId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -123,7 +123,7 @@ func (r *Repository) TranslateRecipe(ctx context.Context, recipeId uuid.UUID, tr
 		`, recipesTable)
 
 		if _, err = tx.ExecContext(ctx, updateRecipeTranslationsQuery, recipeId, languages); err != nil {
-			log.Errorf("unable to update recipe %s translations: %s", recipeId, err)
+			log.AutoErrorf("unable to update recipe %s translations: %s", recipeId, err)
 			return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 		}
 	}
@@ -143,7 +143,7 @@ func (r *Repository) DeleteRecipeTranslation(ctx context.Context, recipeId uuid.
 	`, translationsTable)
 
 	if _, err = tx.ExecContext(ctx, deleteTranslationQuery, recipeId, userId, language); err != nil {
-		log.Errorf("unable to delete recipe %s translation to %s: %s", recipeId, language, err)
+		log.AutoErrorf("unable to delete recipe %s translation to %s: %s", recipeId, language, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -157,7 +157,7 @@ func (r *Repository) DeleteRecipeTranslation(ctx context.Context, recipeId uuid.
 
 	row := tx.QueryRowContext(ctx, getRecipeTranslationsCountQuery, recipeId, language)
 	if err = row.Scan(&translationsCount); err != nil {
-		log.Warnf("unable to get recipe %s translations count: %s", recipeId, err)
+		log.AutoWarnf("unable to get recipe %s translations count: %s", recipeId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -169,7 +169,7 @@ func (r *Repository) DeleteRecipeTranslation(ctx context.Context, recipeId uuid.
 		`, recipesTable)
 
 		if _, err = tx.ExecContext(ctx, updateRecipeTranslationsQuery, recipeId, language); err != nil {
-			log.Errorf("unable to update recipe %s translations: %s", recipeId, err)
+			log.AutoErrorf("unable to update recipe %s translations: %s", recipeId, err)
 			return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 		}
 	}

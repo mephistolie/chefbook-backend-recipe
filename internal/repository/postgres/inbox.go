@@ -39,7 +39,7 @@ func (r *Repository) DeleteUserEncryptedRecipes(ctx context.Context, userId uuid
 	`, recipesTable)
 
 	if _, err := tx.ExecContext(ctx, deleteRecipesQuery, userId); err != nil {
-		log.Errorf("unable to delete user %s encrypted recipes: %s", userId, err)
+		log.AutoErrorf("unable to delete user %s encrypted recipes: %s", userId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -62,7 +62,7 @@ func (r *Repository) DeleteUserData(ctx context.Context, userId uuid.UUID, delet
 	`, recipeBookTable)
 
 	if _, err := tx.ExecContext(ctx, deleteRecipeBookQuery, userId); err != nil {
-		log.Errorf("unable to delete user %s recipe book: %s", userId, err)
+		log.AutoErrorf("unable to delete user %s recipe book: %s", userId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -73,7 +73,7 @@ func (r *Repository) DeleteUserData(ctx context.Context, userId uuid.UUID, delet
 		`, recipesTable)
 
 		if _, err := tx.ExecContext(ctx, deleteUserRecipesQuery, userId); err != nil {
-			log.Errorf("unable to delete user %s recipes: %s", userId, err)
+			log.AutoErrorf("unable to delete user %s recipes: %s", userId, err)
 			return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 		}
 
@@ -88,7 +88,7 @@ func (r *Repository) DeleteUserData(ctx context.Context, userId uuid.UUID, delet
 		`, collectionsTable, collectionContributorsTable, entity.RoleOwner)
 
 		if _, err := tx.ExecContext(ctx, deleteUserCollectionsQuery, userId); err != nil {
-			log.Errorf("unable to delete user %s collections: %s", userId, err)
+			log.AutoErrorf("unable to delete user %s collections: %s", userId, err)
 			return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 		}
 	} else {
@@ -106,7 +106,7 @@ func (r *Repository) DeleteUserData(ctx context.Context, userId uuid.UUID, delet
 		`, recipesTable, recipeBookTable, model.VisibilityPrivate)
 
 		if _, err := tx.ExecContext(ctx, deleteNotUsedRecipesQuery, userId); err != nil {
-			log.Errorf("unable to delete not used user %s recipes: %s", userId, err)
+			log.AutoErrorf("unable to delete not used user %s recipes: %s", userId, err)
 			return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 		}
 
@@ -129,7 +129,7 @@ func (r *Repository) DeleteUserData(ctx context.Context, userId uuid.UUID, delet
 			`, collectionsTable, collectionContributorsTable, collectionUsersTable, entity.RoleOwner)
 
 		if _, err := tx.ExecContext(ctx, deleteNotUsedCollectionsQuery, userId); err != nil {
-			log.Errorf("unable to delete not used user %s collections: %s", userId, err)
+			log.AutoErrorf("unable to delete not used user %s collections: %s", userId, err)
 			return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 		}
 	}
@@ -150,7 +150,7 @@ func (r *Repository) handleMessageIdempotently(ctx context.Context, messageId uu
 
 	if _, err = tx.ExecContext(ctx, addMessageQuery, messageId); err != nil {
 		if !isUniqueViolationError(err) {
-			log.Error("unable to add message to inbox: ", err)
+			log.AutoError("unable to add message to inbox: ", err)
 		}
 		return nil, errorWithTransactionRollback(tx, err)
 	}

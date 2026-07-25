@@ -82,7 +82,7 @@ func New(
 		if err != nil {
 			return nil, err
 		}
-		log.Info("Firebase client initialized")
+		log.AutoInfo("Firebase client initialized")
 	}
 
 	return &Service{

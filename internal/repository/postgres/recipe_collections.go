@@ -46,7 +46,7 @@ func (r *Repository) AddRecipeToCollection(ctx context.Context, recipeId, collec
 	`, recipesCollectionsTable)
 
 	if _, err := r.db.ExecContext(ctx, query, recipeId, collectionId); err != nil {
-		log.Errorf("unable to add recipe %s to collection %s: %s", recipeId, collectionId, err)
+		log.AutoErrorf("unable to add recipe %s to collection %s: %s", recipeId, collectionId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -69,7 +69,7 @@ func (r *Repository) RemoveRecipeFromCollection(ctx context.Context, recipeId, c
 	`, recipesCollectionsTable)
 
 	if _, err := r.db.ExecContext(ctx, query, recipeId, collectionId); err != nil {
-		log.Errorf("unable to remove recipe %s from collection %s: %s", recipeId, collectionId, err)
+		log.AutoErrorf("unable to remove recipe %s from collection %s: %s", recipeId, collectionId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -98,7 +98,7 @@ func (r *Repository) SetRecipeCollections(ctx context.Context, recipeId, userId 
 	`, recipesCollectionsTable)
 
 	if _, err := tx.ExecContext(ctx, clearCollectionsQuery, recipeId, editableCollections); err != nil {
-		log.Errorf("unable to clear recipe %s collections for user %s: %s", recipeId, userId, err)
+		log.AutoErrorf("unable to clear recipe %s collections for user %s: %s", recipeId, userId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -129,7 +129,7 @@ func (r *Repository) SetRecipeCollections(ctx context.Context, recipeId, userId 
 	setRecipeCollectionsQuery += fmt.Sprint(" ON CONFLICT (recipe_id, collection_id) DO NOTHING")
 
 	if _, err = tx.ExecContext(ctx, setRecipeCollectionsQuery, args...); err != nil {
-		log.Errorf("unable to set recipe %s collections for user %s: %s", recipeId, userId, err)
+		log.AutoErrorf("unable to set recipe %s collections for user %s: %s", recipeId, userId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -147,7 +147,7 @@ func (r *Repository) getEditableCollections(ctx context.Context, tx *sql.Tx, use
 
 	rows, err := tx.QueryContext(ctx, query, userId)
 	if err != nil {
-		log.Errorf("unable to get editable collections for user %s: %s", userId, err)
+		log.AutoErrorf("unable to get editable collections for user %s: %s", userId, err)
 		return []uuid.UUID{}, fail.GrpcUnknown
 	}
 
@@ -155,7 +155,7 @@ func (r *Repository) getEditableCollections(ctx context.Context, tx *sql.Tx, use
 	for rows.Next() {
 		var collectionId uuid.UUID
 		if err = rows.Scan(&collectionId); err != nil {
-			log.Warnf("unable to parse collection id: %s", err)
+			log.AutoWarnf("unable to parse collection id: %s", err)
 			continue
 		}
 		editableCollectionIds = append(editableCollectionIds, collectionId)
@@ -178,7 +178,7 @@ func (r *Repository) checkCollectionAccessible(ctx context.Context, tx *sql.Tx, 
 
 	row := tx.QueryRowContext(ctx, query, collectionId, userId)
 	if err := row.Scan(&hasAccess); err != nil {
-		log.Errorf("unable to check is user %s has access to collection %s: %s", userId, collectionId, err)
+		log.AutoErrorf("unable to check is user %s has access to collection %s: %s", userId, collectionId, err)
 		return false
 	}
 	return hasAccess

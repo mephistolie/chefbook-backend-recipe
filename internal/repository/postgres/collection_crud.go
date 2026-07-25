@@ -43,7 +43,7 @@ func (r *Repository) GetCollections(ctx context.Context, userId, requesterId uui
 
 	rows, err := r.db.QueryContext(ctx, query, userId, requesterId)
 	if err != nil {
-		log.Errorf("unable to get user %s collections: %s", userId, err)
+		log.AutoErrorf("unable to get user %s collections: %s", userId, err)
 		return []entity.Collection{}
 	}
 
@@ -57,7 +57,7 @@ func (r *Repository) GetCollections(ctx context.Context, userId, requesterId uui
 			&collection.RecipesCount,
 		)
 		if err != nil {
-			log.Warnf("unable to parse user %s collection: %s", userId, err)
+			log.AutoWarnf("unable to parse user %s collection: %s", userId, err)
 			continue
 		}
 		collections = append(collections, collection.Entity())
@@ -77,7 +77,7 @@ func (r *Repository) GetCollectionsMap(ctx context.Context, collectionIds []uuid
 
 	rows, err := r.db.QueryContext(ctx, query, collectionIds)
 	if err != nil {
-		log.Errorf("unable to get collections: %s", err)
+		log.AutoErrorf("unable to get collections: %s", err)
 		return map[uuid.UUID]entity.CollectionInfo{}
 	}
 
@@ -87,7 +87,7 @@ func (r *Repository) GetCollectionsMap(ctx context.Context, collectionIds []uuid
 		var collection entity.CollectionInfo
 		err = rows.Scan(&id, &collection.Name)
 		if err != nil {
-			log.Errorf("unable to parse collection: %s", err)
+			log.AutoErrorf("unable to parse collection: %s", err)
 			continue
 		}
 		collections[id] = collection
@@ -109,7 +109,7 @@ func (r *Repository) CreateCollection(ctx context.Context, input entity.Collecti
 	`, collectionsTable)
 
 	if _, err = tx.ExecContext(ctx, createCollectionQuery, input.Id, input.Visibility, input.Name); err != nil {
-		log.Errorf("unable to add collection %s: %s", input.Id, err)
+		log.AutoErrorf("unable to add collection %s: %s", input.Id, err)
 		return uuid.UUID{}, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -119,7 +119,7 @@ func (r *Repository) CreateCollection(ctx context.Context, input entity.Collecti
 	`, collectionContributorsTable)
 
 	if _, err = tx.ExecContext(ctx, addOwnerQuery, input.Id, input.UserId, entity.RoleOwner); err != nil {
-		log.Errorf("unable to add owner for collection %s: %s", input.Id, err)
+		log.AutoErrorf("unable to add owner for collection %s: %s", input.Id, err)
 		return uuid.UUID{}, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -129,7 +129,7 @@ func (r *Repository) CreateCollection(ctx context.Context, input entity.Collecti
 	`, collectionUsersTable)
 
 	if _, err = tx.ExecContext(ctx, saveCollectionForOwnerQuery, input.Id, input.UserId); err != nil {
-		log.Errorf("unable to save collection %s for owner %s: %s", input.Id, input.UserId, err)
+		log.AutoErrorf("unable to save collection %s for owner %s: %s", input.Id, input.UserId, err)
 		return uuid.UUID{}, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -175,7 +175,7 @@ func (r *Repository) GetCollection(ctx context.Context, collectionId, userId uui
 		&collection.Visibility, m.SQLScanner(&collection.Contributors),
 		&collection.RecipesCount,
 	); err != nil {
-		log.Errorf("unable to get collection %s: %s", collectionId, err)
+		log.AutoErrorf("unable to get collection %s: %s", collectionId, err)
 		return entity.Collection{}, fail.GrpcAccessDenied
 	}
 
@@ -196,11 +196,11 @@ func (r *Repository) UpdateCollection(ctx context.Context, collection entity.Col
 
 	result, err := r.db.ExecContext(ctx, query, collection.Id, collection.UserId, collection.Name, collection.Visibility)
 	if err != nil {
-		log.Errorf("unable to update collection %s: %s", collection.Id, err)
+		log.AutoErrorf("unable to update collection %s: %s", collection.Id, err)
 		return fail.GrpcUnknown
 	}
 	if rows, err := result.RowsAffected(); err != nil || rows == 0 {
-		log.Warnf("user %s isn't owner of collection %s: %s", collection.UserId, collection.Id, err)
+		log.AutoWarnf("user %s isn't owner of collection %s: %s", collection.UserId, collection.Id, err)
 		return fail.GrpcAccessDenied
 	}
 
@@ -220,11 +220,11 @@ func (r *Repository) DeleteCollection(ctx context.Context, collectionId, userId 
 
 	result, err := r.db.ExecContext(ctx, query, collectionId, userId)
 	if err != nil {
-		log.Errorf("unable to delete collection %s: %s", collectionId, err)
+		log.AutoErrorf("unable to delete collection %s: %s", collectionId, err)
 		return fail.GrpcUnknown
 	}
 	if rows, err := result.RowsAffected(); err != nil || rows == 0 {
-		log.Warnf("user %s isn't owner of collection %s: %s", userId, collectionId, err)
+		log.AutoWarnf("user %s isn't owner of collection %s: %s", userId, collectionId, err)
 		return fail.GrpcAccessDenied
 	}
 

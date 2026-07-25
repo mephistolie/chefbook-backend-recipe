@@ -17,7 +17,7 @@ func (r *Repository) createOutboxMsg(ctx context.Context, msg *model.MessageData
 	`, outboxTable)
 
 	if _, err := tx.ExecContext(ctx, query, msg.Id, msg.Exchange, msg.Type, msg.Body); err != nil {
-		log.Error("unable to add message to outbox: ", err)
+		log.AutoError("unable to add message to outbox: ", err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -45,7 +45,7 @@ func (r *Repository) getPendingMessages(ctx context.Context) ([]*model.MessageDa
 		var msg model.MessageData
 		err := rows.Scan(&msg.Id, &msg.Exchange, &msg.Type, &msg.Body)
 		if err != nil {
-			log.Warn("unable to get scan message row: ", err)
+			log.AutoWarn("unable to get scan message row: ", err)
 			continue
 		}
 		msgs = append(msgs, &msg)
@@ -66,7 +66,7 @@ func (r *Repository) markMessageSent(ctx context.Context, messageId uuid.UUID) e
 
 	_, err := r.db.ExecContext(ctx, query, messageId)
 	if err != nil {
-		log.Warnf("unable to update status for message %s: %s", messageId, err)
+		log.AutoWarnf("unable to update status for message %s: %s", messageId, err)
 	}
 	return err
 }

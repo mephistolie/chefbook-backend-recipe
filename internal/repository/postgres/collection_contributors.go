@@ -39,11 +39,11 @@ func (r *Repository) GetCollectionKey(ctx context.Context, collectionId uuid.UUI
 
 	row := tx.QueryRowContext(ctx, createKeyQuery, collectionId, time.Now().Add(r.keyTtl))
 	if err := row.Scan(&key, &expiresAt); err != nil {
-		log.Errorf("unable to create collection %s key: %s", collectionId, err)
+		log.AutoErrorf("unable to create collection %s key: %s", collectionId, err)
 		return uuid.UUID{}, time.Time{}, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 	if expiresAt.Unix() < time.Now().Unix() {
-		log.Debugf("key for collection %s is outdated; updating...", collectionId.String())
+		log.AutoDebugf("key for collection %s is outdated; updating...", collectionId.String())
 		return r.updateCollectionKey(ctx, tx, collectionId)
 	}
 
@@ -61,7 +61,7 @@ func (r *Repository) updateCollectionKey(ctx context.Context, tx *sql.Tx, collec
 		`, collectionKeysTable)
 
 	if _, err := tx.ExecContext(ctx, updateKeyQuery, key, expiresAt, collectionId); err != nil {
-		log.Errorf("unable to update collection %s key: %s", collectionId, err)
+		log.AutoErrorf("unable to update collection %s key: %s", collectionId, err)
 		return uuid.UUID{}, time.Time{}, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -82,7 +82,7 @@ func (r *Repository) IsCollectionKeyValid(ctx context.Context, collectionId, key
 
 	currentTime := time.Now()
 	if err := r.db.GetContext(ctx, &valid, query, collectionId, key, currentTime); err != nil {
-		log.Errorf("unable to validate collection %s key: %s", collectionId, err)
+		log.AutoErrorf("unable to validate collection %s key: %s", collectionId, err)
 		return false, fail.GrpcUnknown
 	}
 	return true, nil
@@ -95,7 +95,7 @@ func (r *Repository) AddCollectionContributor(ctx context.Context, collectionId,
 	`, collectionContributorsTable)
 
 	if _, err := r.db.ExecContext(ctx, query, collectionId, contributorId, role); err != nil {
-		log.Errorf("unable to add collection %s contributor %s: %s", collectionId, contributorId, err)
+		log.AutoErrorf("unable to add collection %s contributor %s: %s", collectionId, contributorId, err)
 		return fail.GrpcUnknown
 	}
 
@@ -109,7 +109,7 @@ func (r *Repository) RemoveCollectionContributors(ctx context.Context, collectio
 	`, collectionContributorsTable)
 
 	if _, err := r.db.ExecContext(ctx, query, collectionId, contributorIds); err != nil {
-		log.Errorf("unable to remove collection %s contributors: %s", collectionId, err)
+		log.AutoErrorf("unable to remove collection %s contributors: %s", collectionId, err)
 		return fail.GrpcUnknown
 	}
 

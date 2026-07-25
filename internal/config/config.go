@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"github.com/mephistolie/chefbook-backend-common/log"
 	amqpConfig "github.com/mephistolie/chefbook-backend-common/mq/config"
 	"time"
@@ -75,34 +76,9 @@ func (c Config) Validate() error {
 }
 
 func (c Config) Print() {
-	log.Infof("RECIPE SERVICE CONFIGURATION\n"+
-		"Environment: %v\n"+
-		"Port: %v\n"+
-		"Logs path: %v\n\n"+
-		"Recipes key TTL: %v\n\n"+
-		"Check subscription: %v\n"+
-		"Max recipe pictures for free subscription: %v\n"+
-		"Max recipe pictures for premium subscription: %v\n"+
-		"Max recipe picture size for free subscription: %vB\n"+
-		"Max recipe picture size for premium subscription: %vB\n\n"+
-		"Profile Service Address: %v\n"+
-		"Tag Service Address: %v\n"+
-		"Database host: %v\n"+
-		"Database port: %v\n"+
-		"Database name: %v\n\n"+
-		"S3 host: %v\n"+
-		"S3 bucket: %v\n"+
-		"S3 region: %v\n\n"+
-		"MQ host: %v\n"+
-		"MQ port: %v\n"+
-		"MQ vhost: %v\n\n",
-		*c.Environment, *c.Port, *c.LogsPath,
-		*c.Recipes.KeyTtl,
-		*c.Subscription.CheckSubscription, *c.Subscription.MaxPicturesFree, *c.Subscription.MaxPicturesPremium,
-		*c.Subscription.PictureMaxSizeFree, *c.Subscription.PictureMaxSizePremium,
-		*c.ProfileService.Addr, *c.TagService.Addr,
-		*c.Database.Host, *c.Database.Port, *c.Database.DBName,
-		*c.S3.Host, *c.S3.Bucket, *c.S3.Region,
-		*c.Amqp.Host, *c.Amqp.Port, *c.Amqp.VHost,
-	)
+	log.Log(context.Background(), log.Event{
+		Event:     "config.loaded",
+		Message:   "service configuration loaded",
+		Component: "config",
+	})
 }
